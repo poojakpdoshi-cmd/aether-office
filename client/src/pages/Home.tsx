@@ -37,6 +37,18 @@ type WorkspaceView =
   | "Employees"
   | "Settings";
 
+const QUERY_WORKSPACE_VIEWS: Record<string, WorkspaceView> = {
+  cameras: "Cameras",
+  chat: "Chat",
+  files: "Files",
+  editor: "Editor",
+  diff: "Diff",
+  tests: "Tests",
+  git: "Git",
+  employees: "Employees",
+  settings: "Settings",
+};
+
 type EmployeeStatus =
   | "IDLE"
   | "THINKING"
@@ -55,6 +67,14 @@ type Employee = {
   focus: string;
   status: EmployeeStatus;
   accent: string;
+};
+
+type ReplacementPreview = {
+  search: string;
+  replace: string;
+  before: string;
+  after: string;
+  matches: number;
 };
 
 const employees: Employee[] = [
@@ -141,7 +161,10 @@ function EmptyWorkspace({ title, detail, action }: { title: string; detail: stri
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<WorkspaceView>(() => new URLSearchParams(window.location.search).get("view") === "cameras" ? "Cameras" : "Office");
+  const [activeView, setActiveView] = useState<WorkspaceView>(() => {
+    const requestedView = new URLSearchParams(window.location.search).get("view")?.toLowerCase();
+    return requestedView ? QUERY_WORKSPACE_VIEWS[requestedView] ?? "Office" : "Office";
+  });
   const [task, setTask] = useState("");
   const [submittedTask, setSubmittedTask] = useState<string | null>(null);
   const [mode, setMode] = useState("Safe Mode");
@@ -151,9 +174,17 @@ export default function Home() {
   const [baseUrl, setBaseUrl] = useState("");
   const [workspaceInput, setWorkspaceInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [fileSearch, setFileSearch] = useState("");
   const [uploadedAttachment, setUploadedAttachment] = useState<string | null>(null);
   const [visionAnalysis, setVisionAnalysis] = useState<string | null>(null);
   const [draftContent, setDraftContent] = useState("");
+  const [lastSavedContent, setLastSavedContent] = useState("");
+  const [draftHistory, setDraftHistory] = useState<string[]>([]);
+  const [draftHistoryIndex, setDraftHistoryIndex] = useState(-1);
+  const [editorSearch, setEditorSearch] = useState("");
+  const [editorReplacement, setEditorReplacement] = useState("");
+  const [replaceAllMatches, setReplaceAllMatches] = useState(true);
+  const [replacementPreview, setReplacementPreview] = useState<ReplacementPreview | null>(null);
   const [commitMessage, setCommitMessage] = useState("");
   const [ownerConfirmed, setOwnerConfirmed] = useState(false);
   const [focusedCamera, setFocusedCamera] = useState("Office Floor");
@@ -186,20 +217,60 @@ export default function Home() {
   const proposalActionMutation = trpc.aether.proposalAction.useMutation({ onSuccess: () => dashboardQuery.refetch() });
   const selectWorkspaceMutation = trpc.aether.selectWorkspace.useMutation({ onSuccess: () => workspaceQuery.refetch() });
   const directoryQuery = trpc.aether.listDirectory.useQuery({ path: "." }, { enabled: Boolean(workspaceQuery.data?.selected) });
+  const normalizedFileSearch = fileSearch.trim();
+  const fileSearchQuery = trpc.aether.searchFiles.useQuery({ query: normalizedFileSearch }, { enabled: Boolean(workspaceQuery.data?.selected && normalizedFileSearch.length >= 2) });
   const fileQuery = trpc.aether.readFile.useQuery({ path: selectedFile ?? "." }, { enabled: Boolean(selectedFile) });
   const gitStatusQuery = trpc.aether.gitStatus.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const gitDiffQuery = trpc.aether.gitDiff.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const uploadMutation = trpc.aether.importUpload.useMutation({ onSuccess: (result) => { setUploadedAttachment(result.relativePath); directoryQuery.refetch(); } });
   const inspectImageMutation = trpc.aether.inspectImage.useMutation({ onSuccess: (result) => setVisionAnalysis(result.analysis) });
-  const writeFileMutation = trpc.aether.writeFile.useMutation({ onSuccess: () => { fileQuery.refetch(); gitDiffQuery.refetch(); } });
+  const writeFileMutation = trpc.aether.writeFile.useMutation({ onSuccess: () => { setLastSavedContent(draftContent); fileQuery.refetch(); gitDiffQuery.refetch(); } });
   const runTestsMutation = trpc.aether.runTests.useMutation();
   const createCommitMutation = trpc.aether.createCommit.useMutation({ onSuccess: () => { gitStatusQuery.refetch(); gitDiffQuery.refetch(); setCommitMessage(""); } });
   const gitHistoryQuery = trpc.aether.gitHistory.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const workspaceLabel = useMemo(() => workspaceQuery.data?.selected ? workspaceQuery.data.root?.split("/").pop() ?? "Selected workspace" : submittedTask ? "Task staged" : "No workspace selected", [submittedTask, workspaceQuery.data]);
 
   useEffect(() => {
-    if (fileQuery.data?.content !== undefined) setDraftContent(fileQuery.data.content);
+    if (fileQuery.data?.content === undefined) return;
+    setDraftContent(fileQuery.data.content);
+    setLastSavedContent(fileQuery.data.content);
+    setDraftHistory([fileQuery.data.content]);
+    setDraftHistoryIndex(0);
+    setReplacementPreview(null);
   }, [fileQuery.data?.content, selectedFile]);
+
+  const recordDraft = (nextContent: string) => {
+    setDraftContent(nextContent);
+    setDraftHistory((history) => {
+      const base = history.slice(0, draftHistoryIndex + 1);
+      if (base.at(-1) === nextContent) return history;
+      const nextHistory = [...base, nextContent].slice(-80);
+      setDraftHistoryIndex(nextHistory.length - 1);
+      return nextHistory;
+    });
+  };
+
+  const undoDraft = () => {
+    if (draftHistoryIndex <= 0) return;
+    const nextIndex = draftHistoryIndex - 1;
+    setDraftHistoryIndex(nextIndex);
+    setDraftContent(draftHistory[nextIndex] ?? draftContent);
+  };
+
+  const redoDraft = () => {
+    if (draftHistoryIndex < 0 || draftHistoryIndex >= draftHistory.length - 1) return;
+    const nextIndex = draftHistoryIndex + 1;
+    setDraftHistoryIndex(nextIndex);
+    setDraftContent(draftHistory[nextIndex] ?? draftContent);
+  };
+
+  const prepareReplacement = () => {
+    if (!editorSearch) return;
+    const matches = draftContent.split(editorSearch).length - 1;
+    if (!matches) return;
+    const after = replaceAllMatches ? draftContent.split(editorSearch).join(editorReplacement) : draftContent.replace(editorSearch, editorReplacement);
+    setReplacementPreview({ search: editorSearch, replace: editorReplacement, before: draftContent, after, matches: replaceAllMatches ? matches : 1 });
+  };
 
   const handleTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -459,6 +530,26 @@ export default function Home() {
 
   const renderEditor = () => selectedFile ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">{selectedFile}</p><p className="mt-1 text-xs text-slate-400">Saving is a controlled operation: an approved TEAM PROPOSAL and explicit owner confirmation are required in Safe Mode.</p></div><Button size="sm" variant="outline" onClick={() => setActiveView("Files")} className="border-white/10 bg-white/[0.03] text-slate-200">Back to files</Button></div><textarea value={draftContent} onChange={(event) => setDraftContent(event.target.value)} className="mt-5 min-h-[420px] w-full rounded-xl border border-white/[0.08] bg-black/25 p-4 font-mono text-xs leading-6 text-slate-300 outline-none focus:border-sky-300/30" aria-label="Workspace file editor" />{latestMeeting?.state === "APPROVED" ? <div className="mt-4 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />I confirm this controlled change</label><Button size="sm" disabled={!ownerConfirmed || writeFileMutation.isPending} onClick={() => writeFileMutation.mutate({ path: selectedFile, content: draftContent, who: "Owner", why: "Owner saved a reviewed workspace edit.", meetingId: latestMeeting.id, ownerConfirmed })} className="bg-sky-300 text-slate-950 hover:bg-sky-200">{writeFileMutation.isPending ? "Saving…" : "Save controlled change"}</Button></div> : <p className="mt-4 text-xs text-amber-200">Approve a TEAM PROPOSAL before meaningful workspace edits can be saved.</p>}{writeFileMutation.error ? <p className="mt-3 text-xs text-rose-300">The controlled save was blocked or failed. Review the approval state and workspace rules.</p> : null}</section> : <EmptyWorkspace title="No file open" detail="Choose a file from the selected workspace to inspect and edit it through the approval-gated tool layer." action="Open Files to select a file." />;
 
+  const renderEnhancedFiles = () => (
+    <div className="grid gap-5 xl:grid-cols-[340px_minmax(0,1fr)]">
+      <aside className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">
+        <p className="text-sm font-semibold text-white">Local workspace</p>
+        <p className="mt-1 text-xs leading-5 text-slate-400">AetherOffice scopes all project tools to this directory. The CLI selects it automatically; you may also choose it here.</p>
+        <form onSubmit={chooseWorkspace} className="mt-4 space-y-2"><Input value={workspaceInput} onChange={(event) => setWorkspaceInput(event.target.value)} placeholder="/path/to/project" className="border-white/10 bg-black/20 text-slate-100" /><Button type="submit" disabled={!workspaceInput.trim() || selectWorkspaceMutation.isPending} className="w-full bg-sky-300 text-slate-950 hover:bg-sky-200">{selectWorkspaceMutation.isPending ? "Selecting…" : "Select workspace"}</Button></form>
+        {workspaceQuery.data?.selected ? <><Separator className="my-5 bg-white/10" /><p className="break-all text-xs leading-5 text-emerald-200">{workspaceQuery.data.root}</p><label className="mt-5 flex cursor-pointer items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/[0.08]"><input type="file" className="sr-only" onChange={(event) => uploadFile(event.target.files?.[0])} />Upload file</label></> : null}
+      </aside>
+      <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">
+        {!workspaceQuery.data?.selected ? <EmptyWorkspace title="Workspace not selected" detail="Select a local project directory. Files, tools, Git, tests, and AI execution remain restricted until the Owner chooses a workspace." action="Your whole computer is never available by default." /> : <><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-semibold text-white">Project files</p><p className="mt-1 text-xs text-slate-400">The file list reflects the selected local workspace.</p></div><Button size="sm" variant="outline" onClick={() => directoryQuery.refetch()} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><Input value={fileSearch} onChange={(event) => setFileSearch(event.target.value)} placeholder="Search workspace file names…" className="mb-4 border-white/10 bg-black/20 text-slate-100" />{normalizedFileSearch.length >= 2 ? <div className="mb-4 rounded-xl border border-sky-300/15 bg-sky-300/[0.05] p-3"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-200">Workspace search</p>{fileSearchQuery.data?.length ? <div className="mt-2 flex flex-wrap gap-2">{fileSearchQuery.data.map((path) => <button type="button" key={path} onClick={() => { setSelectedFile(path); setActiveView("Editor"); }} className="rounded-md border border-white/[0.1] bg-black/15 px-2.5 py-1.5 text-xs text-slate-200 hover:bg-white/[0.06]">{path}</button>)}</div> : <p className="mt-2 text-xs text-slate-400">{fileSearchQuery.isLoading ? "Searching selected workspace…" : "No matching file names."}</p>}</div> : null}<div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">{directoryQuery.data?.map((entry) => <button key={`${entry.type}-${entry.name}`} disabled={entry.type !== "file"} onClick={() => { setSelectedFile(entry.name); setActiveView("Editor"); }} className={cn("flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.025] p-3 text-left text-xs", entry.type === "file" ? "text-slate-200 hover:bg-white/[0.07]" : "cursor-default text-sky-200")}><span className="text-slate-500">{entry.type === "directory" ? "DIR" : "FILE"}</span><span className="truncate">{entry.name}</span></button>)}</div>{directoryQuery.isLoading ? <p className="mt-5 text-xs text-slate-500">Reading local workspace…</p> : null}</>}</section>
+    </div>
+  );
+
+  const renderEnhancedEditor = () => {
+    if (!selectedFile) return <EmptyWorkspace title="No file open" detail="Choose a file from the selected workspace to inspect and edit it through the approval-gated tool layer." action="Open Files to select a file." />;
+    const searchMatches = editorSearch ? draftContent.split(editorSearch).length - 1 : 0;
+    const hasUnsavedChanges = draftContent !== lastSavedContent;
+    return <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><div className="flex flex-wrap items-center gap-2"><p className="text-sm font-semibold text-white">{selectedFile}</p><span aria-live="polite" className={cn("rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em]", hasUnsavedChanges ? "border-amber-300/25 bg-amber-300/10 text-amber-100" : "border-emerald-300/20 bg-emerald-300/10 text-emerald-100")}>{hasUnsavedChanges ? "Unsaved changes" : "Saved"}</span></div><p className="mt-1 text-xs text-slate-400">Saving is a controlled operation: an approved TEAM PROPOSAL and explicit owner confirmation are required in Safe Mode.</p></div><Button size="sm" variant="outline" onClick={() => setActiveView("Files")} className="border-white/10 bg-white/[0.03] text-slate-200">Back to files</Button></div><div className="mt-5 grid gap-2 rounded-xl border border-white/[0.08] bg-black/15 p-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto_auto]"><Input value={editorSearch} onChange={(event) => setEditorSearch(event.target.value)} placeholder="Find exact text…" className="border-white/10 bg-black/20 text-slate-100" /><Input value={editorReplacement} onChange={(event) => setEditorReplacement(event.target.value)} placeholder="Replace with…" className="border-white/10 bg-black/20 text-slate-100" /><label className="flex items-center gap-2 whitespace-nowrap px-1 text-xs text-slate-300"><input type="checkbox" checked={replaceAllMatches} onChange={(event) => setReplaceAllMatches(event.target.checked)} />All matches</label><Button type="button" size="sm" variant="outline" disabled={!editorSearch || !searchMatches} onClick={prepareReplacement} className="border-sky-300/25 bg-sky-300/[0.06] text-sky-100 hover:bg-sky-300/[0.12]">Preview replacement{searchMatches ? ` (${searchMatches})` : ""}</Button></div><div className="mt-3 flex flex-wrap items-center gap-2"><Button type="button" size="sm" variant="outline" disabled={draftHistoryIndex <= 0} onClick={undoDraft} className="border-white/10 bg-white/[0.03] text-slate-200">Undo</Button><Button type="button" size="sm" variant="outline" disabled={draftHistoryIndex < 0 || draftHistoryIndex >= draftHistory.length - 1} onClick={redoDraft} className="border-white/10 bg-white/[0.03] text-slate-200">Redo</Button><p className="text-[11px] text-slate-500">Local edit history keeps the latest 80 draft states and never writes a file by itself.</p></div>{replacementPreview ? <div className="mt-4 rounded-xl border border-sky-300/20 bg-sky-300/[0.05] p-4"><div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-xs font-semibold text-sky-100">Selected replacement review</p><p className="mt-1 text-[11px] text-slate-400">{replacementPreview.matches} match{replacementPreview.matches === 1 ? "" : "es"} for “{replacementPreview.search}” will be changed in the draft only.</p></div><div className="flex gap-2"><Button type="button" size="sm" variant="outline" onClick={() => setReplacementPreview(null)} className="border-white/10 bg-white/[0.03] text-slate-200">Reject preview</Button><Button type="button" size="sm" onClick={() => { recordDraft(replacementPreview.after); setReplacementPreview(null); }} className="bg-sky-300 text-slate-950 hover:bg-sky-200">Accept into draft</Button></div></div><div className="mt-3 grid gap-3 lg:grid-cols-2"><pre className="max-h-48 overflow-auto rounded-lg border border-rose-300/15 bg-black/20 p-3 text-[11px] leading-5 text-rose-100">{replacementPreview.before.slice(0, 1800)}{replacementPreview.before.length > 1800 ? "\n…" : ""}</pre><pre className="max-h-48 overflow-auto rounded-lg border border-emerald-300/15 bg-black/20 p-3 text-[11px] leading-5 text-emerald-100">{replacementPreview.after.slice(0, 1800)}{replacementPreview.after.length > 1800 ? "\n…" : ""}</pre></div></div> : null}<textarea value={draftContent} onChange={(event) => recordDraft(event.target.value)} className="mt-5 min-h-[420px] w-full rounded-xl border border-white/[0.08] bg-black/25 p-4 font-mono text-xs leading-6 text-slate-300 outline-none focus:border-sky-300/30" aria-label="Workspace file editor" />{latestMeeting?.state === "APPROVED" ? <div className="mt-4 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />I confirm this controlled change</label><Button size="sm" disabled={!hasUnsavedChanges || !ownerConfirmed || writeFileMutation.isPending} onClick={() => writeFileMutation.mutate({ path: selectedFile, content: draftContent, who: "Owner", why: "Owner saved a reviewed workspace edit.", meetingId: latestMeeting.id, ownerConfirmed })} className="bg-sky-300 text-slate-950 hover:bg-sky-200">{writeFileMutation.isPending ? "Saving…" : "Save controlled change"}</Button></div> : <p className="mt-4 text-xs text-amber-200">Approve a TEAM PROPOSAL before meaningful workspace edits can be saved.</p>}{writeFileMutation.error ? <p className="mt-3 text-xs text-rose-300">The controlled save was blocked or failed. Review the approval state and workspace rules.</p> : null}</section>;
+  };
+
   const renderDiff = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Reviewable diff</p><p className="mt-1 text-xs text-slate-400">This is the real Git diff from the selected workspace. No remote push is implemented.</p></div><Button size="sm" variant="outline" onClick={() => gitDiffQuery.refetch()} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><pre className="mt-5 min-h-72 max-h-[620px] overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{workspaceQuery.data?.gitAvailable ? gitDiffQuery.data || "No uncommitted diff." : "Select a Git workspace to inspect diffs."}</pre></section>;
 
   const renderTests = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Controlled tests</p><p className="mt-1 text-xs text-slate-400">Test execution runs only in the selected workspace and requires an approved plan plus owner confirmation.</p>{latestMeeting?.state === "APPROVED" ? <div className="mt-5"><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />I confirm this test run</label><Button size="sm" disabled={!ownerConfirmed || runTestsMutation.isPending} onClick={() => runTestsMutation.mutate({ who: "Owner", why: "Owner initiated the approved workspace test run.", meetingId: latestMeeting.id, ownerConfirmed })} className="mt-3 bg-sky-300 text-slate-950 hover:bg-sky-200">{runTestsMutation.isPending ? "Running tests…" : "Run tests"}</Button></div> : <p className="mt-5 text-xs text-amber-200">Approve a TEAM PROPOSAL before test execution.</p>}<pre className="mt-5 min-h-72 max-h-[500px] overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{runTestsMutation.data ? `${runTestsMutation.data.command}\n\n${runTestsMutation.data.stdout}\n${runTestsMutation.data.stderr}` : "No controlled test run has occurred."}</pre></section>;
@@ -485,8 +576,8 @@ export default function Home() {
     if (activeView === "Cameras") return renderCameras();
     if (activeView === "Chat") return renderChat();
     if (activeView === "Settings") return renderSettings();
-    if (activeView === "Files") return renderFiles();
-    if (activeView === "Editor") return renderEditor();
+    if (activeView === "Files") return renderEnhancedFiles();
+    if (activeView === "Editor") return renderEnhancedEditor();
     if (activeView === "Git") return renderGit();
     const details: Record<Exclude<WorkspaceView, "Office" | "Cameras" | "Chat" | "Settings">, [string, string, string]> = {
       Files: ["Workspace not selected", "Select a local project directory from the CLI or local setup screen. AetherOffice will scope all controlled tools to that directory.", "Files remain inaccessible until the Owner selects a workspace."],

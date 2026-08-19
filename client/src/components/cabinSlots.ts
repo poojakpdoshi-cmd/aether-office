@@ -9,13 +9,13 @@ export type CompactCabinSlot = {
 };
 
 export const COMPACT_CABIN_SLOTS: readonly CompactCabinSlot[] = [
-  { id: "manager-cabin", employee: "Manus", station: { x: "50%", y: "15%" }, laptop: { left: "52%", top: "20%" }, desk: { x: "50%", y: "15%" } },
-  { id: "left-north-cabin", employee: "Gemini", station: { x: "16%", y: "25%" }, laptop: { left: "11%", top: "22%" }, desk: { x: "16%", y: "31%" } },
-  { id: "right-north-cabin", employee: "DeepSeek", station: { x: "84%", y: "25%" }, laptop: { left: "89%", top: "22%" }, desk: { x: "84%", y: "31%" } },
-  { id: "left-middle-cabin", employee: "Mistral", station: { x: "16%", y: "48%" }, laptop: { left: "11%", top: "45%" }, desk: { x: "16%", y: "54%" } },
-  { id: "right-middle-cabin", employee: "Arcee", station: { x: "84%", y: "48%" }, laptop: { left: "89%", top: "45%" }, desk: { x: "84%", y: "54%" } },
-  { id: "left-south-cabin", employee: "SambaNova", station: { x: "16%", y: "72%" }, laptop: { left: "11%", top: "69%" }, desk: { x: "16%", y: "77%" } },
-  { id: "right-south-cabin", employee: "Grok", station: { x: "84%", y: "72%" }, laptop: { left: "89%", top: "69%" }, desk: { x: "84%", y: "77%" } },
+  { id: "manager-cabin", employee: "Manus", station: { x: "50%", y: "14%" }, laptop: { left: "52%", top: "20%" }, desk: { x: "50%", y: "17%" } },
+  { id: "left-north-cabin", employee: "Gemini", station: { x: "11%", y: "21%" }, laptop: { left: "10%", top: "20%" }, desk: { x: "12%", y: "24%" } },
+  { id: "left-upper-cabin", employee: "DeepSeek", station: { x: "28%", y: "21%" }, laptop: { left: "27%", top: "20%" }, desk: { x: "29%", y: "24%" } },
+  { id: "right-upper-cabin", employee: "Mistral", station: { x: "72%", y: "21%" }, laptop: { left: "71%", top: "20%" }, desk: { x: "73%", y: "24%" } },
+  { id: "right-north-cabin", employee: "Arcee", station: { x: "90%", y: "21%" }, laptop: { left: "89%", top: "20%" }, desk: { x: "91%", y: "24%" } },
+  { id: "left-middle-cabin", employee: "SambaNova", station: { x: "10%", y: "47%" }, laptop: { left: "10%", top: "46%" }, desk: { x: "12%", y: "50%" } },
+  { id: "right-middle-cabin", employee: "Grok", station: { x: "90%", y: "47%" }, laptop: { left: "89%", top: "46%" }, desk: { x: "91%", y: "50%" } },
 ];
 
 export function allocateCompactCabinSlots(employeeNames: readonly string[]) {

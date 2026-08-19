@@ -98,3 +98,9 @@
 - [x] Start DeepDiscuss directly from a Manager-submitted command and return the Owner to the Discussion Room without exposing a separate office start control.
 - [x] Make localhost launch directly into the animated office map with no visible written text, headings, labels, buttons, panels, or instructions.
 - [x] Preserve direct clickable cabins, employees, desk files/photos, Provider Locker, Discussion Room, and work areas through invisible accessible interaction targets.
+- [x] Remove the visible blue manager interaction marker from the default office map while retaining an accessible Manager Cabin interaction target.
+- [x] Expand the Discussion Room visual and interaction footprint without introducing visible launch text or controls.
+- [x] Reframe the supplied office map into a 16:9 horizontal presentation while preserving all map content and default text-free launch behavior.
+- [ ] Record final Owner approval of the generated 16:9 horizontal office artwork before treating it as the permanent selected office map.
+- [x] Capture visual verification that the generated 16:9 office artwork retains the Manager Cabin, enlarged Discussion Room, employee cabins, and direct interactive zones.
+- [x] Implement and test compositor-friendly real-status walking and work-state motion, preserving responsive mobile scale and CSS reduced-motion support.

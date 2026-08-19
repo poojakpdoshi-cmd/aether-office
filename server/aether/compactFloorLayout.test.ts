@@ -13,7 +13,7 @@ describe("Owner-selected compact office floor", () => {
     expect(officeComponent).toContain('src={ACTIVE_OFFICE_BACKGROUND}');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-supplied-only"');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_GENERATION_ENABLED = false');
-    expect(officeArtworkPolicy).toContain('owner-selected-office-floor_2f95057d.webp');
+    expect(officeArtworkPolicy).toContain('aether-office-horizontal-16x9_8fd4a4b4.png');
     expect(officeComponent).toContain('aria-label="Open Manager Cabin"');
     expect(officeComponent).toContain('aria-label="Open DeepDiscuss Room"');
     expect(officeComponent).toContain('aria-label="Provide files or photos to the Manager"');
@@ -21,8 +21,9 @@ describe("Owner-selected compact office floor", () => {
     expect(officeComponent).toContain('aria-label="Inspect Central Corridor"');
   });
 
-  it("contains compact portrait and mobile rules for the selected map", () => {
+  it("contains horizontal 16:9 and mobile rules for the selected map", () => {
     expect(compactFloorStyles).toContain('width: min(100%, 680px)');
+    expect(compactFloorStyles).toContain('aspect-ratio: 16 / 9');
     expect(compactFloorStyles).toContain('@media (max-width: 760px)');
     expect(compactFloorStyles).toContain('.office-corridor-zone');
   });
