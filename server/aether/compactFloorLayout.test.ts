@@ -14,7 +14,7 @@ describe("Owner-selected compact office floor", () => {
     expect(officeComponent).toContain('src={ACTIVE_OFFICE_BACKGROUND}');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-supplied-only"');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_GENERATION_ENABLED = false');
-    expect(officeArtworkPolicy).toContain('aether-office-horizontal-16x9_8fd4a4b4.png');
+    expect(officeArtworkPolicy).toContain('aether-office-horizontal-16x9-owner-corrected_9ef6d677.png');
     expect(officeComponent).toContain('aria-label="Open Manager Cabin"');
     expect(officeComponent).toContain('aria-label="Open DeepDiscuss Room"');
     expect(officeComponent).toContain('aria-label="Provide files or photos to the Manager"');

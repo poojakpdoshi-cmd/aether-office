@@ -142,3 +142,15 @@
 - [x] Update the managed artwork reference and confirm text-free launch, Manager Cabin, Discussion Room, desk, and laptop interactions against the supplied image.
 - [x] Run focused tests, type checking, build, visual verification, and save a checkpoint for the supplied corrected office image.
 
+- [ ] Replace the pushed office background with a genuinely corrected full 16:9 image that removes the unwanted manager-leg/pants defect.
+- [ ] Verify the corrected Manager Cabin visually and recheck all physical office hotspots before publishing the replacement.
+- [ ] Push only the verified corrected artwork replacement and confirm GitHub matches the local checkpoint.
+
+- [x] Analyze the supplied multi-agent office reference video and document its useful motion, meeting, activity, and monitoring patterns.
+- [x] Define an AetherOffice-native enhancement set that preserves real-event truth, local-first safety, text-free map launch, and physical hotspot navigation.
+- [x] Implement approved living-office enhancements such as event-driven walking, meeting transitions, workstation activity, camera detail, and richer task progress without fake activity.
+- [x] Verify the new experience at full-map scale, including performance-oriented animation, physical hotspot behavior, and regression coverage.
+
+- [x] Keep user tasks, meetings, approvals, activity history, and audit records restart-persistent through local runtime files without requiring a database.
+- [x] Add secure Gemini Pro provider setup and server-side validation through the encrypted Provider Locker flow, without exposing the key.
+- [x] Add regression coverage for local restart persistence and Gemini configuration safety.

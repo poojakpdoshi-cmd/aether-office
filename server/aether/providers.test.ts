@@ -52,4 +52,23 @@ describe("recognizeProviderKey", () => {
       rmSync(configHome, { recursive: true, force: true });
     }
   });
+
+  it("persists Gemini configuration in the local encrypted vault without a database", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-gemini-provider-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    try {
+      await configureProvider({ provider: "gemini", apiKey: "gemini-test-key", ...getProviderDefaults("gemini") });
+      const gemini = (await listProviderStatuses()).find((provider) => provider.id === "gemini");
+      expect(gemini).toMatchObject({ configured: true, route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY" });
+      expect(getProviderDefaults("gemini")).toMatchObject({
+        baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
+        model: "gemini-3.7-flash",
+      });
+    } finally {
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
 });

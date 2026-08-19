@@ -188,6 +188,50 @@ function EmptyWorkspace({ title, detail, action }: { title: string; detail: stri
   );
 }
 
+function VerifiedActivityTimeline({ activities }: { activities: Array<{ id: string; kind: string; message: string; createdAt: number; employee?: string }> }) {
+  return (
+    <section className="mt-5 rounded-xl border border-white/[0.08] bg-black/15 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-200">Verified activity timeline</p>
+          <p className="mt-1 text-xs text-slate-500">Real meeting, approval, tool, and workspace events only.</p>
+        </div>
+        <Activity className="h-4 w-4 text-sky-300" />
+      </div>
+      {activities.length ? (
+        <div className="mt-4 space-y-2">
+          {activities.slice(0, 8).map((event) => (
+            <div key={event.id} className="grid grid-cols-[auto_1fr_auto] items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+              <span className="mt-1 h-2 w-2 rounded-full bg-sky-300 shadow-[0_0_12px_rgba(125,211,252,0.6)]" />
+              <div className="min-w-0"><p className="text-xs leading-5 text-slate-300">{event.message}</p><p className="mt-0.5 text-[10px] uppercase tracking-[0.1em] text-slate-600">{event.employee ?? "System"} · {event.kind}</p></div>
+              <time className="text-[10px] text-slate-600">{new Date(event.createdAt).toLocaleTimeString()}</time>
+            </div>
+          ))}
+        </div>
+      ) : <p className="mt-4 rounded-lg border border-dashed border-white/[0.08] px-3 py-4 text-xs text-slate-500">No verified events have been recorded for this location yet.</p>}
+    </section>
+  );
+}
+
+function MeetingCollaborationPulse({ meeting }: { meeting: { selectedEmployees: string[]; messages: Array<{ employee: string; round: string }>; state: string } }) {
+  const contributions = meeting.selectedEmployees.map((employee) => ({
+    employee,
+    rounds: Array.from(new Set(meeting.messages.filter((message) => message.employee === employee).map((message) => message.round))),
+  }));
+
+  return (
+    <section className="mt-5 rounded-xl border border-sky-300/15 bg-sky-300/[0.045] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div><p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-200">Meeting collaboration pulse</p><p className="mt-1 text-xs text-slate-500">Derived from recorded DeepDiscuss participants and rounds.</p></div>
+        <Badge className="border-white/10 bg-white/[0.06] text-[10px] text-slate-200 hover:bg-white/[0.06]">{meeting.state.replaceAll("_", " ")}</Badge>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {contributions.map((contribution) => <div key={contribution.employee} className="rounded-lg border border-white/[0.07] bg-black/10 px-3 py-2.5"><p className="text-xs font-semibold text-slate-200">{contribution.employee}</p><p className="mt-1 text-[10px] uppercase tracking-[0.1em] text-sky-200">{contribution.rounds.length ? contribution.rounds.join(" · ") : "invited · awaiting recorded round"}</p></div>)}
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const [activeView, setActiveView] = useState<WorkspaceView>(() => {
     const requestedView = new URLSearchParams(window.location.search).get("view")?.toLowerCase();
@@ -466,7 +510,7 @@ export default function Home() {
     const relatedEmployee = focusedEmployee ?? liveEmployees.find((employee) => employee.name === deskEmployee);
     const roomActivity = officeFocus === "DeepDiscuss Room" ? (latestMeeting ? `Meeting state: ${latestMeeting.state.replaceAll("_", " ")}. ${latestMeeting.messages.length} verified discussion message(s) recorded.` : "No verified DeepDiscuss meeting is active.") : officeFocus === "Test Lab" ? (runTestsMutation.data ? `Last controlled test command: ${runTestsMutation.data.command}` : "No controlled test run has occurred.") : officeFocus === "Lounge" ? (liveEmployees.some((employee) => employee.status === "WAITING") ? "One or more employees are genuinely waiting for the next verified task event." : "No employee is currently waiting in the lounge.") : undefined;
     const verifiedActivity = relatedEmployee ? dashboard?.activities.find((event) => event.employee === relatedEmployee.name)?.message : roomActivity;
-    return <div className={officeFocus ? "space-y-5" : ""}><LiveOffice employees={liveEmployees} onOpenManager={() => setOfficeFocus("Manager Cabin")} onDeskFiles={() => setOfficeFocus("Manager Desk Files")} onProviderLocker={() => setActiveView("Settings")} onInspect={setOfficeFocus} />{officeFocus ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{officeFocus === "Manager Cabin" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager Cabin</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Click the Manager character to speak with them, the physical files and photos on the desk to provide materials, or the small Provider Locker to configure AI keys locally.</p></> : officeFocus === "Manager Desk Files" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager requested files or photos</h2><p className="mt-2 text-sm leading-6 text-slate-200">Please provide any files, photos, screenshots, or reference materials needed for the current work.</p><label className="mt-4 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-sky-300/35 bg-sky-300/[0.05] px-4 py-7 text-center text-sm text-sky-100 hover:bg-sky-300/[0.1]"><input type="file" className="sr-only" onChange={(event) => uploadFile(event.target.files?.[0])} />Click here to choose a file or photo</label>{uploadedAttachment ? <p className="mt-3 text-xs text-emerald-200">Provided to the Manager: {uploadedAttachment}</p> : null}{uploadMutation.error ? <p className="mt-3 text-xs text-rose-300">Choose a local workspace first so the Manager can import this material safely.</p> : null}</> : officeFocus === "Manager" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager · Manus</h2><p className="mt-2 text-sm leading-6 text-slate-200">Work is going, sir. Do you want to change, edit, or give more information?</p><form onSubmit={(event) => { event.preventDefault(); const command = managerCommand.trim(); if (!command) return; setSubmittedTask(command); setManagerCommand(""); setActiveView("Chat"); }} className="mt-4"><Input value={managerCommand} onChange={(event) => setManagerCommand(event.target.value)} placeholder="Type your instruction and press Enter…" className="border-white/10 bg-black/20 text-slate-100" /><p className="mt-2 text-[11px] text-slate-500">Press Enter to send a change, edit request, or more information to the Manager.</p></form></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee ? `${relatedEmployee.role} · ${relatedEmployee.status}` : "Room status"}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">{verifiedActivity || "No verified activity has been recorded for this room or employee yet."}</p></>}</div></section> : null}</div>;
+    return <div className={officeFocus ? "space-y-5" : ""}><LiveOffice employees={liveEmployees} onOpenManager={() => setOfficeFocus("Manager Cabin")} onDeskFiles={() => setOfficeFocus("Manager Desk Files")} onProviderLocker={() => setActiveView("Settings")} onInspect={setOfficeFocus} />{officeFocus ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{officeFocus === "Manager Cabin" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager Cabin</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Click the Manager character to speak with them, the physical files and photos on the desk to provide materials, or the small Provider Locker to configure AI keys locally.</p></> : officeFocus === "Manager Desk Files" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager requested files or photos</h2><p className="mt-2 text-sm leading-6 text-slate-200">Please provide any files, photos, screenshots, or reference materials needed for the current work.</p><label className="mt-4 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-sky-300/35 bg-sky-300/[0.05] px-4 py-7 text-center text-sm text-sky-100 hover:bg-sky-300/[0.1]"><input type="file" className="sr-only" onChange={(event) => uploadFile(event.target.files?.[0])} />Click here to choose a file or photo</label>{uploadedAttachment ? <p className="mt-3 text-xs text-emerald-200">Provided to the Manager: {uploadedAttachment}</p> : null}{uploadMutation.error ? <p className="mt-3 text-xs text-rose-300">Choose a local workspace first so the Manager can import this material safely.</p> : null}</> : officeFocus === "Manager" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager · Manus</h2><p className="mt-2 text-sm leading-6 text-slate-200">Work is going, sir. Do you want to change, edit, or give more information?</p><form onSubmit={(event) => { event.preventDefault(); const command = managerCommand.trim(); if (!command) return; setSubmittedTask(command); setManagerCommand(""); setActiveView("Chat"); }} className="mt-4"><Input value={managerCommand} onChange={(event) => setManagerCommand(event.target.value)} placeholder="Type your instruction and press Enter…" className="border-white/10 bg-black/20 text-slate-100" /><p className="mt-2 text-[11px] text-slate-500">Press Enter to send a change, edit request, or more information to the Manager.</p></form></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee ? `${relatedEmployee.role} · ${relatedEmployee.status}` : "Room status"}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">{verifiedActivity || "No verified activity has been recorded for this room or employee yet."}</p></>}</div>{officeFocus === "DeepDiscuss Room" && latestMeeting ? <MeetingCollaborationPulse meeting={latestMeeting} /> : null}<VerifiedActivityTimeline activities={dashboard?.activities ?? []} /></section> : null}</div>;
   };
 
   const renderChat = () => (

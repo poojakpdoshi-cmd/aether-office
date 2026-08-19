@@ -1,0 +1,9 @@
+# Reference Video Analysis
+
+The supplied reference presents a multi-agent orchestration product as a spatial 2D office. Agents autonomously move between assigned desks and a shared conference area when their underlying state changes. Localized actions make work legible: an agent sits at a workstation while working, may visit a shared area for collaboration, and may perform non-work office actions such as using a coffee area.
+
+The reference makes delegation visible. A central orchestrator receives a high-level instruction, distributes subtasks to specialized agents, and invites agents to collaborate. Agents can visibly join a shared table, with speech bubbles or other contextual cues showing collaboration. The reference also pairs the spatial map with an observability surface that includes terminal output, logs, task status, triggers, memory, and relationship/context views.
+
+The strongest AetherOffice adaptation is a local-first visual state machine: real task-assigned, meeting-started, tool-started, tool-finished, approval-requested, and task-completed events should drive movement and activity. The office map should remain the primary text-free launch surface, while physical objects can open focused detail views for event history, terminal output, monitoring, approvals, and task context. No decorative movement or fabricated activity should be introduced.
+
+The reference suggests practical additions: a real-time activity ribbon sourced from the audit log, a meeting route showing invitation and attendance, a task-progress view tied to controlled tool executions, a relationship/delegation graph derived from actual DeepDiscuss rounds, and contextual employee detail cards showing current approved scope. Any new feature must preserve local-only secrets, bounded commands, owner approval, and the existing physical-hotspot navigation model.
