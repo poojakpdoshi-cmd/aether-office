@@ -1,0 +1,26 @@
+import { describe, expect, it } from "vitest";
+import { parseProposal, selectEmployeesForTask } from "./deepDiscuss";
+
+describe("DeepDiscuss selection and proposal parsing", () => {
+  it("selects only relevant staff for a frontend security task", () => {
+    const selected = selectEmployeesForTask("Build a React login screen and review authentication security.");
+    expect(selected).toEqual(expect.arrayContaining(["Manus", "Gemini", "Arcee", "Mistral"]));
+    expect(selected).not.toContain("Grok");
+  });
+
+  it("accepts only complete structured TEAM PROPOSAL data", () => {
+    const proposal = parseProposal(JSON.stringify({
+      objective: "Create project settings",
+      techStack: ["React", "Node.js"],
+      filesToCreateModify: ["client/src/pages/Settings.tsx"],
+      risks: ["Secret exposure"],
+      confidencePercent: 91,
+    }), "Fallback");
+    expect(proposal.confidencePercent).toBe(91);
+    expect(proposal.filesToCreateModify).toHaveLength(1);
+  });
+
+  it("rejects incomplete proposal JSON instead of fabricating a plan", () => {
+    expect(() => parseProposal('{"objective":"Only title"}', "Fallback")).toThrow("incomplete TEAM PROPOSAL");
+  });
+});

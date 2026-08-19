@@ -1,5 +1,14 @@
 {
   "name": "aether-office",
+  "bin": {
+    "aether": "bin/aether.mjs"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -10,7 +19,8 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
-    "db:push": "drizzle-kit generate && drizzle-kit migrate"
+    "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.693.0",

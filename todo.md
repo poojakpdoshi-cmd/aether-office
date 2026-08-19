@@ -1,0 +1,30 @@
+# Project TODO
+
+- [x] Define local-first runtime boundaries: browser UI on localhost, backend bound to loopback, selected-workspace-only filesystem access, and no automatic remote Git push.
+- [x] Design and implement a dark AetherOffice workspace shell with Office, Chat, Files, Editor, Diff, Tests, Git, Employees, and Settings navigation.
+- [x] Build the real-time employee status display using only the required labels: IDLE, THINKING, IN_MEETING, CODING, REVIEWING, TESTING, WAITING, ERROR, COMPLETED.
+- [x] Build the DeepDiscuss meeting interface and four required rounds: independent analysis, cross-critique, debate, and synthesis.
+- [x] Implement task-aware employee selection to avoid unnecessary provider calls.
+- [x] Implement the TEAM PROPOSAL card with exactly these sections: objective, tech stack, files to create/modify, risks, and confidence %.
+- [x] Implement exactly these proposal actions: Approve, Modify Plan, and Reject.
+- [x] Implement approval modes: Safe Mode, Team Mode, and Autonomous Mode, with Safe Mode as the default.
+- [x] Implement provider abstraction contracts and configurable adapters for Manus, Gemini, Mistral, DeepSeek, Arcee, Grok, SambaNova, and optional OpenRouter routing.
+- [x] Build Settings / Providers setup UI that never returns API-key values to the browser and masks connection status safely.
+- [x] Implement secure server-side provider secret handling with no secrets in frontend bundles, logs, Git, or committed environment files.
+- [x] Implement controlled workspace tools: read_file, write_file, edit_file, create_file, delete_file, list_directory, search_files, move_file, run_command, run_tests, git_diff, and git_status.
+- [x] Implement per-call audit logging with all required fields: WHO, WHAT, WHICH FILE, WHEN, and WHY.
+- [ ] Build workspace file tree, editor tabs, search/replace, before/after diff viewer, save indicator, undo/redo, and selected-change acceptance flow.
+- [ ] Implement bounded command and test execution with visible output, explicit permissions, cancellation, and retry limits.
+- [ ] Implement Git workspace panel for branch, changes, diffs, history, commit creation, guarded revert, and an absolute prohibition on automatic remote push.
+- [x] Implement chat uploads for PNG, JPG, WEBP, GIF, PDF, TXT, MD, CSV, JSON, ZIP, and source files, including type/size validation.
+- [ ] Route uploaded images only to configured vision-capable providers and preserve upload metadata without leaking files or secrets.
+- [ ] Implement employee profiles and performance history with task count, average score, and recent performance.
+- [ ] Implement reviewer evaluations using the required scoring weights: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.
+- [x] Implement activity history that reflects real provider calls, tool invocations, approvals, execution, testing, and review events only.
+- [x] Create a local CLI foundation supporting aether, aether ., and aether --help with automatic available-port selection and browser opening where supported.
+- [x] Add safe local configuration examples, .gitignore protection, README installation instructions, and cross-platform behavior notes for Windows, macOS, and Linux.
+- [x] Write Vitest coverage for core policy, approval, audit, provider configuration, and controlled-tool safeguards.
+- [x] Verify type checking, tests, build output, UI responsiveness, and secret-exposure protections before delivery.
+- [x] Replace static employee status presentation with real event-driven state transitions from meeting, tool, execution, review, and test events.
+- [x] Add a persisted DeepDiscuss round state machine with provider-backed messages, dynamic employee selection, and final synthesis.
+- [x] Enforce persisted Safe Mode, Team Mode, and Autonomous Mode policies in backend orchestration before any controlled tool execution.

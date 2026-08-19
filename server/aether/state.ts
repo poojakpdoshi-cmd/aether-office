@@ -1,0 +1,206 @@
+import { randomUUID } from "node:crypto";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import {
+  type ActivityEvent,
+  type ApprovalMode,
+  type DiscussionMessage,
+  type EmployeeId,
+  type EmployeeProfile,
+  type EmployeeStatus,
+  type Meeting,
+  type ProposalAction,
+  type TeamProposal,
+} from "../../shared/aether";
+
+const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averageScore" | "recentPerformance">> = [
+  { id: "Manus", role: "CEO · Orchestrator", provider: "manus" },
+  { id: "Gemini", role: "Lead Developer", provider: "gemini" },
+  { id: "Mistral", role: "Software Engineer", provider: "mistral" },
+  { id: "DeepSeek", role: "Senior Engineer", provider: "deepseek" },
+  { id: "Arcee", role: "Quality Reviewer", provider: "arcee" },
+  { id: "Grok", role: "Researcher", provider: "grok" },
+  { id: "SambaNova", role: "Fast Analysis Worker", provider: "sambanova" },
+];
+
+const employeeProfiles = new Map<EmployeeId, EmployeeProfile>(
+  employeeSeed.map((employee) => [
+    employee.id,
+    { ...employee, status: "IDLE", taskCount: 0, averageScore: null, recentPerformance: [] },
+  ])
+);
+
+const meetings = new Map<string, Meeting>();
+const activities: ActivityEvent[] = [];
+let approvalMode: ApprovalMode = "Safe Mode";
+
+function stateFilePath() {
+  return join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "runtime-state.json");
+}
+
+function persistState() {
+  const filePath = stateFilePath();
+  mkdirSync(join(filePath, ".."), { recursive: true, mode: 0o700 });
+  writeFileSync(filePath, JSON.stringify({ approvalMode, employees: Array.from(employeeProfiles.values()), meetings: Array.from(meetings.values()), activities }), { mode: 0o600 });
+}
+
+function hydrateState() {
+  const filePath = stateFilePath();
+  if (!existsSync(filePath)) return;
+  try {
+    const stored = JSON.parse(readFileSync(filePath, "utf8")) as { approvalMode?: ApprovalMode; employees?: EmployeeProfile[]; meetings?: Meeting[]; activities?: ActivityEvent[] };
+    if (stored.approvalMode) approvalMode = stored.approvalMode;
+    stored.employees?.forEach((employee) => employeeProfiles.set(employee.id, employee));
+    stored.meetings?.forEach((meeting) => meetings.set(meeting.id, meeting));
+    if (stored.activities) activities.push(...stored.activities.slice(-200));
+  } catch {
+    // A corrupt non-secret local runtime state is ignored instead of blocking startup.
+  }
+}
+
+export function getDashboardState() {
+  return {
+    approvalMode,
+    employees: Array.from(employeeProfiles.values()),
+    meetings: Array.from(meetings.values()).sort((a, b) => b.updatedAt - a.updatedAt),
+    activities: [...activities].sort((a, b) => b.createdAt - a.createdAt).slice(0, 50),
+  };
+}
+
+export function setApprovalMode(mode: ApprovalMode) {
+  approvalMode = mode;
+  addActivity({ kind: "system", message: `Owner set approval mode to ${mode}.` });
+  persistState();
+  return approvalMode;
+}
+
+export function setEmployeeStatus(employee: EmployeeId, status: EmployeeStatus) {
+  const profile = employeeProfiles.get(employee);
+  if (!profile) throw new Error(`Unknown employee: ${employee}`);
+  profile.status = status;
+  persistState();
+}
+
+export function resetEmployeeStatuses() {
+  employeeProfiles.forEach((employee) => {
+    employee.status = "IDLE";
+  });
+  persistState();
+}
+
+export function addActivity(event: Omit<ActivityEvent, "id" | "createdAt">) {
+  const activity = { id: randomUUID(), createdAt: Date.now(), ...event };
+  activities.push(activity);
+  persistState();
+  return activity;
+}
+
+export function createMeeting(task: string, selectedEmployees: EmployeeId[]) {
+  const now = Date.now();
+  const meeting: Meeting = {
+    id: randomUUID(),
+    task,
+    selectedEmployees,
+    messages: [],
+    proposal: null,
+    state: "PENDING_APPROVAL",
+    createdAt: now,
+    updatedAt: now,
+  };
+  meetings.set(meeting.id, meeting);
+  addActivity({ kind: "meeting", message: "Team meeting started.", employee: "Manus" });
+  persistState();
+  return meeting;
+}
+
+export function getMeeting(meetingId: string) {
+  return meetings.get(meetingId);
+}
+
+export function addDiscussionMessage(meetingId: string, message: Omit<DiscussionMessage, "id" | "createdAt">) {
+  const meeting = requireMeeting(meetingId);
+  meeting.messages.push({ id: randomUUID(), createdAt: Date.now(), ...message });
+  meeting.updatedAt = Date.now();
+  persistState();
+  return meeting;
+}
+
+export function setProposal(meetingId: string, proposal: TeamProposal) {
+  const meeting = requireMeeting(meetingId);
+  meeting.proposal = proposal;
+  meeting.state = "PENDING_APPROVAL";
+  meeting.updatedAt = Date.now();
+  addActivity({ kind: "meeting", message: "Manus produced a TEAM PROPOSAL for owner review.", employee: "Manus" });
+  persistState();
+  return meeting;
+}
+
+export function failMeeting(meetingId: string, errorMessage: string) {
+  const meeting = requireMeeting(meetingId);
+  meeting.state = "ERROR";
+  meeting.errorMessage = errorMessage;
+  meeting.updatedAt = Date.now();
+  addActivity({ kind: "system", message: "Team meeting stopped because a provider call failed.", employee: "Manus" });
+  persistState();
+  return meeting;
+}
+
+export function applyProposalAction(meetingId: string, action: ProposalAction, note?: string) {
+  const meeting = requireMeeting(meetingId);
+  if (!meeting.proposal) throw new Error("A proposal must exist before an owner action can be recorded.");
+  if (meeting.state !== "PENDING_APPROVAL") throw new Error("This proposal is no longer awaiting owner approval.");
+
+  if (action === "Approve") meeting.state = "APPROVED";
+  if (action === "Modify Plan") meeting.state = "CHANGES_REQUESTED";
+  if (action === "Reject") meeting.state = "REJECTED";
+  meeting.updatedAt = Date.now();
+
+  addActivity({
+    kind: "approval",
+    message: `Owner selected ${action}${note ? ": " + note : "."}`,
+    employee: "Manus",
+  });
+  persistState();
+  return meeting;
+}
+
+export function assertExecutionAllowed(meetingId: string | undefined, ownerConfirmed: boolean) {
+  if (approvalMode === "Autonomous Mode") return;
+  if (!meetingId) throw new Error("A TEAM PROPOSAL approval is required before controlled execution.");
+  const meeting = requireMeeting(meetingId);
+  if (meeting.state !== "APPROVED") throw new Error("The TEAM PROPOSAL must be approved before controlled execution.");
+  if (approvalMode === "Safe Mode" && !ownerConfirmed) throw new Error("Safe Mode requires explicit owner confirmation for this meaningful change.");
+}
+
+export function recordCompletedTask(employee: EmployeeId, score?: number) {
+  const profile = employeeProfiles.get(employee);
+  if (!profile) throw new Error(`Unknown employee: ${employee}`);
+  profile.taskCount += 1;
+  if (typeof score === "number") {
+    profile.recentPerformance = [...profile.recentPerformance, score].slice(-8);
+    profile.averageScore = profile.recentPerformance.reduce((sum, current) => sum + current, 0) / profile.recentPerformance.length;
+  }
+  persistState();
+}
+
+function requireMeeting(meetingId: string) {
+  const meeting = meetings.get(meetingId);
+  if (!meeting) throw new Error("Meeting not found.");
+  return meeting;
+}
+
+export function resetStateForTests() {
+  meetings.clear();
+  activities.length = 0;
+  approvalMode = "Safe Mode";
+  employeeProfiles.forEach((employee) => {
+    employee.status = "IDLE";
+    employee.taskCount = 0;
+    employee.averageScore = null;
+    employee.recentPerformance = [];
+  });
+  persistState();
+}
+
+hydrateState();
