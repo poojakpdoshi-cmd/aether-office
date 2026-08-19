@@ -86,10 +86,10 @@ export function setApprovalMode(mode: ApprovalMode) {
   return approvalMode;
 }
 
-export function setEmployeeStatus(employee: EmployeeId, status: EmployeeStatus) {
+export function setEmployeeStatus(employee: EmployeeId, status: EmployeeStatus, at = Date.now()) {
   const profile = employeeProfiles.get(employee);
   if (!profile) throw new Error(`Unknown employee: ${employee}`);
-  if (!isEmployeeActive(employee)) throw new Error(`${employee} is no longer active in this local office.`);
+  if (!isEmployeeActive(employee, at)) throw new Error(`${employee} is no longer active in this local office.`);
   profile.status = status;
   persistState();
 }
@@ -207,12 +207,20 @@ export function resetStateForTests() {
   activities.length = 0;
   approvalMode = "Safe Mode";
   employeeProfiles.forEach((employee) => {
+    const seeded = employeeSeed.find((candidate) => candidate.id === employee.id);
     employee.status = "IDLE";
     employee.taskCount = 0;
     employee.averageScore = null;
     employee.recentPerformance = [];
+    employee.temporaryUntil = seeded?.id === "Manus" ? Date.now() + 7 * 24 * 60 * 60 * 1000 : undefined;
   });
   persistState();
+}
+
+export function setTemporaryUntilForTests(employee: EmployeeId, temporaryUntil: number | undefined) {
+  const profile = employeeProfiles.get(employee);
+  if (!profile) throw new Error(`Unknown employee: ${employee}`);
+  profile.temporaryUntil = temporaryUntil;
 }
 
 hydrateState();

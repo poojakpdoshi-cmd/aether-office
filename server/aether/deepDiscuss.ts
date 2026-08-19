@@ -103,7 +103,7 @@ async function runRound(
 }
 
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {
-  const synthesisEmployee = isEmployeeActive("Manus") ? "Manus" : messages[0]?.employee;
+  const synthesisEmployee = selectSynthesisEmployee(messages);
   if (!synthesisEmployee) throw new Error("No active employee is available to synthesize the TEAM PROPOSAL.");
   setEmployeeStatus(synthesisEmployee, "THINKING");
   const source = messages.map((message) => `${message.employee}: ${message.content}`).join("\n\n").slice(0, 16000);
@@ -116,6 +116,11 @@ async function synthesizePlan(meetingId: string, task: string, messages: Array<{
   const proposal = parseProposal(content, task);
   addDiscussionMessage(meetingId, { employee: synthesisEmployee, provider, round: "synthesis", content: JSON.stringify(proposal) });
   return proposal;
+}
+
+export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }>) {
+  if (isEmployeeActive("Manus")) return "Manus";
+  return messages.find((message) => isEmployeeActive(message.employee))?.employee;
 }
 
 export function parseProposal(content: string, fallbackObjective: string): TeamProposal {

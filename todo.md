@@ -106,16 +106,21 @@
 - [x] Implement and test compositor-friendly real-status walking and work-state motion, preserving responsive mobile scale and CSS reduced-motion support.
 - [x] Add a navigable expanded workspace file tree beyond the root-level file list.
 - [x] Add multi-file editor tabs with tab selection and close behavior.
-- [ ] Create an Owner-authorized GitHub repository and push the reviewed local project through browser-based GitHub authorization without sharing a PAT in chat.
-- [ ] Set the Owner-authorized GitHub repository to public visibility after verifying no secret-risk files are included.
-- [ ] Use a one-time secure GitHub token input solely to complete the Owner-confirmed public push, then remove the credential access.
-- [ ] Make Manus a temporary employee with a seven-day lifecycle and safe expiration behavior.
-- [ ] Add configurable model routing for Cohere North Mini Code through OpenRouter and Devstral Small 2 through the Mistral provider.
-- [ ] Verify the official provider route and model identifier for Nemotron 3 Ultra before adding it as a configurable employee.
-- [ ] Expand approved-office cabin allocation so each configured additional employee has a real desk, laptop, and workstation interaction target.
-- [ ] Add owner-visible temporary-Manus expiry handling and end-to-end expiry behavior coverage at and after the seven-day limit.
-- [ ] Gate retired Devstral Small 2 behind an explicit compatibility warning and configured-provider validation before it can be selected for a meeting.
-- [ ] Resolve Nemotron 3 Ultra to one concrete supported route based on the Owner’s key provider and test that configuration path.
-- [ ] Configure Nemotron 3 Ultra for the Owner-selected NVIDIA API Catalog endpoint and model identifier.
-- [ ] Verify the North Mini Code, Devstral Small 2, and Nemotron 3 Ultra office desk, laptop, and workstation hotspots with the employees configured and present.
+- [x] Create the Owner-authorized public GitHub repository and perform the reviewed one-time initial push using secure browser login plus an Owner-approved one-time token, without sending a PAT in chat.
+- [x] Set the Owner-authorized GitHub repository to public visibility after verifying no secret-risk files are included.
+- [x] Use a one-time secure GitHub token input solely to complete the Owner-confirmed public push, then remove the credential access.
+- [x] Make Manus a temporary employee with a seven-day lifecycle and safe expiration behavior.
+- [x] Add configurable model routing for Cohere North Mini Code through OpenRouter and Devstral Small 2 through a Mistral-compatible endpoint, with explicit retired-model acknowledgement.
+- [x] Verify the official provider route and model identifier for Nemotron 3 Ultra before adding it as a configurable employee.
+- [x] Expand approved-office cabin allocation so each configured additional employee has a real desk, laptop, and workstation interaction target.
+- [x] Add owner-visible temporary-Manus expiry handling and end-to-end expiry behavior coverage at and after the seven-day limit.
+- [x] Gate retired Devstral Small 2 behind an explicit compatibility warning and configured-provider validation before it can be selected for a meeting.
+- [x] Resolve Nemotron 3 Ultra to one concrete supported route based on the Owner’s key provider and test that configuration path.
+- [x] Configure Nemotron 3 Ultra for the Owner-selected NVIDIA API Catalog endpoint and model identifier.
+- [x] Verify the North Mini Code, Devstral Small 2, and Nemotron 3 Ultra office desk, laptop, and workstation hotspots with the employees configured and present.
+- [x] Correct the GitHub handoff record to state that the completed push used an Owner-approved one-time secure token after browser/device authorization lacked Git write permission.
+- [x] Add exact Manus expiry-boundary tests at `temporaryUntil` and verify dashboard, office roster, and DeepDiscuss fallback behavior.
+- [x] Verify Devstral Small 2 uses the Mistral-compatible endpoint and provider configuration path with retired-model acknowledgement.
+- [x] Add a complete NVIDIA Nemotron Provider Locker/API configuration-flow test.
+- [x] Run integrated configured-employee map coverage for the three new employee desk, laptop, and workstation hotspots.
 - [x] Create a local Git-ignored provider secrets template that the Owner can fill without putting keys in chat or source control.

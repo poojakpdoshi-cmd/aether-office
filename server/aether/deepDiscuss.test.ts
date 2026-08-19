@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseProposal, selectEmployeesForTask } from "./deepDiscuss";
+import { parseProposal, selectEmployeesForTask, selectSynthesisEmployee } from "./deepDiscuss";
+import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
   it("selects only relevant staff for a frontend security task", () => {
@@ -22,5 +23,11 @@ describe("DeepDiscuss selection and proposal parsing", () => {
 
   it("rejects incomplete proposal JSON instead of fabricating a plan", () => {
     expect(() => parseProposal('{"objective":"Only title"}', "Fallback")).toThrow("incomplete TEAM PROPOSAL");
+  });
+
+  it("uses an active discussion teammate for synthesis after temporary Manus expires", () => {
+    resetStateForTests();
+    setTemporaryUntilForTests("Manus", Date.now() - 1);
+    expect(selectSynthesisEmployee([{ employee: "Mistral" }, { employee: "Gemini" }])).toBe("Mistral");
   });
 });

@@ -159,6 +159,10 @@ const environmentDefaults: Partial<Record<ProviderId, Omit<EffectiveProviderConf
   nemotron: { baseUrl: "https://integrate.api.nvidia.com/v1/chat/completions", model: "nvidia/nemotron-3-ultra-550b-a55b" },
 };
 
+export function getProviderDefaults(provider: ProviderId) {
+  return environmentDefaults[provider];
+}
+
 async function getEffectiveProviderConfig(provider: ProviderId): Promise<EffectiveProviderConfig | undefined> {
   if (provider === "manus") return undefined;
   const persisted = await readProviderConfig(provider);

@@ -30,10 +30,23 @@ export function createAgentMotionFrames(deltaX: number, deltaY: number, mobileMo
   ];
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onInspect }: Props) {
+export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   const { assignments } = allocateCompactCabinSlots(employees.map((employee) => employee.name));
+  const assignedEmployeeNames = new Set(assignments.map((slot) => slot.employee));
+  return {
+    assignments,
+    assignedEmployees: employees.filter((employee) => assignedEmployeeNames.has(employee.name)),
+    hotspots: assignments.flatMap((slot) => [
+      { employee: slot.employee, target: `${slot.employee} Desk` },
+      { employee: slot.employee, target: `${slot.employee} Laptop` },
+      { employee: slot.employee, target: slot.employee },
+    ]),
+  };
+}
+
+export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onInspect }: Props) {
+  const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
-  const assignedEmployees = employees.filter((employee) => slotByEmployee.has(employee.name));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
   const previousAgentRects = useRef(new Map<string, DOMRect>());
 

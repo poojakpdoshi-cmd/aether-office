@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, resetStateForTests, setApprovalMode, setProposal } from "./state";
+import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, resetStateForTests, setApprovalMode, setEmployeeStatus, setProposal, setTemporaryUntilForTests } from "./state";
 
 describe("AetherOffice owner approvals", () => {
   beforeEach(() => resetStateForTests());
@@ -35,5 +35,16 @@ describe("AetherOffice owner approvals", () => {
     const dashboard = getDashboardState(afterSevenDays);
     expect(dashboard.employees.some((employee) => employee.id === "Manus")).toBe(false);
     expect(dashboard.expiredTemporaryEmployees).toContain("Manus");
+  });
+
+  it("treats the exact temporaryUntil boundary as expired across dashboard and state updates", () => {
+    const boundary = 1_800_000_000_000;
+    setTemporaryUntilForTests("Manus", boundary);
+    expect(isEmployeeActive("Manus", boundary - 1)).toBe(true);
+    expect(isEmployeeActive("Manus", boundary)).toBe(false);
+    const dashboard = getDashboardState(boundary);
+    expect(dashboard.employees.some((employee) => employee.id === "Manus")).toBe(false);
+    expect(dashboard.expiredTemporaryEmployees).toContain("Manus");
+    expect(() => setEmployeeStatus("Manus", "CODING", boundary)).toThrow("no longer active");
   });
 });
