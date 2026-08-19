@@ -60,6 +60,21 @@ Open **Settings → Providers** in AetherOffice. Paste a provider key into the l
 
 External adapters use OpenAI-style chat-completions semantics where available. Each provider also accepts an optional model ID and endpoint override for a local installation. The built-in Manus provider coordinates synthesis using the server-side model helper.
 
+## Owner-supplied office artwork
+
+AetherOffice launches directly into the **Owner-selected compact office floor**. The application does not generate replacement office backgrounds during normal use. The active map is served through the project-managed storage path referenced by `client/src/components/LiveOffice.tsx`; no office-image binary is placed in the Git working tree.
+
+| Step | Owner action | Safe implementation outcome |
+|---|---|---|
+| 1 | Supply or select the replacement office image. | The image is stored through project-managed media storage, not in `client/public/`, `client/src/`, or the Git repository. |
+| 2 | Ask for the map to be updated. | The map component is changed to reference the returned storage URL, and invisible cabin, desk, laptop, room, and object targets are calibrated to the supplied layout. |
+| 3 | Review the local launch view. | The workspace verifies that the map remains text-free at launch and that direct interaction targets still work on desktop and mobile. |
+| 4 | Approve the update. | The change is validated, checked into a local project checkpoint, and can be restored through project version history. |
+
+> Do not commit the source office image, local upload path, provider vault, runtime state, or temporary media files. Only the managed storage reference belongs in the UI source.
+
+If a later image does not have enough clear cabins for the configured team, the compact-floor slot allocator keeps unassigned or overflow employees off the map rather than placing them into arbitrary artwork positions. The current visual reference is Owner-selected and must remain the sole background until the Owner explicitly replaces it.
+
 ## Security model
 
 > AetherOffice never grants an AI employee unrestricted access to the entire computer. The Owner must select a workspace, and the controlled-tool layer resolves every path within that workspace before it touches the filesystem.

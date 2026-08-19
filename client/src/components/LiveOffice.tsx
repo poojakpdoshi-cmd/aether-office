@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { allocateCompactCabinSlots, type CompactCabinSlot } from "./cabinSlots";
+import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 
 type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
 type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFiles: () => void; onProviderLocker: () => void; onInspect: (target: string) => void };
@@ -26,7 +27,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
   const assignedEmployees = employees.filter((employee) => slotByEmployee.has(employee.name));
   return <section className="text-free-office" aria-label="Interactive animated AI office map">
     <div className="real-office-stage illustrated-office-stage" aria-label="Large interactive illustrated AI office map">
-      <img className="real-office-backdrop" src="/manus-storage/owner-selected-office-floor_2f95057d.webp" alt="Owner-selected compact interactive office floor" />
+      <img className="real-office-backdrop" src={ACTIVE_OFFICE_BACKGROUND} alt="Owner-selected compact interactive office floor" />
       <div className="illustrated-readability" />
       <div className="deep-discuss-room-frame" aria-hidden="true"><i /><i /></div>
       <button onClick={onOpenManager} className="office-hotspot office-manager" aria-label="Open Manager Cabin" />

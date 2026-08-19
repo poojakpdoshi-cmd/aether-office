@@ -69,8 +69,8 @@
 - [x] Remove the sidebar and dashboard-style office navigation from the local office experience.
 - [x] Make a physical files/photo area on the Manager’s desk the direct upload trigger for owner-provided documents and images.
 - [x] Show the Manager’s upload request only after the Owner clicks the physical desk files/photos, without adding visible office buttons.
-- [ ] Stop generating office artwork and replace the current office scene only when the Owner supplies their chosen office image.
-- [ ] Document the Owner-supplied office-image replacement workflow without placing the image in Git or exposing local upload paths.
+- [x] Stop generating office artwork and replace the current office scene only when the Owner supplies their chosen office image.
+- [x] Document the Owner-supplied office-image replacement workflow without placing the image in Git or exposing local upload paths.
 - [x] Verify the sidebar-free Manager desk upload flow without adding unrequested controls.
 - [x] Replace the current temporary office map with the Owner-supplied merged artwork based on the advanced cabin-floor layout.
 - [x] Keep a controlled roster of configured AI employees instead of treating every illustrated person as an active employee.

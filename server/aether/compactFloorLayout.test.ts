@@ -5,10 +5,14 @@ import { describe, expect, it } from "vitest";
 const officeComponent = readFileSync(fileURLToPath(new URL("../../client/src/components/LiveOffice.tsx", import.meta.url)), "utf8");
 const compactFloorStyles = readFileSync(fileURLToPath(new URL("../../client/src/pages/owner-floor.css", import.meta.url)), "utf8");
 const homePage = readFileSync(fileURLToPath(new URL("../../client/src/pages/Home.tsx", import.meta.url)), "utf8");
+const officeArtworkPolicy = readFileSync(fileURLToPath(new URL("../../client/src/components/officeArtwork.ts", import.meta.url)), "utf8");
 
 describe("Owner-selected compact office floor", () => {
   it("uses the selected asset and provides direct room, desk, object, and corridor targets", () => {
-    expect(officeComponent).toContain('/manus-storage/owner-selected-office-floor_2f95057d.webp');
+    expect(officeComponent).toContain('src={ACTIVE_OFFICE_BACKGROUND}');
+    expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-supplied-only"');
+    expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_GENERATION_ENABLED = false');
+    expect(officeArtworkPolicy).toContain('owner-selected-office-floor_2f95057d.webp');
     expect(officeComponent).toContain('aria-label="Open Manager Cabin"');
     expect(officeComponent).toContain('aria-label="Open DeepDiscuss Room"');
     expect(officeComponent).toContain('aria-label="Provide files or photos to the Manager"');
