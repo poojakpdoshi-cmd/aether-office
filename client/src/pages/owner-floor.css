@@ -1,0 +1,25 @@
+.real-office-stage {
+  width: min(100%, 680px);
+  height: min(142vw, 1020px);
+  min-height: 760px;
+  margin-inline: auto;
+  background: #d2d8db;
+}
+
+.real-office-backdrop {
+  object-fit: cover;
+  filter: saturate(.78) brightness(.9);
+}
+
+.deep-discuss-room-frame { left: 35%; top: 42%; width: 30%; height: 18%; }
+.office-manager { left: 43%; top: 7%; }
+.office-deep-discuss { left: 41%; top: 43%; }
+.office-test { right: 42%; top: 89%; }
+.map-lounge { left: 45%; bottom: 16%; }
+.manager-file-pile { left: 56%; top: 13%; }
+.manager-provider-locker { left: 61%; top: 10%; }
+
+@media (max-width: 760px) {
+  .real-office-stage { height: 760px; min-height: 760px; }
+  .deep-discuss-room-frame { left: 35%; top: 42%; width: 30%; height: 18%; }
+}

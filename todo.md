@@ -60,3 +60,38 @@
 - [x] Reframe the office view so the full workspace is visible at launch, with clickable Manager Cabin, DeepDiscuss Room, employee desks, lounge, test area, and work zones.
 - [x] Open a verified status and activity detail panel when the Owner taps an employee, room, or workspace zone.
 - [x] Verify the complete manager-first local interaction flow on desktop and mobile without introducing unrequested features.
+- [ ] Remove visible office-flow buttons so Manager Cabin, Manager, DeepDiscuss Room, desks, laptops, and employee characters are the direct interaction targets.
+- [ ] Show manager choices only after the Owner directly clicks the Manager, without displaying Change, Edit, or More Information as standing office controls.
+- [ ] Make each employee laptop/desk a direct clickable work detail source, with no separate office navigation buttons.
+- [ ] Prepare the local Git repository for a safe GitHub handoff without adding remotes, tokens, API keys, encrypted vault files, runtime state, or local configuration to Git.
+- [ ] Document where the Owner enters provider secrets locally and how GitHub authorization will occur without sharing a PAT in chat.
+- [ ] Verify the button-free interaction flow and confirm the Git repository contains no secrets before handoff.
+- [ ] Remove the sidebar and dashboard-style office navigation from the local office experience.
+- [ ] Make a physical files/photo area on the Manager’s desk the direct upload trigger for owner-provided documents and images.
+- [ ] Show the Manager’s upload request only after the Owner clicks the physical desk files/photos, without adding visible office buttons.
+- [ ] Stop generating office artwork and replace the current office scene only when the Owner supplies their chosen office image.
+- [ ] Document the Owner-supplied office-image replacement workflow without placing the image in Git or exposing local upload paths.
+- [ ] Verify the sidebar-free Manager desk upload flow without adding unrequested controls.
+- [ ] Replace the current temporary office map with the Owner-supplied merged artwork based on the advanced cabin-floor layout.
+- [ ] Keep a controlled roster of configured AI employees instead of treating every illustrated person as an active employee.
+- [ ] Map separate Manager Cabin, enclosed Discussion Room, corridors, and individual employee cabins/workstations into the interactive office layout.
+- [ ] Animate configured employees gathering in the Discussion Room, then visibly walking through corridors into assigned cabins only when DeepDiscuss is actually complete.
+- [ ] Animate cabin work states—coding/building, reviewing, testing, waiting, error, and completed—only from real orchestration and controlled-tool events.
+- [ ] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
+- [ ] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
+- [ ] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
+- [ ] Generate multiple selectable top-down/isometric office-map concepts that merge the supplied compact cabin layout with illustrated people working at desks.
+- [ ] Include a distinct Manager Cabin, enclosed Discussion Room, corridors, individual AI work cabins, laptop/desk areas, and enough clear floor space for status-driven movement.
+- [ ] Keep the illustrated employee count controlled and reserve visual characters for configured AI employees rather than every person in the concept art.
+- [ ] Present the generated office-map concepts to the Owner for selection before replacing the current localhost office map.
+- [ ] Add a compact local Add Employee control at the top or bottom of the sidebar-free office experience.
+- [ ] Accept a provider key only through the local secure setup form and test supported-provider recognition on the server without returning or logging the key.
+- [ ] Add an employee only after a supported provider key is verified; never infer an unknown provider only from an ambiguous key pattern.
+- [ ] Persist the encrypted provider configuration locally, assign the new employee a free cabin, and expose only masked connection state in the UI.
+- [ ] Show a clear safe fallback that asks the Owner to choose a provider when automatic validation cannot identify the key.
+- [ ] Verify automatic onboarding with mocked provider validation paths and confirm keys are absent from browser responses, logs, Git, and audit events.
+- [ ] Replace the temporary office artwork with the Owner-selected compact cabin-floor image.
+- [ ] Align Manager Cabin, Provider Locker, physical files/photos, Discussion Room, corridors, work cabins, desks, and test area hotspots to the selected image.
+- [ ] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
+- [ ] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
+- [x] Remove the extra employee-addition system and all visible employee-add controls from the local office interface.

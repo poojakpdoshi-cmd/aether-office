@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import "./owner-floor.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -115,6 +116,14 @@ const employees: Employee[] = [
     accent: "from-lime-300 to-emerald-500",
   },
   {
+    name: "SambaNova",
+    shortName: "SN",
+    role: "Rapid Analysis Worker",
+    focus: "Fast implementation observations and risk scans",
+    status: "IDLE",
+    accent: "from-indigo-300 to-violet-500",
+  },
+  {
     name: "Grok",
     shortName: "Gr",
     role: "Researcher",
@@ -167,6 +176,7 @@ export default function Home() {
   const [ownerConfirmed, setOwnerConfirmed] = useState(false);
   const [focusedCamera, setFocusedCamera] = useState("Office Floor");
   const [officeFocus, setOfficeFocus] = useState<string | null>("Manager Cabin");
+  const [managerCommand, setManagerCommand] = useState("");
   const providerQuery = trpc.aether.providers.useQuery();
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
@@ -184,7 +194,8 @@ export default function Home() {
   const configuredCount = providerStatuses.filter((provider) => provider.configured).length;
   const dashboard = dashboardQuery.data;
   const latestMeeting = dashboard?.meetings[0];
-  const liveEmployees = employees.map((employee) => ({
+  const configuredEmployeeNames = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id === "sambanova" ? "SambaNova" : provider.label));
+  const liveEmployees = employees.filter((employee) => employee.name === "Manus" || configuredEmployeeNames.has(employee.name)).map((employee) => ({
     ...employee,
     status: (dashboard?.employees.find((profile) => profile.id === employee.name)?.status ?? employee.status) as EmployeeStatus,
   }));
@@ -327,7 +338,7 @@ export default function Home() {
     const relatedEmployee = focusedEmployee ?? liveEmployees.find((employee) => employee.name === deskEmployee);
     const roomActivity = officeFocus === "DeepDiscuss Room" ? (latestMeeting ? `Meeting state: ${latestMeeting.state.replaceAll("_", " ")}. ${latestMeeting.messages.length} verified discussion message(s) recorded.` : "No verified DeepDiscuss meeting is active.") : officeFocus === "Test Lab" ? (runTestsMutation.data ? `Last controlled test command: ${runTestsMutation.data.command}` : "No controlled test run has occurred.") : officeFocus === "Lounge" ? (liveEmployees.some((employee) => employee.status === "WAITING") ? "One or more employees are genuinely waiting for the next verified task event." : "No employee is currently waiting in the lounge.") : undefined;
     const verifiedActivity = relatedEmployee ? dashboard?.activities.find((event) => event.employee === relatedEmployee.name)?.message : roomActivity;
-    return <div className="space-y-5"><LiveOffice employees={liveEmployees} activity={dashboard?.activities[0]?.message} onOpenManager={() => setOfficeFocus("Manager Cabin")} onInspect={setOfficeFocus} />{officeFocus ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{officeFocus === "Manager Cabin" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager Cabin</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Tap the Manager to give an instruction, change the task, edit its detail, or add more information.</p><Button onClick={() => setOfficeFocus("Manager")} className="mt-4 bg-sky-300 text-slate-950 hover:bg-sky-200">Talk to Manager</Button></> : officeFocus === "Manager" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager · Manus</h2><p className="mt-2 text-sm leading-6 text-slate-200">Work is going, sir. Do you want to change, edit, or give more information?</p><div className="mt-4 flex flex-wrap gap-2"><Button onClick={() => setActiveView("Chat")} className="bg-sky-300 text-slate-950 hover:bg-sky-200">Change</Button><Button variant="outline" onClick={() => setActiveView("Editor")} className="border-white/10 bg-white/[0.04] text-slate-100">Edit</Button><Button variant="outline" onClick={() => setActiveView("Chat")} className="border-white/10 bg-white/[0.04] text-slate-100">More Information</Button></div></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee ? `${relatedEmployee.role} · ${relatedEmployee.status}` : "Room status"}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">{verifiedActivity || "No verified activity has been recorded for this room or employee yet."}</p></>}</div><Button variant="outline" size="sm" onClick={() => setOfficeFocus(null)} className="border-white/10 bg-white/[0.04] text-slate-100">Close</Button></div></section> : null}</div>;
+    return <div className="space-y-5"><LiveOffice employees={liveEmployees} activity={dashboard?.activities[0]?.message} onOpenManager={() => setOfficeFocus("Manager Cabin")} onDeskFiles={() => setOfficeFocus("Manager Desk Files")} onProviderLocker={() => setActiveView("Settings")} onInspect={setOfficeFocus} />{officeFocus ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{officeFocus === "Manager Cabin" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager Cabin</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Click the Manager character to speak with them, the physical files and photos on the desk to provide materials, or the small Provider Locker to configure AI keys locally.</p></> : officeFocus === "Manager Desk Files" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager requested files or photos</h2><p className="mt-2 text-sm leading-6 text-slate-200">Please provide any files, photos, screenshots, or reference materials needed for the current work.</p><label className="mt-4 flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-sky-300/35 bg-sky-300/[0.05] px-4 py-7 text-center text-sm text-sky-100 hover:bg-sky-300/[0.1]"><input type="file" className="sr-only" onChange={(event) => uploadFile(event.target.files?.[0])} />Click here to choose a file or photo</label>{uploadedAttachment ? <p className="mt-3 text-xs text-emerald-200">Provided to the Manager: {uploadedAttachment}</p> : null}{uploadMutation.error ? <p className="mt-3 text-xs text-rose-300">Choose a local workspace first so the Manager can import this material safely.</p> : null}</> : officeFocus === "Manager" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager · Manus</h2><p className="mt-2 text-sm leading-6 text-slate-200">Work is going, sir. Do you want to change, edit, or give more information?</p><form onSubmit={(event) => { event.preventDefault(); const command = managerCommand.trim(); if (!command) return; setSubmittedTask(command); setManagerCommand(""); setActiveView("Chat"); }} className="mt-4"><Input value={managerCommand} onChange={(event) => setManagerCommand(event.target.value)} placeholder="Type your instruction and press Enter…" className="border-white/10 bg-black/20 text-slate-100" /><p className="mt-2 text-[11px] text-slate-500">Press Enter to send a change, edit request, or more information to the Manager.</p></form></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee ? `${relatedEmployee.role} · ${relatedEmployee.status}` : "Room status"}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">{verifiedActivity || "No verified activity has been recorded for this room or employee yet."}</p></>}</div></section> : null}</div>;
   };
 
   const renderChat = () => (
@@ -498,7 +509,8 @@ export default function Home() {
 
   return (
     <div className="aether-shell min-h-screen bg-[#070b16] text-slate-100">
-      <aside className={cn("aether-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/[0.08] bg-[#090f1e]/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200 md:flex", sidebarOpen ? "w-[248px]" : "w-[76px]")}>
+      {/* The office map is the primary navigation; no sidebar is rendered. */}
+      {false ? <aside className={cn("aether-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/[0.08] bg-[#090f1e]/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200 md:flex", sidebarOpen ? "w-[248px]" : "w-[76px]")}>
         <div className="flex h-11 items-center gap-3 px-1.5">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-300 via-blue-400 to-violet-500 text-slate-950 shadow-lg shadow-blue-500/20"><Sparkles className="h-4 w-4" /></div>
           {sidebarOpen ? <div className="min-w-0"><p className="text-sm font-semibold tracking-[-0.02em] text-white">AetherOffice</p><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-sky-200/70">AI Software Company</p></div> : null}
@@ -520,15 +532,11 @@ export default function Home() {
           <div className="flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-300" />{sidebarOpen ? <span className="text-xs font-medium text-slate-200">Local engine</span> : null}</div>
           {sidebarOpen ? <p className="mt-1.5 text-[11px] leading-4 text-slate-500">Not connected · 127.0.0.1 only</p> : null}
         </div>
-      </aside>
+      </aside> : null}
 
-      <main className={cn("min-h-screen transition-[padding] duration-200", sidebarOpen ? "md:pl-[248px]" : "md:pl-[76px]")}>
+      <main className="min-h-screen">
         <header className="sticky top-0 z-20 flex min-h-[72px] items-center justify-between gap-4 border-b border-white/[0.07] bg-[#070b16]/85 px-5 py-3 backdrop-blur-xl sm:px-7">
           <div><p className="text-sm font-semibold text-white">{activeView}</p><p className="mt-0.5 text-xs text-slate-500">{activeView === "Office" ? "Company overview" : "Local workspace"}</p></div>
-          <div className="flex items-center gap-2">
-            <Badge className="hidden border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.04] sm:inline-flex"><span className="mr-1.5 h-1.5 w-1.5 rounded-full bg-amber-300" />No workspace</Badge>
-            <Button size="sm" onClick={() => setActiveView("Settings")} className="bg-white text-slate-950 hover:bg-slate-200"><Settings2 className="mr-1.5 h-4 w-4" />Configure</Button>
-          </div>
         </header>
         <div className="mx-auto max-w-[1680px] p-5 sm:p-7">{renderView()}</div>
       </main>

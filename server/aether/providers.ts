@@ -152,6 +152,37 @@ export async function configureProvider(input: { provider: Exclude<ProviderId, "
   return status;
 }
 
+/**
+ * Identify only API-key prefixes that are unambiguous. Ambiguous `sk-` keys are
+ * deliberately not guessed, because sending a secret to multiple providers would
+ * be unsafe and would violate the Owner's local-secret expectation.
+ */
+export function recognizeProviderKey(apiKey: string): Exclude<ProviderId, "manus"> | undefined {
+  const key = apiKey.trim();
+  if (/^AIza[\w-]{20,}$/.test(key)) return "gemini";
+  if (/^sk-or-v1-[\w-]{16,}$/.test(key)) return "openrouter";
+  if (/^xai-[\w-]{16,}$/i.test(key)) return "grok";
+  return undefined;
+}
+
+export async function recognizeAndConfigureProvider(apiKey: string) {
+  const provider = recognizeProviderKey(apiKey);
+  if (!provider) return { recognized: false as const, status: undefined };
+
+  // A positive response proves the supplied key works for its unambiguous provider.
+  // The key never leaves this server function and is never included in its return value.
+  const defaults = environmentDefaults[provider];
+  if (!defaults?.baseUrl || !defaults.model) return { recognized: false as const, status: undefined };
+  const response = await fetch(defaults.baseUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey.trim()}` },
+    body: JSON.stringify({ model: defaults.model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: 8 }),
+  });
+  if (!response.ok) return { recognized: false as const, status: undefined };
+  const status = await configureProvider({ provider, apiKey, ...defaults });
+  return { recognized: true as const, provider, status };
+}
+
 export async function removeConfiguredProvider(provider: Exclude<ProviderId, "manus">) {
   await removeProviderConfig(provider);
   const status = (await listProviderStatuses()).find((item) => item.id === provider);

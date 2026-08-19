@@ -6,7 +6,7 @@ import { z } from "zod";
 import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether";
 import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
 import { evaluateImplementation } from "./aether/evaluation";
-import { configureProvider, listProviderStatuses, removeConfiguredProvider } from "./aether/providers";
+import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
 import { applyProposalAction, assertExecutionAllowed, getDashboardState, setApprovalMode } from "./aether/state";
 import { createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, getGitDiff, getGitHistory, getGitStatus, getWorkspaceSummary, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, writeWorkspaceFile } from "./aether/workspace";
 
@@ -30,6 +30,9 @@ export const appRouter = router({
     configureProvider: publicProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional() }))
       .mutation(({ input }) => configureProvider(input)),
+    recognizeEmployee: publicProcedure
+      .input(z.object({ apiKey: z.string().trim().min(8).max(1000) }))
+      .mutation(({ input }) => recognizeAndConfigureProvider(input.apiKey)),
     removeProvider: publicProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]) }))
       .mutation(({ input }) => removeConfiguredProvider(input.provider)),

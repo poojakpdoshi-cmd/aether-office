@@ -4,7 +4,6 @@ import {
   addDiscussionMessage,
   createMeeting,
   failMeeting,
-  recordCompletedTask,
   resetEmployeeStatuses,
   setEmployeeStatus,
   setProposal,
@@ -57,8 +56,8 @@ export async function runDeepDiscuss(task: string) {
     const proposal = await synthesizePlan(meeting.id, task, meeting.messages);
     setProposal(meeting.id, proposal);
     for (const employee of selectedEmployees) {
-      setEmployeeStatus(employee, "COMPLETED");
-      recordCompletedTask(employee);
+      setEmployeeStatus(employee, "THINKING");
+      addActivity({ kind: "system", message: `${employee} left the Discussion Room and moved to their assigned cabin to prepare the approved work.`, employee });
     }
     return meeting;
   } catch (error) {
