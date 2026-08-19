@@ -80,7 +80,6 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
     <div className="real-office-stage illustrated-office-stage" aria-label="Large interactive illustrated AI office map">
       <div className="office-ambient-backdrop" style={{ backgroundImage: `url(${ACTIVE_OFFICE_BACKGROUND})` }} aria-hidden="true" />
       <img className="real-office-backdrop" src={ACTIVE_OFFICE_BACKGROUND} alt="Owner-selected compact interactive office floor" />
-      <div className="manager-cabin-recovery" aria-hidden="true" />
       <div className="office-map-overlay">
         <div className="illustrated-readability" />
         <div className="deep-discuss-room-frame" aria-hidden="true"><i /><i /></div>

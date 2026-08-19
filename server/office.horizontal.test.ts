@@ -15,8 +15,9 @@ describe("horizontal text-free office map", () => {
 
   it("keeps the Discussion Room directly clickable without a visible frame", () => {
     const globalStyles = readFileSync(new URL("../client/src/index.css", import.meta.url), "utf8");
-    expect(officeSource).toContain('<div className="manager-cabin-recovery" aria-hidden="true" />');
-    expect(floorStyles).toContain("background-size: 500% auto");
+    expect(officeSource).not.toContain("manager-cabin-recovery");
+    expect(officeSource).not.toContain("manager-leg-repair");
+    expect(floorStyles).not.toContain("manager-leg-repair");
     expect(globalStyles).toContain(".deep-discuss-room-frame{display:none}");
     expect(officeSource).toContain('className="office-hotspot office-deep-discuss"');
   });
