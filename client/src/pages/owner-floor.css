@@ -11,15 +11,17 @@
   filter: saturate(.78) brightness(.9);
 }
 
-.deep-discuss-room-frame { left: 35%; top: 42%; width: 30%; height: 18%; }
+.deep-discuss-room-frame { left: 35%; top: 40%; width: 30%; height: 34%; }
 .office-manager { left: 43%; top: 7%; }
 .office-deep-discuss { left: 41%; top: 43%; }
-.office-test { right: 42%; top: 89%; }
-.map-lounge { left: 45%; bottom: 16%; }
+.office-test { right: auto; left: 45%; top: 88%; }
+.map-lounge { left: 7%; bottom: 11%; }
 .manager-file-pile { left: 56%; top: 13%; }
 .manager-provider-locker { left: 61%; top: 10%; }
+.office-corridor-zone { position: absolute; z-index: 5; left: 39%; top: 25%; width: 22%; height: 61%; border: 0; background: transparent; cursor: pointer; }
+.office-corridor-zone:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
 
 @media (max-width: 760px) {
   .real-office-stage { height: 760px; min-height: 760px; }
-  .deep-discuss-room-frame { left: 35%; top: 42%; width: 30%; height: 18%; }
+  .deep-discuss-room-frame { left: 35%; top: 40%; width: 30%; height: 34%; }
 }

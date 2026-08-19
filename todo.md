@@ -90,8 +90,8 @@
 - [ ] Persist the encrypted provider configuration locally, assign the new employee a free cabin, and expose only masked connection state in the UI.
 - [ ] Show a clear safe fallback that asks the Owner to choose a provider when automatic validation cannot identify the key.
 - [ ] Verify automatic onboarding with mocked provider validation paths and confirm keys are absent from browser responses, logs, Git, and audit events.
-- [ ] Replace the temporary office artwork with the Owner-selected compact cabin-floor image.
-- [ ] Align Manager Cabin, Provider Locker, physical files/photos, Discussion Room, corridors, work cabins, desks, and test area hotspots to the selected image.
+- [x] Replace the temporary office artwork with the Owner-selected compact cabin-floor image.
+- [x] Align Manager Cabin, Provider Locker, physical files/photos, Discussion Room, corridors, work cabins, desks, and test area hotspots to the selected image.
 - [ ] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
-- [ ] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
+- [x] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
 - [x] Remove the extra employee-addition system and all visible employee-add controls from the local office interface.
