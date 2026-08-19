@@ -126,6 +126,11 @@ export async function isEmployeeAvailable(employee: EmployeeId) {
   return adapters[employeeProvider[employee]].isConfigured();
 }
 
+export async function getConfiguredVisionProvider() {
+  if (!(await manusAdapter.isConfigured())) throw new Error("No configured vision-capable provider is available for local image inspection.");
+  return { provider: "Manus" as const, model: "gemini-3-flash-preview" as const };
+}
+
 type EffectiveProviderConfig = { apiKey: string; model?: string; baseUrl?: string };
 
 const environmentDefaults: Partial<Record<ProviderId, Omit<EffectiveProviderConfig, "apiKey">>> = {

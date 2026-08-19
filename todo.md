@@ -17,9 +17,9 @@
 - [ ] Implement bounded command and test execution with visible output, explicit permissions, cancellation, and retry limits.
 - [ ] Implement Git workspace panel for branch, changes, diffs, history, commit creation, guarded revert, and an absolute prohibition on automatic remote push.
 - [x] Implement chat uploads for PNG, JPG, WEBP, GIF, PDF, TXT, MD, CSV, JSON, ZIP, and source files, including type/size validation.
-- [ ] Route uploaded images only to configured vision-capable providers and preserve upload metadata without leaking files or secrets.
-- [ ] Implement employee profiles and performance history with task count, average score, and recent performance.
-- [ ] Implement reviewer evaluations using the required scoring weights: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.
+- [x] Route uploaded images only to configured vision-capable providers and preserve upload metadata without leaking files or secrets.
+- [x] Implement employee profiles and performance history with task count, average score, and recent performance.
+- [x] Implement reviewer evaluations using the required scoring weights: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.
 - [x] Implement activity history that reflects real provider calls, tool invocations, approvals, execution, testing, and review events only.
 - [x] Create a local CLI foundation supporting aether, aether ., and aether --help with automatic available-port selection and browser opening where supported.
 - [x] Add safe local configuration examples, .gitignore protection, README installation instructions, and cross-platform behavior notes for Windows, macOS, and Linux.

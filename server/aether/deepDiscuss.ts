@@ -8,7 +8,7 @@ import {
   setEmployeeStatus,
   setProposal,
 } from "./state";
-import { getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
+import { getConfiguredVisionProvider, getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
 import { invokeLLM } from "../_core/llm";
 
 const employeeInstructions: Record<EmployeeId, string> = {
@@ -128,8 +128,9 @@ export function parseProposal(content: string, fallbackObjective: string): TeamP
 }
 
 export async function inspectVisualReference(dataUrl: string, prompt: string) {
+  const vision = await getConfiguredVisionProvider();
   const response = await invokeLLM({
-    model: "gemini-3-flash-preview",
+    model: vision.model,
     messages: [
       { role: "system", content: "You are Manus acting as a visual requirements analyst. Inspect the provided image, describe observable UI/layout details, and identify implementation considerations. Do not invent content that is not visible." },
       { role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: dataUrl, detail: "auto" } }] },
