@@ -1,17 +1,19 @@
-# Local Provider Configuration Template
+# Development-Only Local Provider Environment Reference
 
-Use the **Settings → Providers** screen to enter a key once into the local encrypted provider vault. The application only reports whether a provider is configured; it does not return the key value to the browser.
+The published `AetherOffice` npm CLI uses its first-run terminal setup wizard and encrypted local provider vault. This document is only for contributors who intentionally run the application from a source checkout and need server-side environment configuration during development.
 
-For non-interactive local deployments, set these values in the server runtime only. Do not create or commit an environment file in the repository.
+> Do not commit a local `.env.local` file. Do not place provider keys in browser code, issue comments, test fixtures, or chat messages.
 
-| Provider | Server-side variable |
-|---|---|
-| Gemini | `GEMINI_API_KEY` |
-| Mistral | `MISTRAL_API_KEY` |
-| DeepSeek | `DEEPSEEK_API_KEY` |
-| Arcee | `ARCEE_API_KEY` |
-| Grok | `GROK_API_KEY` |
-| SambaNova | `SAMBANOVA_API_KEY` |
-| OpenRouter | `OPENROUTER_API_KEY` |
+| Environment variable | Actual provider route | Notes |
+|---|---|---|
+| `GEMINI_API_KEY` | Gemini | Direct route with the built-in Gemini default endpoint/model. |
+| `MISTRAL_API_KEY` | Mistral | Direct Mistral route; Devstral may inherit this key only when encrypted Devstral-specific configuration is absent and its acknowledgement requirement is satisfied. |
+| `DEEPSEEK_API_KEY` | DeepSeek | Direct route. |
+| `ARCEE_API_KEY` | Arcee | Requires an endpoint and model override because no default endpoint/model is set. |
+| `GROK_API_KEY` | Grok | Direct xAI route. |
+| `SAMBANOVA_API_KEY` | SambaNova | Direct route. |
+| `OPENROUTER_API_KEY` | OpenRouter / North Mini Code | North Mini Code uses OpenRouter’s fixed route and can inherit this key. |
+| `DEVSTRAL_API_KEY` | Devstral Small 2 | Uses the Mistral-compatible endpoint; the retired-model acknowledgement still applies. |
+| `NVIDIA_API_KEY` | Nemotron 3 Ultra | Uses the NVIDIA API Catalog endpoint and fixed model route. |
 
-Provider model IDs and endpoints can be configured through the UI when a provider requires an override. Never place an API key in source code, a README, client configuration, an issue, or a Git commit.
+The platform-bound Manus adapter is not configured through a normal end-user environment variable. It uses platform-provided service credentials in the managed development environment and is not a substitute for an end user’s external provider setup.

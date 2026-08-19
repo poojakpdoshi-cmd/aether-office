@@ -1,124 +1,141 @@
-# AetherOffice — Your AI Software Company
+# AetherOffice
 
-AetherOffice is a **local-first AI development workspace**. Its browser interface is opened by a local Node.js server, while the CLI chooses the project directory that the AI company may access. The user remains the Owner: the team discusses a task, produces a plan, and must obtain approval before meaningful workspace changes unless the Owner has explicitly chosen Autonomous Mode.
+**AetherOffice** is a local-first AI software company workspace. It starts a browser interface on your own computer, scopes all controlled tools to the workspace you choose, and keeps provider credentials in a local encrypted vault. The default interaction is the text-free animated office map; DeepDiscuss, proposals, controlled tools, audit history, tests, and guarded Git actions remain available through direct in-office interactions.
 
-## What is included
+> AetherOffice does **not** automatically push to a Git remote. It does **not** place API keys in the browser, source code, Git history, or application logs.
 
-| Capability | Current behavior |
-|---|---|
-| DeepDiscuss | Runs four real orchestration rounds: analysis, cross-critique, debate, and Manus synthesis. The app does not invent messages when no provider call occurs. |
-| Provider settings | Provider keys are accepted by the local backend and encrypted with AES-256-GCM in the user’s local configuration folder. Keys are never returned to the browser, committed to Git, or included in application logs. |
-| Owner approvals | A structured **TEAM PROPOSAL** has the required `objective`, `tech stack`, `files to create/modify`, `risks`, and `confidence %` sections, with **Approve**, **Modify Plan**, and **Reject** actions. |
-| Workspace tools | The local server scopes reads, writes, edits, moves, deletes, commands, tests, and Git inspection to the selected project folder. Traversal outside that folder is blocked. |
-| Audit trail | Every controlled tool action writes `WHO`, `WHAT`, `WHICH FILE`, `WHEN`, and `WHY` to a local protected NDJSON audit file. |
-| Git | Status, diffs, history, commits, and guarded reverts are available. The code has no remote-push implementation, and destructive operations require explicit confirmation. |
+## Install
 
-## Install and start
-
-For development, clone the repository and run:
+The planned public distribution target is `@aetheroffice/cli`. The Owner must first create or obtain the `@aetheroffice` npm organization and publish the package; until then, install it from a packed release artifact during verification.
 
 ```bash
+npm install --global @aetheroffice/cli
+```
+
+The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. npm installs the global `AetherOffice` executable; no Git clone, source editing, or project-local dependency installation is required for end users.
+
+## Run
+
+Run AetherOffice inside the directory you want it to access:
+
+```bash
+cd /path/to/your/project
+AetherOffice
+```
+
+You may also provide a workspace path directly:
+
+```bash
+AetherOffice /absolute/path/to/your/project
+```
+
+The CLI starts the local backend and local web interface on `127.0.0.1`, chooses an available local port when the preferred port is occupied, opens the default browser where possible, and prints the URL when it cannot open a browser. Press `Ctrl+C` in the terminal to stop AetherOffice cleanly.
+
+## First run
+
+When no usable external provider is configured, `AetherOffice` begins an interactive terminal setup wizard before it starts the workspace. The wizard asks you to choose only the provider or providers you intend to use; it does **not** require every provider key.
+
+| Provider route | Credential requested by setup | Important behavior |
+|---|---|---|
+| Gemini | `GEMINI_API_KEY` | Direct provider route. |
+| Mistral | `MISTRAL_API_KEY` | Direct provider route. |
+| DeepSeek | `DEEPSEEK_API_KEY` | Direct provider route. |
+| Arcee | `ARCEE_API_KEY` | Also requests the actual chat-completions endpoint and model identifier because no default is configured. |
+| Grok | `GROK_API_KEY` | Direct xAI route. |
+| SambaNova | `SAMBANOVA_API_KEY` | Direct provider route. |
+| OpenRouter / North Mini Code | `OPENROUTER_API_KEY` | One OpenRouter key supports its gateway route and the configured North Mini Code route. |
+| Devstral Small 2 | `DEVSTRAL_API_KEY` | Requires an explicit acknowledgement because this retired Mistral-compatible model may no longer be served. |
+| Nemotron 3 Ultra | `NVIDIA_API_KEY` | Uses the fixed NVIDIA API Catalog endpoint and model route. |
+
+Enter credentials only in the interactive wizard or through the physical **Provider Locker** inside the locally running Manager Cabin. Never paste an API key into a GitHub issue, source file, commit, browser console, or chat message.
+
+The wizard may offer an optional connection check. It is always opt-in because it contacts the selected provider and may use quota. A failed check never prints your key; it offers a safe reconfiguration path instead.
+
+## CLI reference
+
+| Command | Purpose |
+|---|---|
+| `AetherOffice` | Configure on first run, then open the current directory as the controlled workspace. |
+| `AetherOffice <workspace>` | Open a specific existing directory as the controlled workspace. |
+| `AetherOffice setup` | Add or replace selected encrypted provider configuration without starting the browser interface. |
+| `AetherOffice doctor` | Check the Node version, installed bundle, local configuration presence, provider readiness, and preferred loopback port without reading or printing credentials. |
+| `AetherOffice --help` | Show safe usage guidance. |
+| `AetherOffice --version` | Print the installed package version. |
+| `aether` | Compatibility alias for `AetherOffice`. |
+
+Use npm for package lifecycle operations:
+
+```bash
+npm update --global @aetheroffice/cli
+npm uninstall --global @aetheroffice/cli
+```
+
+There is intentionally no `AetherOffice update` command: software updates should remain visible and user-controlled through npm.
+
+## Local configuration and security
+
+Provider configuration is stored locally under `~/.aether-office/`. The provider vault uses AES-256-GCM encryption, with the encryption key and encrypted payload written as separate local files. On POSIX systems, the configuration directory is restricted to mode `0700` and the vault/key to mode `0600`.
+
+| Local artifact | Purpose | Git behavior |
+|---|---|---|
+| `~/.aether-office/vault.key` | Local vault encryption key. | Never created in the repository. |
+| `~/.aether-office/providers.enc.json` | Encrypted selected provider configuration. | Never created in the repository. |
+| `~/.aether-office/runtime-state.json` | Local runtime state. | Never created in the repository. |
+| `~/.aether-office/audit/` | Local protected audit records. | Never created in the repository. |
+
+The project you choose at launch is the only workspace exposed to AetherOffice controlled tools. DeepDiscuss in the default **Safe Mode** creates a TEAM PROPOSAL before meaningful workspace changes. You remain responsible for reviewing proposals, diffs, commands, tests, and guarded Git actions.
+
+Uninstalling the npm package removes the executable and installed program files, but deliberately does **not** erase local credentials or audit data. If you want to permanently erase local AetherOffice data, first stop the process and then remove `~/.aether-office/` yourself using an operating-system appropriate secure deletion method.
+
+## Troubleshooting
+
+| Situation | Recommended action |
+|---|---|
+| `AetherOffice` is not found | Verify npm’s global binary directory is on your `PATH`, then reopen the terminal. |
+| Setup cannot mask input | Run `AetherOffice setup` from a normal interactive terminal, or start AetherOffice and use the physical Provider Locker. Do not use a shared/logged terminal session for credentials. |
+| No provider is ready | Run `AetherOffice setup`, select an actual provider you have an account for, and enter its key. |
+| A provider connection check fails | Check your key, billing/account access, selected model, and endpoint; rerun setup. For Devstral, confirm the retired model is still available to your Mistral account. |
+| The preferred port is occupied | The server searches the next available local port. Run `AetherOffice doctor` to see the preferred-port result. |
+| A workspace is rejected | Supply an existing directory, for example `AetherOffice /absolute/path/to/project`. |
+| A vault is unreadable | Keep a backup of your local configuration directory if needed, then rerun setup to create fresh provider settings. |
+
+## Development
+
+Contributors use the repository workflow rather than the global npm workflow:
+
+```bash
+git clone https://github.com/poojakpdoshi-cmd/aether-office.git
+cd aether-office
 pnpm install
+pnpm check
+pnpm test
+pnpm build
 pnpm dev
 ```
 
-The development server selects an available port. For an installed package, build and install it globally:
+To test the production CLI from a local checkout after a build, run:
 
 ```bash
-pnpm build
-npm install -g .
-aether
+node bin/aether-office.mjs --help
+node bin/aether-office.mjs doctor
 ```
 
-To select the current project explicitly, run:
+## Publishing for the Owner
 
-```bash
-aether .
-```
+The `@aetheroffice/cli` scope must be owned by the publishing npm account or an npm organization before this exact public name can be released. Create an npm account, enable two-factor authentication, create or obtain the `@aetheroffice` organization, grant the publisher the required access, and authenticate in your own terminal with `npm login`. Do not send an npm access token in chat or store one in this repository.
 
-To open a specific project:
-
-```bash
-aether /path/to/project
-```
-
-The CLI starts a local server bound to **127.0.0.1**, then opens the default browser where the operating system supports it. Press `Ctrl+C` to stop the server and its child process cleanly.
-
-### Platform notes
-
-| Platform | CLI behavior | Workspace path example |
-|---|---|---|
-| Windows | The launcher uses `cmd /c start` to open the default browser. Use a normal absolute path when selecting a project. | `aether C:\Users\Owner\projects\my-app` |
-| macOS | The launcher uses the system `open` command to open the default browser. | `aether /Users/owner/projects/my-app` |
-| Linux | The launcher uses `xdg-open` where it is available. If a desktop opener is unavailable, the terminal still prints the local URL. | `aether /home/owner/projects/my-app` |
-
-The browser UI is served locally; it is not exposed to other devices unless a future configuration explicitly changes the local-only binding.
-
-## Configure providers safely
-
-At launch, click the physical **Provider Locker** in the Manager Cabin. Paste a provider key into the local setup form; it is sent to the local backend only, stored encrypted at rest, then cleared from the browser form. Local installations may alternatively provide server-side variables such as `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `ARCEE_API_KEY`, `GROK_API_KEY`, `SAMBANOVA_API_KEY`, or `OPENROUTER_API_KEY` through their secure runtime configuration. See the safe [local configuration template](docs/local-config.template.md) for variable names only. Never paste a secret into a public issue, commit it to Git, or place it in client-side JavaScript.
-
-External adapters use OpenAI-style chat-completions semantics where available. Each provider also accepts an optional model ID and endpoint override for a local installation. The built-in Manus provider coordinates synthesis using the server-side model helper.
-
-## Owner-supplied office artwork
-
-AetherOffice launches directly into the **Owner-selected compact office floor**. The application does not generate replacement office backgrounds during normal use. The active map is served through the project-managed storage path referenced by `client/src/components/LiveOffice.tsx`; no office-image binary is placed in the Git working tree.
-
-| Step | Owner action | Safe implementation outcome |
-|---|---|---|
-| 1 | Supply or select the replacement office image. | The image is stored through project-managed media storage, not in `client/public/`, `client/src/`, or the Git repository. |
-| 2 | Ask for the map to be updated. | The map component is changed to reference the returned storage URL, and invisible cabin, desk, laptop, room, and object targets are calibrated to the supplied layout. |
-| 3 | Review the local launch view. | The workspace verifies that the map remains text-free at launch and that direct interaction targets still work on desktop and mobile. |
-| 4 | Approve the update. | The change is validated, checked into a local project checkpoint, and can be restored through project version history. |
-
-> Do not commit the source office image, local upload path, provider vault, runtime state, or temporary media files. Only the managed storage reference belongs in the UI source.
-
-If a later image does not have enough clear cabins for the configured team, the compact-floor slot allocator keeps unassigned or overflow employees off the map rather than placing them into arbitrary artwork positions. The current visual reference is Owner-selected and must remain the sole background until the Owner explicitly replaces it.
-
-## Safe GitHub handoff
-
-Create or export a GitHub repository only through an authenticated browser authorization flow. In the project management interface, open **Settings → GitHub**, sign in to GitHub in the browser, choose the Owner account or organization, and create or select the destination repository. This avoids putting a personal access token in chat, source code, shell history, configuration files, or audit records.
-
-| Handoff step | Required action | Security boundary |
-|---|---|---|
-| Provider setup | Use the physical Provider Locker or secure local runtime variables. | Provider key values remain on the local backend and are encrypted at rest. |
-| Secret review | Confirm that `.env*`, `providers.enc.json`, `vault.key`, `runtime-state.json`, and audit folders are ignored and untracked. | Secret-bearing runtime data is excluded from Git. |
-| GitHub authorization | Complete GitHub sign-in in the browser-managed authorization screen. | No GitHub personal access token is sent in chat or embedded in the project. |
-| Repository export | Review the selected GitHub account and repository name before authorizing export. | AetherOffice never performs an automatic remote push from its workspace tools. |
-
-> Never send a GitHub personal access token in a message. If browser authorization is unavailable, create the repository yourself in GitHub and connect it only through a local, user-controlled Git credential flow.
-
-The project’s existing internal synchronization remote keeps its **fetch** endpoint but has a deliberately disabled **push** endpoint. It is not a user GitHub repository, and it cannot receive an automatic push from this workspace. A GitHub repository is connected only after the Owner reviews and authorizes the browser-based export flow.
-
-## Security model
-
-> AetherOffice never grants an AI employee unrestricted access to the entire computer. The Owner must select a workspace, and the controlled-tool layer resolves every path within that workspace before it touches the filesystem.
-
-The default **Safe Mode** requires an approved proposal and a per-change owner confirmation. **Team Mode** permits scoped work after plan approval. **Autonomous Mode** is opt-in and remains limited to the selected workspace and allowed command policy. Allowed commands do not run through a shell, block shell-control characters, and have time and output limits.
-
-## Architecture
-
-```text
-CLI → local Node server → browser workspace UI
-                         ↓
-                  DeepDiscuss orchestrator
-                         ↓
-            provider adapters / Manus synthesis
-                         ↓
-          controlled tools → selected project workspace
-                         ↓
-              audit trail, tests, Git safeguards
-```
-
-## Validate the project
+After reviewing the release package, publish manually and explicitly:
 
 ```bash
 pnpm check
 pnpm test
 pnpm build
-node bin/aether.mjs --help
+npm pack --dry-run
+npm publish --access public
 ```
 
-## Important limitations
+See [the npm release guide](docs/npm-publishing.md) for the required Owner-controlled preflight and rollback considerations. The project intentionally does not publish itself or perform npm actions that require your account authorization.
 
-The project implements the local-first core architecture and secure provider setup. Provider calls require a valid configured provider, and UI/image understanding requires a vision-capable model and its applicable provider configuration. The implementation intentionally does not auto-push to any Git remote.
+## License
+
+MIT. See [LICENSE](LICENSE).

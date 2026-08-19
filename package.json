@@ -1,6 +1,29 @@
 {
-  "name": "aether-office",
+  "name": "@aetheroffice/cli",
+  "description": "AetherOffice is a local-first AI software company workspace with a secure terminal setup flow.",
+  "keywords": [
+    "aetheroffice",
+    "ai",
+    "developer-tools",
+    "local-first",
+    "cli"
+  ],
+  "homepage": "https://github.com/poojakpdoshi-cmd/aether-office#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/poojakpdoshi-cmd/aether-office.git"
+  },
+  "bugs": {
+    "url": "https://github.com/poojakpdoshi-cmd/aether-office/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
+    "AetherOffice": "bin/aether-office.mjs",
     "aether": "bin/aether.mjs"
   },
   "files": [
@@ -14,7 +37,7 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
-    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "vite build && esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist && esbuild server/aether/cliConfig.ts --platform=node --packages=external --bundle --format=esm --outfile=dist/cli-config.js",
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

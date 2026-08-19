@@ -124,3 +124,10 @@
 - [x] Add a complete NVIDIA Nemotron Provider Locker/API configuration-flow test.
 - [x] Run integrated configured-employee map coverage for the three new employee desk, laptop, and workstation hotspots.
 - [x] Create a local Git-ignored provider secrets template that the Owner can fill without putting keys in chat or source control.
+- [x] Convert the current repository-local launcher into a compiled npm package CLI with the global `AetherOffice` command and backward-compatible local invocation where appropriate.
+- [x] Add a secure terminal first-run setup wizard that reuses the encrypted local provider vault, requests only Owner-selected real provider credentials, and enforces Devstral acknowledgement.
+- [x] Add `AetherOffice setup`, `doctor`, `--help`, and `--version` commands with local-only, workspace-safe startup behavior and no secret leakage.
+- [x] Prepare npm publication metadata, the runtime package file manifest, and release-safe exclusion rules for a public scoped distribution target.
+- [x] Document end-user installation, first-run configuration, updates, uninstall, supported operating systems, development workflow, and Owner-controlled npm publishing prerequisites.
+- [x] Add automated coverage for CLI argument routing, configuration detection, safe diagnostic output, and wizard validation behavior.
+- [x] Verify the packed artifact through an isolated global installation, first-run/restart behavior, port collision handling, update/uninstall paths, full regressions, and production build.
