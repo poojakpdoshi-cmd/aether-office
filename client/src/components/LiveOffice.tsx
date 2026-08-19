@@ -6,6 +6,9 @@ type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFil
 const stations: Record<string, { x: string; y: string }> = {
   Manus: { x: "50%", y: "15%" }, Gemini: { x: "16%", y: "25%" }, DeepSeek: { x: "84%", y: "25%" }, Mistral: { x: "16%", y: "48%" }, Arcee: { x: "84%", y: "48%" }, SambaNova: { x: "16%", y: "72%" }, Grok: { x: "84%", y: "72%" },
 };
+const laptopPositions: Record<string, { left: string; top: string }> = {
+  Manus: { left: "52%", top: "20%" }, Gemini: { left: "11%", top: "22%" }, DeepSeek: { left: "89%", top: "22%" }, Mistral: { left: "11%", top: "45%" }, Arcee: { left: "89%", top: "45%" }, SambaNova: { left: "11%", top: "69%" }, Grok: { left: "89%", top: "69%" },
+};
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, Arcee: { x: "50%", y: "57%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
 const illustratedEmployees: Record<string, string> = {
   Manus: "/manus-storage/illustrated-manus_46107b3d.png", Gemini: "/manus-storage/illustrated-gemini_908df82a.png", DeepSeek: "/manus-storage/illustrated-deepseek_8bbe4ac7.png", Mistral: "/manus-storage/illustrated-mistral_e37410fe.png", Arcee: "/manus-storage/illustrated-arcee_e66515d0.png", Grok: "/manus-storage/illustrated-grok_1ba33ae9.png",
@@ -38,6 +41,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
       <button onClick={() => onInspect("Test Lab")} className="office-hotspot office-test" aria-label="Open Test Lab" /><button onClick={() => onInspect("Lounge")} className="office-hotspot map-lounge" aria-label="Open Lounge" />
       <button onClick={() => onInspect("Central Corridor")} className="office-corridor-zone" aria-label="Inspect Central Corridor" />
       {workZones.map((zone) => <button key={zone.label} onClick={() => onInspect(zone.label)} className="office-work-zone" style={{ left: zone.x, top: zone.y }} aria-label={`Inspect ${zone.label}`} />)}
+      {employees.map((employee) => <button key={`${employee.name}-laptop`} onClick={() => onInspect(`${employee.name} Laptop`)} className="office-laptop-zone" style={laptopPositions[employee.name]} aria-label={`Inspect ${employee.name} laptop`} />)}
       {employees.map((employee) => { const pos = location(employee); return <button key={employee.name} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`}>
         <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name] ?? illustratedEmployees.Mistral} alt="" /><span className="illustrated-agent-dot" />
       </button>; })}

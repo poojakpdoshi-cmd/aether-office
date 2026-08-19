@@ -320,7 +320,7 @@ export default function Home() {
 
   const renderOffice = () => {
     const focusedEmployee = liveEmployees.find((employee) => employee.name === officeFocus || (officeFocus === "Manager" && employee.name === "Manus"));
-    const deskEmployee = officeFocus?.endsWith(" Desk") ? officeFocus.replace(" Desk", "") : undefined;
+    const deskEmployee = officeFocus?.endsWith(" Desk") ? officeFocus.replace(" Desk", "") : officeFocus?.endsWith(" Laptop") ? officeFocus.replace(" Laptop", "") : undefined;
     const relatedEmployee = focusedEmployee ?? liveEmployees.find((employee) => employee.name === deskEmployee);
     const roomActivity = officeFocus === "DeepDiscuss Room" ? (latestMeeting ? `Meeting state: ${latestMeeting.state.replaceAll("_", " ")}. ${latestMeeting.messages.length} verified discussion message(s) recorded.` : "No verified DeepDiscuss meeting is active.") : officeFocus === "Test Lab" ? (runTestsMutation.data ? `Last controlled test command: ${runTestsMutation.data.command}` : "No controlled test run has occurred.") : officeFocus === "Lounge" ? (liveEmployees.some((employee) => employee.status === "WAITING") ? "One or more employees are genuinely waiting for the next verified task event." : "No employee is currently waiting in the lounge.") : undefined;
     const verifiedActivity = relatedEmployee ? dashboard?.activities.find((event) => event.employee === relatedEmployee.name)?.message : roomActivity;

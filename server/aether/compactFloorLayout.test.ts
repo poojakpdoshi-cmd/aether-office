@@ -39,4 +39,17 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain('useState<string | null>(null)');
     expect(homePage).toContain('activeView !== "Office" ? <header');
   });
+
+  it("keeps cabins, rooms, desks, and employees as direct invisible interaction targets", () => {
+    expect(officeComponent).toContain('className="office-hotspot office-manager" aria-label="Open Manager Cabin"');
+    expect(officeComponent).toContain('className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room"');
+    expect(officeComponent).toContain('className="office-work-zone"');
+    expect(officeComponent).toContain('className="office-laptop-zone"');
+    expect(officeComponent).toContain('onInspect(`${employee.name} Laptop`)');
+    expect(officeComponent).toContain('className={cn("illustrated-agent", `illustrated-${pos.state}`)}');
+    expect(officeComponent).not.toContain('illustrated-agent-label');
+    expect(compactFloorStyles).toContain('.text-free-office .office-work-zone { width: 18%; height: 16%; transform: translate(-50%, -50%); opacity: 0; }');
+    expect(compactFloorStyles).toContain('.text-free-office .office-laptop-zone { position: absolute; z-index: 8; width: 11%; height: 10%; transform: translate(-50%, -50%); cursor: pointer; opacity: 0; }');
+    expect(homePage).toContain('officeFocus?.endsWith(" Laptop") ? officeFocus.replace(" Laptop", "")');
+  });
 });

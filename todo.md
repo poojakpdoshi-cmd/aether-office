@@ -60,9 +60,9 @@
 - [x] Reframe the office view so the full workspace is visible at launch, with clickable Manager Cabin, DeepDiscuss Room, employee desks, lounge, test area, and work zones.
 - [x] Open a verified status and activity detail panel when the Owner taps an employee, room, or workspace zone.
 - [x] Verify the complete manager-first local interaction flow on desktop and mobile without introducing unrequested features.
-- [ ] Remove visible office-flow buttons so Manager Cabin, Manager, DeepDiscuss Room, desks, laptops, and employee characters are the direct interaction targets.
-- [ ] Show manager choices only after the Owner directly clicks the Manager, without displaying Change, Edit, or More Information as standing office controls.
-- [ ] Make each employee laptop/desk a direct clickable work detail source, with no separate office navigation buttons.
+- [x] Remove visible office-flow buttons so Manager Cabin, Manager, DeepDiscuss Room, desks, laptops, and employee characters are the direct interaction targets.
+- [x] Show manager choices only after the Owner directly clicks the Manager, without displaying Change, Edit, or More Information as standing office controls.
+- [x] Make each employee laptop/desk a direct clickable work detail source, with no separate office navigation buttons.
 - [ ] Prepare the local Git repository for a safe GitHub handoff without adding remotes, tokens, API keys, encrypted vault files, runtime state, or local configuration to Git.
 - [ ] Document where the Owner enters provider secrets locally and how GitHub authorization will occur without sharing a PAT in chat.
 - [ ] Verify the button-free interaction flow and confirm the Git repository contains no secrets before handoff.
