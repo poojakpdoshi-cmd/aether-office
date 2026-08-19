@@ -95,3 +95,4 @@
 - [ ] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
 - [x] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
 - [x] Remove the extra employee-addition system and all visible employee-add controls from the local office interface.
+- [x] Start DeepDiscuss directly from a Manager-submitted command and return the Owner to the Discussion Room without exposing a separate office start control.

@@ -26,7 +26,7 @@ import {
   TerminalSquare,
   UsersRound,
 } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 
 type WorkspaceView =
   | "Office"
@@ -176,6 +176,7 @@ export default function Home() {
   const [focusedCamera, setFocusedCamera] = useState("Office Floor");
   const [officeFocus, setOfficeFocus] = useState<string | null>("Manager Cabin");
   const [managerCommand, setManagerCommand] = useState("");
+  const startedManagerTaskRef = useRef<string | null>(null);
   const providerQuery = trpc.aether.providers.useQuery();
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
@@ -237,9 +238,13 @@ export default function Home() {
     });
   };
 
-  const startMeeting = () => {
-    if (submittedTask) startDeepDiscussMutation.mutate({ task: submittedTask });
-  };
+  useEffect(() => {
+    if (activeView !== "Chat" || !submittedTask || startedManagerTaskRef.current === submittedTask) return;
+    startedManagerTaskRef.current = submittedTask;
+    setActiveView("Office");
+    setOfficeFocus("DeepDiscuss Room");
+    if (configuredCount) startDeepDiscussMutation.mutate({ task: submittedTask });
+  }, [activeView, configuredCount, startDeepDiscussMutation, submittedTask]);
 
   const chooseWorkspace = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -367,8 +372,8 @@ export default function Home() {
               <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-sky-200">Owner task staged</p>
               <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-100">{submittedTask}</p>
               <p className="mt-3 text-xs leading-5 text-slate-400">The task has not been sent to any AI provider. Start the meeting to create real deliberation records.</p>
-              {startDeepDiscussMutation.error ? <p className="mt-3 text-xs text-rose-300">The meeting could not start. Configure a provider and review its endpoint/model settings.</p> : null}
-              <Button size="sm" disabled={!configuredCount || startDeepDiscussMutation.isPending} onClick={startMeeting} className="mt-4 bg-sky-300 text-slate-950 hover:bg-sky-200">{startDeepDiscussMutation.isPending ? "Team is discussing…" : "Start DeepDiscuss"}</Button>
+              {startDeepDiscussMutation.error ? <p className="mt-3 text-xs text-rose-300">The meeting could not start. Configure a provider and then issue the task again through the Manager.</p> : null}
+              <p className="mt-3 text-xs leading-5 text-slate-400">Manager-submitted work enters the private Discussion Room automatically when a provider is configured.</p>
             </div>
           ) : (
             <div className="mx-auto max-w-md text-center">
