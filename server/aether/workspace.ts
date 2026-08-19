@@ -68,7 +68,9 @@ async function appendAudit(record: AuditRecord) {
   const auditPath = getAuditPath(root);
   await mkdir(dirname(auditPath), { recursive: true, mode: 0o700 });
   await appendFile(auditPath, `${JSON.stringify(record)}\n`, { encoding: "utf8", mode: 0o600 });
-  addActivity({ kind: "tool", message: `${record.WHO} ran ${record.WHAT}: ${record.result}.`, employee: record.WHO === "Owner" || record.WHO === "System" ? undefined : record.WHO });
+  const taskStage = record.WHAT === "run_tests" ? "Testing" : record.WHAT === "git_diff" || record.WHAT === "git_status" ? "Reviewing" : record.WHAT === "read_file" || record.WHAT === "list_directory" || record.WHAT === "search_files" ? "Inspecting" : "Building";
+  const fileScope = record.WHAT === "run_tests" ? "Approved test target" : record.WHAT === "git_diff" || record.WHAT === "git_status" ? "Approved change set" : "Approved workspace file";
+  addActivity({ kind: "tool", message: `${record.WHO} ran ${record.WHAT}: ${record.result}.`, employee: record.WHO === "Owner" || record.WHO === "System" ? undefined : record.WHO, camera: { fileScope, activeTool: record.WHAT, taskStage } });
 }
 
 export async function readAuditLog(limit = 100): Promise<AuditRecord[]> {

@@ -64,12 +64,19 @@ export type Meeting = {
   errorMessage?: string;
 };
 
+export type CameraOverlayData = {
+  fileScope: string;
+  activeTool: string;
+  taskStage: string;
+};
+
 export type ActivityEvent = {
   id: string;
   kind: "meeting" | "provider" | "approval" | "tool" | "workspace" | "system";
   message: string;
   createdAt: number;
   employee?: EmployeeId;
+  camera?: CameraOverlayData;
 };
 
 export const REVIEW_RUBRIC = {

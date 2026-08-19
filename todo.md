@@ -50,7 +50,7 @@
 - [x] Verify the illustrated office at desktop and mobile breakpoints before presenting it to the Owner.
 - [x] Add a Live Cameras workspace view with Manager Cabin, Meeting Cabin, Office Floor, and employee Laptop Camera feeds.
 - [x] Show each camera’s current occupants, task phase, and genuine status only from real DeepDiscuss, provider, workspace, tool, test, and review events.
-- [ ] Add a per-employee laptop activity overlay describing the current file/tool/task stage without exposing API keys, prompts containing secrets, or unrelated file content.
+- [x] Add a per-employee laptop activity overlay describing the current file/tool/task stage without exposing API keys, prompts containing secrets, or unrelated file content.
 - [x] Add camera selection, focused preview, and accessible current-activity text for the live workplace.
 - [ ] Verify camera previews across desktop and mobile breakpoints and confirm fake activity is never displayed as real work.
 - [x] Make Manager Cabin the first screen shown when the local AetherOffice application opens.

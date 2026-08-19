@@ -57,7 +57,7 @@ export async function runDeepDiscuss(task: string) {
     setProposal(meeting.id, proposal);
     for (const employee of selectedEmployees) {
       setEmployeeStatus(employee, "THINKING");
-      addActivity({ kind: "system", message: `${employee} left the Discussion Room and moved to their assigned cabin to prepare the approved work.`, employee });
+      addActivity({ kind: "system", message: `${employee} left the Discussion Room and moved to their assigned cabin to prepare the approved work.`, employee, camera: { fileScope: "Planned workspace file", activeTool: "Planning board", taskStage: "Preparing" } });
     }
     return meeting;
   } catch (error) {
@@ -87,13 +87,13 @@ async function runRound(
     setEmployeeStatus(employee, round === "analysis" ? "THINKING" : "REVIEWING");
     const provider = getEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
-    addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee });
+    addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `Discussing ${round}` } });
     const content = await adapter.generate({
       system: `${employeeInstructions[employee]} You are participating in the ${round} round of an owner-approved software planning meeting. Do not claim that files, tests, or tools have run. Be concise, concrete, and cite risks.`,
       user: `Owner task:\n${task}\n\nEarlier team material:\n${previousSummary}\n\nProvide your ${round} contribution.`,
     });
     addDiscussionMessage(meetingId, { employee, provider, round, content });
-    addActivity({ kind: "provider", message: `${employee} completed ${round}.`, employee });
+    addActivity({ kind: "provider", message: `${employee} completed ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} complete` } });
     setEmployeeStatus(employee, "WAITING");
   }
 }

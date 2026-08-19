@@ -6,6 +6,7 @@ const officeComponent = readFileSync(fileURLToPath(new URL("../../client/src/com
 const compactFloorStyles = readFileSync(fileURLToPath(new URL("../../client/src/pages/owner-floor.css", import.meta.url)), "utf8");
 const homePage = readFileSync(fileURLToPath(new URL("../../client/src/pages/Home.tsx", import.meta.url)), "utf8");
 const officeArtworkPolicy = readFileSync(fileURLToPath(new URL("../../client/src/components/officeArtwork.ts", import.meta.url)), "utf8");
+const laptopOverlayPolicy = readFileSync(fileURLToPath(new URL("../../client/src/lib/laptopOverlay.ts", import.meta.url)), "utf8");
 
 describe("Owner-selected compact office floor", () => {
   it("uses the selected asset and provides direct room, desk, object, and corridor targets", () => {
@@ -73,5 +74,19 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain('onProviderLocker={() => setActiveView("Settings")}');
     expect(homePage).toContain('Key values are never read back into the browser, rendered in UI, printed to logs, or added to Git.');
     expect(homePage).toContain('encrypted at rest, and never sent back to this browser.');
+  });
+
+  it("shows each employee laptop overlay from structured allowed fields without displaying secrets", () => {
+    expect(homePage).toContain('dashboard?.activities.find((activity) => activity.employee === employee.name && activity.camera)?.camera');
+    expect(homePage).toContain('createLaptopOverlay(employee.status, employee.focus, verifiedCamera)');
+    expect(homePage).not.toContain('const verifiedEvents = dashboard?.activities ?? []');
+    expect(homePage).toContain('Verified file scope, controlled tool, and task stage per employee.');
+    expect(homePage).toContain('{overlay.fileScope}');
+    expect(homePage).toContain('{overlay.tool} · {overlay.taskStage}');
+    expect(homePage).toContain('{overlay.taskScope}');
+    expect(laptopOverlayPolicy).toContain('const approvedTaskScopes = new Set');
+    expect(laptopOverlayPolicy).toContain('taskScope: safeScope');
+    expect(laptopOverlayPolicy).toContain('"Assigned work scope"');
+    expect(homePage).toContain('Sensitive values, API keys, raw prompts, and unapproved file content are never displayed in camera previews.');
   });
 });
