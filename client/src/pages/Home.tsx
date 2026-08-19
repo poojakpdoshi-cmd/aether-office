@@ -141,7 +141,7 @@ function EmptyWorkspace({ title, detail, action }: { title: string; detail: stri
 }
 
 export default function Home() {
-  const [activeView, setActiveView] = useState<WorkspaceView>("Office");
+  const [activeView, setActiveView] = useState<WorkspaceView>(() => new URLSearchParams(window.location.search).get("view") === "cameras" ? "Cameras" : "Office");
   const [task, setTask] = useState("");
   const [submittedTask, setSubmittedTask] = useState<string | null>(null);
   const [mode, setMode] = useState("Safe Mode");

@@ -52,7 +52,7 @@
 - [x] Show each camera’s current occupants, task phase, and genuine status only from real DeepDiscuss, provider, workspace, tool, test, and review events.
 - [x] Add a per-employee laptop activity overlay describing the current file/tool/task stage without exposing API keys, prompts containing secrets, or unrelated file content.
 - [x] Add camera selection, focused preview, and accessible current-activity text for the live workplace.
-- [ ] Verify camera previews across desktop and mobile breakpoints and confirm fake activity is never displayed as real work.
+- [x] Verify camera previews across desktop and mobile breakpoints and confirm fake activity is never displayed as real work.
 - [x] Make Manager Cabin the first screen shown when the local AetherOffice application opens.
 - [x] Replace the Start a discussion control with a clickable Manager Cabin and Manager character command flow.
 - [x] Display the exact manager prompt: “Work is going, sir. Do you want to change, edit, or give more information?” with Change, Edit, and More Information actions.

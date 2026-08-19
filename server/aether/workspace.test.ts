@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createWorkspaceFile, readWorkspaceFile, selectWorkspace, writeWorkspaceFile } from "./workspace";
+import { createGitCommit, createWorkspaceFile, readWorkspaceFile, revertGitCommit, runWorkspaceCommand, selectWorkspace, writeWorkspaceFile } from "./workspace";
 import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
@@ -40,5 +40,15 @@ describe("controlled workspace tools", () => {
     const meeting = createMeeting("Add a file", ["Manus"]);
     setProposal(meeting.id, { objective: "Add a file", techStack: ["Node.js"], filesToCreateModify: ["src/new.ts"], risks: [], confidencePercent: 80 });
     expect(() => assertExecutionAllowed(meeting.id, true)).toThrow("must be approved");
+  });
+
+  it("rejects unapproved commands and shell-control characters before execution", async () => {
+    await expect(runWorkspaceCommand("bash", [], "Manus", "Attempt unsupported shell execution.")).rejects.toThrow("not allowed");
+    await expect(runWorkspaceCommand("pnpm", ["test; rm -rf /"], "Manus", "Attempt chained command.")).rejects.toThrow("Shell control characters");
+  });
+
+  it("requires explicit owner confirmation before local commit or revert actions", async () => {
+    await expect(createGitCommit("Safe local commit", "Owner", "Create a local checkpoint.", false)).rejects.toThrow("explicit owner confirmation");
+    await expect(revertGitCommit("abcd1234", "Owner", "Revert a local checkpoint.", false)).rejects.toThrow("explicit owner confirmation");
   });
 });
