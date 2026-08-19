@@ -73,10 +73,10 @@
 - [ ] Document the Owner-supplied office-image replacement workflow without placing the image in Git or exposing local upload paths.
 - [x] Verify the sidebar-free Manager desk upload flow without adding unrequested controls.
 - [x] Replace the current temporary office map with the Owner-supplied merged artwork based on the advanced cabin-floor layout.
-- [ ] Keep a controlled roster of configured AI employees instead of treating every illustrated person as an active employee.
-- [ ] Map separate Manager Cabin, enclosed Discussion Room, corridors, and individual employee cabins/workstations into the interactive office layout.
-- [ ] Animate configured employees gathering in the Discussion Room, then visibly walking through corridors into assigned cabins only when DeepDiscuss is actually complete.
-- [ ] Animate cabin work states—coding/building, reviewing, testing, waiting, error, and completed—only from real orchestration and controlled-tool events.
+- [x] Keep a controlled roster of configured AI employees instead of treating every illustrated person as an active employee.
+- [x] Map separate Manager Cabin, enclosed Discussion Room, corridors, and individual employee cabins/workstations into the interactive office layout.
+- [x] Animate configured employees gathering in the Discussion Room, then visibly walking through corridors into assigned cabins only when DeepDiscuss is actually complete.
+- [x] Animate cabin work states—coding/building, reviewing, testing, waiting, error, and completed—only from real orchestration and controlled-tool events.
 - [ ] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
 - [ ] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
 - [ ] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
@@ -92,7 +92,7 @@
 - [x] Verify automatic onboarding with mocked provider validation paths and confirm keys are absent from browser responses, logs, Git, and audit events. (Superseded by the Owner's later request to remove the employee-addition system.)
 - [x] Replace the temporary office artwork with the Owner-selected compact cabin-floor image.
 - [x] Align Manager Cabin, Provider Locker, physical files/photos, Discussion Room, corridors, work cabins, desks, and test area hotspots to the selected image.
-- [ ] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
+- [x] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
 - [x] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
 - [x] Remove the extra employee-addition system and all visible employee-add controls from the local office interface.
 - [x] Start DeepDiscuss directly from a Manager-submitted command and return the Owner to the Discussion Room without exposing a separate office start control.
