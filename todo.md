@@ -77,8 +77,8 @@
 - [x] Map separate Manager Cabin, enclosed Discussion Room, corridors, and individual employee cabins/workstations into the interactive office layout.
 - [x] Animate configured employees gathering in the Discussion Room, then visibly walking through corridors into assigned cabins only when DeepDiscuss is actually complete.
 - [x] Animate cabin work states—coding/building, reviewing, testing, waiting, error, and completed—only from real orchestration and controlled-tool events.
-- [ ] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
-- [ ] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
+- [x] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
+- [x] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
 - [ ] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
 - [x] Generate multiple selectable top-down/isometric office-map concepts that merge the supplied compact cabin layout with illustrated people working at desks. (Superseded because the Owner selected the final compact floor map.)
 - [x] Include a distinct Manager Cabin, enclosed Discussion Room, corridors, individual AI work cabins, laptop/desk areas, and enough clear floor space for status-driven movement. (Superseded because the Owner selected the final compact floor map.)

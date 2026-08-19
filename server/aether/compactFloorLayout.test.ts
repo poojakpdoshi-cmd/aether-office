@@ -62,4 +62,12 @@ describe("Owner-selected compact office floor", () => {
     expect(officeComponent).toContain('if (employee.status === "REVIEWING") return { ...slot.station, state: "reviewing" }');
     expect(officeComponent).toContain('if (employee.status === "TESTING") return { x: "50%", y: "92%", state: "testing" }');
   });
+
+  it("routes the physical Provider Locker to local-only secret-safe provider configuration", () => {
+    expect(officeComponent).toContain('onClick={onProviderLocker} className="manager-provider-locker"');
+    expect(officeComponent).toContain('aria-label="Open the secure Provider Locker"');
+    expect(homePage).toContain('onProviderLocker={() => setActiveView("Settings")}');
+    expect(homePage).toContain('Key values are never read back into the browser, rendered in UI, printed to logs, or added to Git.');
+    expect(homePage).toContain('encrypted at rest, and never sent back to this browser.');
+  });
 });
