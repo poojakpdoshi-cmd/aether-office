@@ -137,4 +137,8 @@
 - [x] Recover the Manager Cabin character from a prior valid project office asset so malformed anatomy is removed without consuming a new image-generation quota.
 - [x] Remove the failed Manager Cabin recovery overlay, which incorrectly enlarged and distorted the manager instead of repairing the pose.
 - [x] Restore a visually coherent Manager Cabin without making a new image-generation claim until a seamless background correction is available.
-- [ ] Remove the broad Manager Cabin recovery layer and correct only the small malformed manager-leg region, with no replacement cabin or unrelated office changes.
+- [x] Remove the broad Manager Cabin recovery layer and correct only the small malformed manager-leg region, with no replacement cabin or unrelated office changes.
+- [x] Replace the active office background with the Owner-provided corrected 16:9 image and verify all physical map hotspots remain aligned.
+- [x] Update the managed artwork reference and confirm text-free launch, Manager Cabin, Discussion Room, desk, and laptop interactions against the supplied image.
+- [x] Run focused tests, type checking, build, visual verification, and save a checkpoint for the supplied corrected office image.
+
