@@ -12,4 +12,12 @@ describe("horizontal text-free office map", () => {
     expect(floorStyles).toContain("aspect-ratio: 16 / 9");
     expect(floorStyles).toContain(".text-free-office .office-deep-discuss { left: 32%; top: 35%; width: 36%; height: 42%; }");
   });
+
+  it("keeps the Discussion Room directly clickable without a visible frame and uses the prior valid Manager Cabin artwork only as a recovery layer", () => {
+    const globalStyles = readFileSync(new URL("../client/src/index.css", import.meta.url), "utf8");
+    expect(officeSource).toContain('<div className="manager-cabin-recovery" aria-hidden="true" />');
+    expect(floorStyles).toContain('background-image: url("/manus-storage/owner-selected-office-floor_2f95057d.webp")');
+    expect(globalStyles).toContain(".deep-discuss-room-frame{display:none}");
+    expect(officeSource).toContain('className="office-hotspot office-deep-discuss"');
+  });
 });

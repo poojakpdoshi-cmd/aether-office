@@ -15,6 +15,7 @@
 .text-free-office .real-office-stage { width: min(100vw, 177.778dvh); height: auto; min-height: 0; margin: 0; aspect-ratio: 16 / 9; background: #070b16; }
 .text-free-office .office-ambient-backdrop { display: none; }
 .text-free-office .real-office-backdrop { z-index: 1; object-fit: cover; filter: saturate(.84) brightness(.96); }
+.text-free-office .manager-cabin-recovery { position: absolute; z-index: 1; left: 45%; top: 9%; width: 10%; height: 15%; background-image: url("/manus-storage/owner-selected-office-floor_2f95057d.webp"); background-repeat: no-repeat; background-size: 909% 909%; background-position: 49% 8%; pointer-events: none; }
 .text-free-office .office-map-overlay { position: absolute; z-index: 2; inset: 0; }
 .text-free-office .illustrated-readability { display: none; }
 .text-free-office .deep-discuss-room-frame span,

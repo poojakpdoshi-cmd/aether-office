@@ -131,3 +131,7 @@
 - [x] Document end-user installation, first-run configuration, updates, uninstall, supported operating systems, development workflow, and Owner-controlled npm publishing prerequisites.
 - [x] Add automated coverage for CLI argument routing, configuration detection, safe diagnostic output, and wizard validation behavior.
 - [x] Verify the packed artifact through an isolated global installation, first-run/restart behavior, port collision handling, update/uninstall paths, full regressions, and production build.
+- [x] Correct the Manager Cabin character pose so the manager has natural seated anatomy and legs in the approved office artwork.
+- [x] Remove the visible white discussion-room outline/box while retaining the room, people, composition, and invisible interaction target.
+- [x] Update the office-art reference and verify the text-free launch plus Manager Cabin and Discussion Room hotspot alignment after the focused visual correction.
+- [x] Recover the Manager Cabin character from a prior valid project office asset so malformed anatomy is removed without consuming a new image-generation quota.
