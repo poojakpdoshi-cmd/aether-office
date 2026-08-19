@@ -33,20 +33,20 @@
 - [x] Animate employees meeting, walking to assigned workstations, typing/working, reviewing, testing, waiting, and completing tasks.
 - [x] Bind all visual character motion and office locations to real DeepDiscuss employee status transitions without fabricating work activity.
 - [x] Verify the cartoon office flow at desktop and mobile breakpoints while preserving reduced-motion accessibility.
-- [ ] Replace the current flat isometric office board with a larger, more spacious anime workplace scene.
-- [ ] Create recognizably anime-style employee characters with distinct hair, clothing, expressions, and work poses instead of letter avatars.
-- [ ] Add spacious anime office areas for the meeting room, individual work bays, lounge, research/library zone, test station, and delivery area.
-- [ ] Preserve real status-driven gathering, walking, desk work, review, testing, waiting, error, and completion behavior in the new anime scene.
-- [ ] Verify the redesigned anime office at desktop and mobile breakpoints before presenting it to the Owner.
+- [x] Replace the current flat isometric office board with a larger, more spacious anime workplace scene. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Create recognizably anime-style employee characters with distinct hair, clothing, expressions, and work poses instead of letter avatars. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Add spacious anime office areas for the meeting room, individual work bays, lounge, research/library zone, test station, and delivery area. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Preserve real status-driven gathering, walking, desk work, review, testing, waiting, error, and completion behavior in the new anime scene. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Verify the redesigned anime office at desktop and mobile breakpoints before presenting it to the Owner. (Superseded by the Owner-selected compact cabin-floor map.)
 - [x] Replace the anime/cartoon office scene with a spacious semi-realistic modern workplace visual direction.
 - [x] Create human-like semi-realistic employees with believable professional clothing, proportions, desks, and natural work poses.
 - [x] Add realistic office lighting, meeting room furniture, workstations, glass walls, lounge detail, and depth while preserving a clear game-like overview.
 - [x] Preserve the real status-driven meeting, walking, working, review, testing, waiting, error, and completed actions in the realistic scene.
 - [x] Verify the realistic office scene at desktop and mobile breakpoints before presenting it to the Owner.
 - [x] Replace the photographic office background with a large, detailed, hand-drawn modern office illustration inspired by the supplied reference.
-- [ ] Add illustrated desks, bookshelves, windows, plants, filing cabinets, meeting space, noticeboards, lounge details, and visible workplace activity.
-- [ ] Use expressive hand-drawn human employee characters with individual identities and work poses rather than photo-real portraits or schematic avatars.
-- [ ] Keep the office visually spacious while showing multiple AI employees and animated status-driven meeting, movement, work, review, test, wait, error, and completion scenes.
+- [x] Add illustrated desks, bookshelves, windows, plants, filing cabinets, meeting space, noticeboards, lounge details, and visible workplace activity. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Use expressive hand-drawn human employee characters with individual identities and work poses rather than photo-real portraits or schematic avatars. (Superseded by the Owner-selected compact cabin-floor map.)
+- [x] Keep the office visually spacious while showing multiple AI employees and animated status-driven meeting, movement, work, review, test, wait, error, and completion scenes. (Superseded by the Owner-selected compact cabin-floor map.)
 - [x] Verify the illustrated office at desktop and mobile breakpoints before presenting it to the Owner.
 - [x] Add a Live Cameras workspace view with Manager Cabin, Meeting Cabin, Office Floor, and employee Laptop Camera feeds.
 - [x] Show each camera’s current occupants, task phase, and genuine status only from real DeepDiscuss, provider, workspace, tool, test, and review events.
@@ -72,7 +72,7 @@
 - [ ] Stop generating office artwork and replace the current office scene only when the Owner supplies their chosen office image.
 - [ ] Document the Owner-supplied office-image replacement workflow without placing the image in Git or exposing local upload paths.
 - [ ] Verify the sidebar-free Manager desk upload flow without adding unrequested controls.
-- [ ] Replace the current temporary office map with the Owner-supplied merged artwork based on the advanced cabin-floor layout.
+- [x] Replace the current temporary office map with the Owner-supplied merged artwork based on the advanced cabin-floor layout.
 - [ ] Keep a controlled roster of configured AI employees instead of treating every illustrated person as an active employee.
 - [ ] Map separate Manager Cabin, enclosed Discussion Room, corridors, and individual employee cabins/workstations into the interactive office layout.
 - [ ] Animate configured employees gathering in the Discussion Room, then visibly walking through corridors into assigned cabins only when DeepDiscuss is actually complete.
@@ -80,16 +80,16 @@
 - [ ] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
 - [ ] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
 - [ ] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
-- [ ] Generate multiple selectable top-down/isometric office-map concepts that merge the supplied compact cabin layout with illustrated people working at desks.
-- [ ] Include a distinct Manager Cabin, enclosed Discussion Room, corridors, individual AI work cabins, laptop/desk areas, and enough clear floor space for status-driven movement.
-- [ ] Keep the illustrated employee count controlled and reserve visual characters for configured AI employees rather than every person in the concept art.
-- [ ] Present the generated office-map concepts to the Owner for selection before replacing the current localhost office map.
-- [ ] Add a compact local Add Employee control at the top or bottom of the sidebar-free office experience.
-- [ ] Accept a provider key only through the local secure setup form and test supported-provider recognition on the server without returning or logging the key.
-- [ ] Add an employee only after a supported provider key is verified; never infer an unknown provider only from an ambiguous key pattern.
-- [ ] Persist the encrypted provider configuration locally, assign the new employee a free cabin, and expose only masked connection state in the UI.
-- [ ] Show a clear safe fallback that asks the Owner to choose a provider when automatic validation cannot identify the key.
-- [ ] Verify automatic onboarding with mocked provider validation paths and confirm keys are absent from browser responses, logs, Git, and audit events.
+- [x] Generate multiple selectable top-down/isometric office-map concepts that merge the supplied compact cabin layout with illustrated people working at desks. (Superseded because the Owner selected the final compact floor map.)
+- [x] Include a distinct Manager Cabin, enclosed Discussion Room, corridors, individual AI work cabins, laptop/desk areas, and enough clear floor space for status-driven movement. (Superseded because the Owner selected the final compact floor map.)
+- [x] Keep the illustrated employee count controlled and reserve visual characters for configured AI employees rather than every person in the concept art. (Superseded because the Owner selected the final compact floor map.)
+- [x] Present the generated office-map concepts to the Owner for selection before replacing the current localhost office map. (Superseded because the Owner selected the final compact floor map.)
+- [x] Add a compact local Add Employee control at the top or bottom of the sidebar-free office experience. (Superseded by the Owner's later request to remove the employee-addition system.)
+- [x] Accept a provider key only through the local secure setup form and test supported-provider recognition on the server without returning or logging the key. (Superseded by the Owner's later request to remove the employee-addition system.)
+- [x] Add an employee only after a supported provider key is verified; never infer an unknown provider only from an ambiguous key pattern. (Superseded by the Owner's later request to remove the employee-addition system.)
+- [x] Persist the encrypted provider configuration locally, assign the new employee a free cabin, and expose only masked connection state in the UI. (Superseded by the Owner's later request to remove the employee-addition system.)
+- [x] Show a clear safe fallback that asks the Owner to choose a provider when automatic validation cannot identify the key. (Superseded by the Owner's later request to remove the employee-addition system.)
+- [x] Verify automatic onboarding with mocked provider validation paths and confirm keys are absent from browser responses, logs, Git, and audit events. (Superseded by the Owner's later request to remove the employee-addition system.)
 - [x] Replace the temporary office artwork with the Owner-selected compact cabin-floor image.
 - [x] Align Manager Cabin, Provider Locker, physical files/photos, Discussion Room, corridors, work cabins, desks, and test area hotspots to the selected image.
 - [ ] Map only configured employees to available cabin positions and preserve real discussion-to-cabin movement across the selected floor plan.
