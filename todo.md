@@ -63,9 +63,9 @@
 - [x] Remove visible office-flow buttons so Manager Cabin, Manager, DeepDiscuss Room, desks, laptops, and employee characters are the direct interaction targets.
 - [x] Show manager choices only after the Owner directly clicks the Manager, without displaying Change, Edit, or More Information as standing office controls.
 - [x] Make each employee laptop/desk a direct clickable work detail source, with no separate office navigation buttons.
-- [ ] Prepare the local Git repository for a safe GitHub handoff without adding remotes, tokens, API keys, encrypted vault files, runtime state, or local configuration to Git.
-- [ ] Document where the Owner enters provider secrets locally and how GitHub authorization will occur without sharing a PAT in chat.
-- [ ] Verify the button-free interaction flow and confirm the Git repository contains no secrets before handoff.
+- [x] Prepare the local Git repository for a safe GitHub handoff without adding remotes, tokens, API keys, encrypted vault files, runtime state, or local configuration to Git.
+- [x] Document where the Owner enters provider secrets locally and how GitHub authorization will occur without sharing a PAT in chat.
+- [x] Verify the button-free interaction flow and confirm the Git repository contains no secrets before handoff.
 - [x] Remove the sidebar and dashboard-style office navigation from the local office experience.
 - [x] Make a physical files/photo area on the Manager’s desk the direct upload trigger for owner-provided documents and images.
 - [x] Show the Manager’s upload request only after the Owner clicks the physical desk files/photos, without adding visible office buttons.

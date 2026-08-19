@@ -56,7 +56,7 @@ The browser UI is served locally; it is not exposed to other devices unless a fu
 
 ## Configure providers safely
 
-Open **Settings → Providers** in AetherOffice. Paste a provider key into the local setup form; it is sent to the local backend only, stored encrypted at rest, then cleared from the browser form. Local installations may alternatively provide server-side variables such as `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `ARCEE_API_KEY`, `GROK_API_KEY`, `SAMBANOVA_API_KEY`, or `OPENROUTER_API_KEY` through their secure runtime configuration. See the safe [local configuration template](docs/local-config.template.md) for variable names only. Never paste a secret into a public issue, commit it to Git, or place it in client-side JavaScript.
+At launch, click the physical **Provider Locker** in the Manager Cabin. Paste a provider key into the local setup form; it is sent to the local backend only, stored encrypted at rest, then cleared from the browser form. Local installations may alternatively provide server-side variables such as `GEMINI_API_KEY`, `MISTRAL_API_KEY`, `DEEPSEEK_API_KEY`, `ARCEE_API_KEY`, `GROK_API_KEY`, `SAMBANOVA_API_KEY`, or `OPENROUTER_API_KEY` through their secure runtime configuration. See the safe [local configuration template](docs/local-config.template.md) for variable names only. Never paste a secret into a public issue, commit it to Git, or place it in client-side JavaScript.
 
 External adapters use OpenAI-style chat-completions semantics where available. Each provider also accepts an optional model ID and endpoint override for a local installation. The built-in Manus provider coordinates synthesis using the server-side model helper.
 
@@ -74,6 +74,21 @@ AetherOffice launches directly into the **Owner-selected compact office floor**.
 > Do not commit the source office image, local upload path, provider vault, runtime state, or temporary media files. Only the managed storage reference belongs in the UI source.
 
 If a later image does not have enough clear cabins for the configured team, the compact-floor slot allocator keeps unassigned or overflow employees off the map rather than placing them into arbitrary artwork positions. The current visual reference is Owner-selected and must remain the sole background until the Owner explicitly replaces it.
+
+## Safe GitHub handoff
+
+Create or export a GitHub repository only through an authenticated browser authorization flow. In the project management interface, open **Settings → GitHub**, sign in to GitHub in the browser, choose the Owner account or organization, and create or select the destination repository. This avoids putting a personal access token in chat, source code, shell history, configuration files, or audit records.
+
+| Handoff step | Required action | Security boundary |
+|---|---|---|
+| Provider setup | Use the physical Provider Locker or secure local runtime variables. | Provider key values remain on the local backend and are encrypted at rest. |
+| Secret review | Confirm that `.env*`, `providers.enc.json`, `vault.key`, `runtime-state.json`, and audit folders are ignored and untracked. | Secret-bearing runtime data is excluded from Git. |
+| GitHub authorization | Complete GitHub sign-in in the browser-managed authorization screen. | No GitHub personal access token is sent in chat or embedded in the project. |
+| Repository export | Review the selected GitHub account and repository name before authorizing export. | AetherOffice never performs an automatic remote push from its workspace tools. |
+
+> Never send a GitHub personal access token in a message. If browser authorization is unavailable, create the repository yourself in GitHub and connect it only through a local, user-controlled Git credential flow.
+
+The project’s existing internal synchronization remote keeps its **fetch** endpoint but has a deliberately disabled **push** endpoint. It is not a user GitHub repository, and it cannot receive an automatic push from this workspace. A GitHub repository is connected only after the Owner reviews and authorizes the browser-based export flow.
 
 ## Security model
 

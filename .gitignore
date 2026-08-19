@@ -115,3 +115,8 @@ client/public/__manus__/version.json
 
 # AetherOffice project-local runtime state and imported workspace artifacts
 .aether-office/
+.aether-office/**
+**/providers.enc.json
+**/vault.key
+**/runtime-state.json
+**/audit/
