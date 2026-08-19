@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createGitCommit, createWorkspaceFile, readWorkspaceFile, revertGitCommit, runWorkspaceCommand, selectWorkspace, writeWorkspaceFile } from "./workspace";
+import { cancelWorkspaceExecution, createGitCommit, createWorkspaceFile, getWorkspaceExecution, getWorkspaceTree, readWorkspaceFile, revertGitCommit, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
 import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
@@ -36,6 +36,17 @@ describe("controlled workspace tools", () => {
     expect(await readFile(auditPath, "utf8")).toContain('"WHY":"Implement requested module."');
   });
 
+  it("returns a bounded navigable tree while excluding Git and dependency directories", async () => {
+    await mkdir(join(root, "src", "nested"));
+    await mkdir(join(root, "node_modules"));
+    await mkdir(join(root, ".git"));
+    await writeFile(join(root, "src", "nested", "view.tsx"), "export {}\n");
+    const tree = await getWorkspaceTree();
+    const sourceDirectory = tree.find((entry) => entry.path === "src");
+    expect(sourceDirectory?.children?.find((entry) => entry.path === "src/nested")?.children?.some((entry) => entry.path === "src/nested/view.tsx")).toBe(true);
+    expect(tree.some((entry) => entry.name === ".git" || entry.name === "node_modules")).toBe(false);
+  });
+
   it("does not permit a Safe Mode execution until a proposal is approved and the owner confirms the change", () => {
     const meeting = createMeeting("Add a file", ["Manus"]);
     setProposal(meeting.id, { objective: "Add a file", techStack: ["Node.js"], filesToCreateModify: ["src/new.ts"], risks: [], confidencePercent: 80 });
@@ -45,6 +56,17 @@ describe("controlled workspace tools", () => {
   it("rejects unapproved commands and shell-control characters before execution", async () => {
     await expect(runWorkspaceCommand("bash", [], "Manus", "Attempt unsupported shell execution.")).rejects.toThrow("not allowed");
     await expect(runWorkspaceCommand("pnpm", ["test; rm -rf /"], "Manus", "Attempt chained command.")).rejects.toThrow("Shell control characters");
+  });
+
+  it("tracks a bounded allowed execution and permits the Owner to cancel it", async () => {
+    const execution = startWorkspaceCommand("python3", ["-c", "import time\ntime.sleep(10)"], "Owner", "Exercise controlled cancellation.");
+    expect(getWorkspaceExecution(execution.id)?.status).toBe("running");
+    await expect(cancelWorkspaceExecution(execution.id, "Owner", "Owner stopped the controlled test command.")).resolves.toMatchObject({ cancelled: true });
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (getWorkspaceExecution(execution.id)?.status === "cancelled") break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    expect(getWorkspaceExecution(execution.id)?.status).toBe("cancelled");
   });
 
   it("requires explicit owner confirmation before local commit or revert actions", async () => {

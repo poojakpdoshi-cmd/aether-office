@@ -2,7 +2,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { appendFile, lstat, mkdir, readFile, readdir, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { execFile } from "node:child_process";
+import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import type { ControlledTool, EmployeeId } from "../../shared/aether";
 import { addActivity } from "./state";
@@ -10,6 +10,9 @@ import { addActivity } from "./state";
 const execFileAsync = promisify(execFile);
 const MAX_FILE_BYTES = 1_000_000;
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+const MAX_EXECUTION_OUTPUT_BYTES = 2_000_000;
+const MAX_EXECUTION_HISTORY = 20;
+const ALLOWED_WORKSPACE_COMMANDS = new Set(["npm", "pnpm", "yarn", "bun", "python", "python3", "pytest"]);
 const ALLOWED_UPLOAD_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf", ".txt", ".md", ".csv", ".json", ".zip", ".ts", ".tsx", ".js", ".jsx", ".py", ".java", ".go", ".rs", ".html", ".css", ".scss", ".yml", ".yaml"]);
 
 export type AuditRecord = {
@@ -26,6 +29,31 @@ export type WorkspaceSummary = {
   selected: boolean;
   gitAvailable: boolean;
 };
+
+export type WorkspaceExecution = {
+  id: string;
+  command: string;
+  args: string[];
+  status: "running" | "cancelling" | "completed" | "failed" | "cancelled";
+  stdout: string;
+  stderr: string;
+  exitCode: number | null;
+  startedAt: string;
+  completedAt: string | null;
+};
+
+type ActiveExecution = {
+  execution: WorkspaceExecution;
+  child: ReturnType<typeof spawn>;
+  tool: "run_command" | "run_tests";
+  who: AuditRecord["WHO"];
+  why: string;
+  cancelled: boolean;
+  timeout: ReturnType<typeof setTimeout>;
+};
+
+const activeExecutions = new Map<string, ActiveExecution>();
+const completedExecutions = new Map<string, WorkspaceExecution>();
 
 let workspaceRoot: string | null = process.env.AETHER_WORKSPACE ? resolve(process.env.AETHER_WORKSPACE) : null;
 
@@ -125,6 +153,38 @@ export async function listDirectory(relativePath = ".", who: AuditRecord["WHO"] 
     const path = await resolvedExistingPath(relativePath);
     const entries = await readdir(path, { withFileTypes: true });
     return entries.filter((entry) => entry.name !== ".git").map((entry) => ({ name: entry.name, type: entry.isDirectory() ? "directory" : entry.isFile() ? "file" : "other" })).sort((a, b) => a.type.localeCompare(b.type) || a.name.localeCompare(b.name));
+  });
+}
+
+export type WorkspaceTreeEntry = {
+  name: string;
+  path: string;
+  type: "file" | "directory";
+  children?: WorkspaceTreeEntry[];
+};
+
+export async function getWorkspaceTree(who: AuditRecord["WHO"] = "Owner", why = "Browse the selected workspace tree.") {
+  return withAudit({ who, what: "list_directory", file: "workspace tree", why }, async () => {
+    const root = requireWorkspace();
+    let inspectedEntries = 0;
+    const maximumDepth = 5;
+    const maximumEntries = 500;
+    const visit = async (directory: string, depth: number): Promise<WorkspaceTreeEntry[]> => {
+      if (depth > maximumDepth || inspectedEntries >= maximumEntries) return [];
+      const entries = await readdir(directory, { withFileTypes: true });
+      const visibleEntries = entries.filter((entry) => entry.name !== ".git" && entry.name !== "node_modules" && entry.name !== ".aether-office").sort((a, b) => a.isDirectory() === b.isDirectory() ? a.name.localeCompare(b.name) : a.isDirectory() ? -1 : 1);
+      const tree: WorkspaceTreeEntry[] = [];
+      for (const entry of visibleEntries) {
+        if (inspectedEntries >= maximumEntries) break;
+        inspectedEntries += 1;
+        const fullPath = join(directory, entry.name);
+        const path = relative(root, fullPath);
+        if (entry.isDirectory()) tree.push({ name: entry.name, path, type: "directory", children: await visit(fullPath, depth + 1) });
+        else if (entry.isFile()) tree.push({ name: entry.name, path, type: "file" });
+      }
+      return tree;
+    };
+    return visit(root, 0);
   });
 }
 
@@ -275,29 +335,108 @@ export async function revertGitCommit(commit: string, who: AuditRecord["WHO"], w
 }
 
 export async function runWorkspaceCommand(command: string, args: string[], who: AuditRecord["WHO"], why: string) {
-  return withAudit({ who, what: "run_command", file: command, why }, async () => {
-    const root = requireWorkspace();
-    const allowed = new Set(["npm", "pnpm", "yarn", "bun", "python", "python3", "pytest"]);
-    if (!allowed.has(command)) throw new Error("This command is not allowed by the controlled execution policy.");
-    if (args.some((arg) => arg.includes(";") || arg.includes("&&") || arg.includes("|") || arg.includes("`"))) throw new Error("Shell control characters are not allowed in controlled command arguments.");
-    const { stdout, stderr } = await execFileAsync(command, args, { cwd: root, timeout: 120_000, maxBuffer: 2_000_000 });
-    return { stdout, stderr };
-  });
+  const execution = startWorkspaceCommand(command, args, who, why);
+  return waitForWorkspaceExecution(execution.id);
 }
 
 export async function runWorkspaceTests(who: AuditRecord["WHO"], why: string) {
-  return withAudit({ who, what: "run_tests", file: "workspace", why }, async () => {
-    const root = requireWorkspace();
-    const packagePath = join(root, "package.json");
-    try {
-      await stat(packagePath);
-      const packageManager = await stat(join(root, "pnpm-lock.yaml")).then(() => "pnpm").catch(() => "npm");
-      const { stdout, stderr } = await execFileAsync(packageManager, [packageManager === "pnpm" ? "test" : "test"], { cwd: root, timeout: 120_000, maxBuffer: 2_000_000 });
-      return { command: `${packageManager} test`, stdout, stderr };
-    } catch (error) {
-      if (error instanceof Error && "code" in error && error.code === "ENOENT") throw new Error("No supported package test script was found in the workspace.");
-      throw error;
-    }
+  const execution = await startWorkspaceTests(who, why);
+  const result = await waitForWorkspaceExecution(execution.id);
+  return { command: `${result.command} ${result.args.join(" ")}`.trim(), stdout: result.stdout, stderr: result.stderr };
+}
+
+function assertAllowedCommand(command: string, args: string[]) {
+  if (!ALLOWED_WORKSPACE_COMMANDS.has(command)) throw new Error("This command is not allowed by the controlled execution policy.");
+  if (args.some((arg) => arg.includes(";") || arg.includes("&&") || arg.includes("|") || arg.includes("`"))) throw new Error("Shell control characters are not allowed in controlled command arguments.");
+}
+
+function appendExecutionOutput(existing: string, chunk: Buffer) {
+  if (existing.length >= MAX_EXECUTION_OUTPUT_BYTES) return existing;
+  return `${existing}${chunk.toString("utf8").slice(0, MAX_EXECUTION_OUTPUT_BYTES - existing.length)}`;
+}
+
+function rememberCompletedExecution(execution: WorkspaceExecution) {
+  completedExecutions.set(execution.id, execution);
+  while (completedExecutions.size > MAX_EXECUTION_HISTORY) {
+    const first = completedExecutions.keys().next().value;
+    if (first) completedExecutions.delete(first);
+    else break;
+  }
+}
+
+function launchWorkspaceExecution(input: { command: string; args: string[]; who: AuditRecord["WHO"]; why: string; tool: "run_command" | "run_tests" }) {
+  assertAllowedCommand(input.command, input.args);
+  const root = requireWorkspace();
+  const id = randomUUID();
+  const execution: WorkspaceExecution = { id, command: input.command, args: input.args, status: "running", stdout: "", stderr: "", exitCode: null, startedAt: new Date().toISOString(), completedAt: null };
+  const child = spawn(input.command, input.args, { cwd: root, shell: false, stdio: ["ignore", "pipe", "pipe"] });
+  const timeout = setTimeout(() => {
+    const active = activeExecutions.get(id);
+    if (!active) return;
+    active.cancelled = true;
+    active.execution.status = "cancelling";
+    active.execution.stderr = `${active.execution.stderr}\nExecution exceeded the 120-second limit and was cancelled.\n`;
+    active.child.kill("SIGTERM");
+  }, 120_000);
+  timeout.unref();
+  const active: ActiveExecution = { execution, child, tool: input.tool, who: input.who, why: input.why, cancelled: false, timeout };
+  activeExecutions.set(id, active);
+  child.stdout.on("data", (chunk: Buffer) => { execution.stdout = appendExecutionOutput(execution.stdout, chunk); });
+  child.stderr.on("data", (chunk: Buffer) => { execution.stderr = appendExecutionOutput(execution.stderr, chunk); });
+  child.on("error", (error) => { execution.stderr = appendExecutionOutput(execution.stderr, Buffer.from(error.message)); });
+  child.on("close", (exitCode) => {
+    clearTimeout(timeout);
+    execution.exitCode = exitCode;
+    execution.completedAt = new Date().toISOString();
+    execution.status = active.cancelled ? "cancelled" : exitCode === 0 ? "completed" : "failed";
+    activeExecutions.delete(id);
+    rememberCompletedExecution(execution);
+    void appendAudit({ WHO: input.who, WHAT: input.tool, "WHICH FILE": `${input.command} ${input.args.join(" ")}`.trim(), WHEN: execution.completedAt, WHY: input.why, result: execution.status === "completed" ? "success" : "error" });
+  });
+  return execution;
+}
+
+export function startWorkspaceCommand(command: string, args: string[], who: AuditRecord["WHO"], why: string) {
+  return launchWorkspaceExecution({ command, args, who, why, tool: "run_command" });
+}
+
+export async function startWorkspaceTests(who: AuditRecord["WHO"], why: string) {
+  const root = requireWorkspace();
+  try {
+    await stat(join(root, "package.json"));
+    const packageManager = await stat(join(root, "pnpm-lock.yaml")).then(() => "pnpm").catch(() => "npm");
+    return launchWorkspaceExecution({ command: packageManager, args: ["test"], who, why, tool: "run_tests" });
+  } catch (error) {
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") throw new Error("No supported package test script was found in the workspace.");
+    throw error;
+  }
+}
+
+export function getWorkspaceExecution(id: string) {
+  return activeExecutions.get(id)?.execution ?? completedExecutions.get(id) ?? null;
+}
+
+export async function cancelWorkspaceExecution(id: string, who: AuditRecord["WHO"], why: string) {
+  const active = activeExecutions.get(id);
+  if (!active) return { cancelled: false, execution: getWorkspaceExecution(id) };
+  active.cancelled = true;
+  active.execution.status = "cancelling";
+  active.child.kill("SIGTERM");
+  setTimeout(() => { if (activeExecutions.has(id)) active.child.kill("SIGKILL"); }, 1_500).unref();
+  await appendAudit({ WHO: who, WHAT: active.tool, "WHICH FILE": active.execution.command, WHEN: new Date().toISOString(), WHY: why, result: "success" });
+  return { cancelled: true, execution: active.execution };
+}
+
+async function waitForWorkspaceExecution(id: string): Promise<WorkspaceExecution> {
+  return new Promise((resolve, reject) => {
+    const interval = setInterval(() => {
+      const execution = getWorkspaceExecution(id);
+      if (!execution) { clearInterval(interval); reject(new Error("The controlled execution record was unavailable.")); return; }
+      if (execution.status === "running" || execution.status === "cancelling") return;
+      clearInterval(interval);
+      resolve(execution);
+    }, 50);
+    interval.unref();
   });
 }
 

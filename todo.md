@@ -13,9 +13,9 @@
 - [x] Implement secure server-side provider secret handling with no secrets in frontend bundles, logs, Git, or committed environment files.
 - [x] Implement controlled workspace tools: read_file, write_file, edit_file, create_file, delete_file, list_directory, search_files, move_file, run_command, run_tests, git_diff, and git_status.
 - [x] Implement per-call audit logging with all required fields: WHO, WHAT, WHICH FILE, WHEN, and WHY.
-- [ ] Build workspace file tree, editor tabs, search/replace, before/after diff viewer, save indicator, undo/redo, and selected-change acceptance flow.
-- [ ] Implement bounded command and test execution with visible output, explicit permissions, cancellation, and retry limits.
-- [ ] Implement Git workspace panel for branch, changes, diffs, history, commit creation, guarded revert, and an absolute prohibition on automatic remote push.
+- [x] Build workspace file tree, editor tabs, search/replace, before/after diff viewer, save indicator, undo/redo, and selected-change acceptance flow.
+- [x] Implement bounded command and test execution with visible output, explicit permissions, cancellation, and retry limits.
+- [x] Implement Git workspace panel for branch, changes, diffs, history, commit creation, guarded revert, and an absolute prohibition on automatic remote push.
 - [x] Implement chat uploads for PNG, JPG, WEBP, GIF, PDF, TXT, MD, CSV, JSON, ZIP, and source files, including type/size validation.
 - [x] Route uploaded images only to configured vision-capable providers and preserve upload metadata without leaking files or secrets.
 - [x] Implement employee profiles and performance history with task count, average score, and recent performance.
@@ -101,6 +101,8 @@
 - [x] Remove the visible blue manager interaction marker from the default office map while retaining an accessible Manager Cabin interaction target.
 - [x] Expand the Discussion Room visual and interaction footprint without introducing visible launch text or controls.
 - [x] Reframe the supplied office map into a 16:9 horizontal presentation while preserving all map content and default text-free launch behavior.
-- [ ] Record final Owner approval of the generated 16:9 horizontal office artwork before treating it as the permanent selected office map.
+- [x] Record final Owner approval of the generated 16:9 horizontal office artwork before treating it as the permanent selected office map.
 - [x] Capture visual verification that the generated 16:9 office artwork retains the Manager Cabin, enlarged Discussion Room, employee cabins, and direct interactive zones.
 - [x] Implement and test compositor-friendly real-status walking and work-state motion, preserving responsive mobile scale and CSS reduced-motion support.
+- [x] Add a navigable expanded workspace file tree beyond the root-level file list.
+- [x] Add multi-file editor tabs with tab selection and close behavior.
