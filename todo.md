@@ -135,3 +135,5 @@
 - [x] Remove the visible white discussion-room outline/box while retaining the room, people, composition, and invisible interaction target.
 - [x] Update the office-art reference and verify the text-free launch plus Manager Cabin and Discussion Room hotspot alignment after the focused visual correction.
 - [x] Recover the Manager Cabin character from a prior valid project office asset so malformed anatomy is removed without consuming a new image-generation quota.
+- [x] Remove the failed Manager Cabin recovery overlay, which incorrectly enlarged and distorted the manager instead of repairing the pose.
+- [x] Restore a visually coherent Manager Cabin without making a new image-generation claim until a seamless background correction is available.
