@@ -4,10 +4,11 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether";
-import { runDeepDiscuss } from "./aether/deepDiscuss";
+import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
+import { evaluateImplementation } from "./aether/evaluation";
 import { configureProvider, listProviderStatuses, removeConfiguredProvider } from "./aether/providers";
 import { applyProposalAction, assertExecutionAllowed, getDashboardState, setApprovalMode } from "./aether/state";
-import { createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, getGitDiff, getGitHistory, getGitStatus, getWorkspaceSummary, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readWorkspaceFile, revertGitCommit, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, writeWorkspaceFile } from "./aether/workspace";
+import { createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, getGitDiff, getGitHistory, getGitStatus, getWorkspaceSummary, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, writeWorkspaceFile } from "./aether/workspace";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -60,6 +61,8 @@ export const appRouter = router({
     createCommit: publicProcedure.input(z.object({ message: z.string().trim().min(3).max(300), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000), ownerConfirmed: z.boolean() })).mutation(({ input }) => createGitCommit(input.message, input.who as "Owner", input.why, input.ownerConfirmed)),
     revertCommit: publicProcedure.input(z.object({ commit: z.string().trim().min(4).max(100), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000), ownerConfirmed: z.boolean() })).mutation(({ input }) => revertGitCommit(input.commit, input.who as "Owner", input.why, input.ownerConfirmed)),
     importUpload: publicProcedure.input(z.object({ fileName: z.string().min(1).max(300), mimeType: z.string().max(300), base64: z.string().min(1).max(30_000_000), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000), ownerConfirmed: z.literal(true) })).mutation(({ input }) => importWorkspaceUpload({ ...input, who: input.who as "Owner" })),
+    inspectImage: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), prompt: z.string().trim().min(3).max(2_000) })).mutation(async ({ input }) => { const image = await readWorkspaceImage(input.path, "Manus", "Inspect owner-provided visual reference."); return { analysis: await inspectVisualReference(image.dataUrl, input.prompt), mimeType: image.mimeType }; }),
+    evaluate: publicProcedure.input(z.object({ employee: z.enum(["Manus", "Gemini", "Mistral", "DeepSeek", "Arcee", "Grok", "SambaNova"]), correctness: z.number().min(0).max(100), requirements: z.number().min(0).max(100), codeQuality: z.number().min(0).max(100), security: z.number().min(0).max(100), performance: z.number().min(0).max(100), maintainability: z.number().min(0).max(100), reasoning: z.string().trim().min(3).max(4_000), recommendations: z.string().trim().min(3).max(4_000) })).mutation(({ input }) => evaluateImplementation(input.employee, input)),
   }),
 
   // TODO: add feature routers here, e.g.

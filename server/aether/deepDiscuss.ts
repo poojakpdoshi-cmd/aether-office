@@ -10,6 +10,7 @@ import {
   setProposal,
 } from "./state";
 import { getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
+import { invokeLLM } from "../_core/llm";
 
 const employeeInstructions: Record<EmployeeId, string> = {
   Manus: "You are Manus, the project manager. Establish scope, constraints, success criteria, and a safe owner-approved implementation path.",
@@ -43,6 +44,7 @@ export async function runDeepDiscuss(task: string) {
 
   const meeting = createMeeting(task, selectedEmployees);
   try {
+    resetEmployeeStatuses();
     for (const employee of selectedEmployees) setEmployeeStatus(employee, "IN_MEETING");
     await runRound(meeting.id, task, selectedEmployees, "analysis", []);
 
@@ -64,7 +66,7 @@ export async function runDeepDiscuss(task: string) {
     failMeeting(meeting.id, message);
     throw error;
   } finally {
-    resetEmployeeStatuses();
+    // Keep the last genuine state visible so the local office can reflect the completed or failed meeting.
   }
 }
 
@@ -80,6 +82,9 @@ async function runRound(
     : "No earlier responses are available for this first round.";
 
   for (const employee of employees) {
+    for (const teammate of employees) {
+      if (teammate !== employee) setEmployeeStatus(teammate, "WAITING");
+    }
     setEmployeeStatus(employee, round === "analysis" ? "THINKING" : "REVIEWING");
     const provider = getEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
@@ -90,6 +95,7 @@ async function runRound(
     });
     addDiscussionMessage(meetingId, { employee, provider, round, content });
     addActivity({ kind: "provider", message: `${employee} completed ${round}.`, employee });
+    setEmployeeStatus(employee, "WAITING");
   }
 }
 
@@ -120,4 +126,18 @@ export function parseProposal(content: string, fallbackObjective: string): TeamP
     risks: parsed.risks.map(String).slice(0, 12),
     confidencePercent: Math.min(100, Math.max(0, Math.round(Number(parsed.confidencePercent) || 0))),
   };
+}
+
+export async function inspectVisualReference(dataUrl: string, prompt: string) {
+  const response = await invokeLLM({
+    model: "gemini-3-flash-preview",
+    messages: [
+      { role: "system", content: "You are Manus acting as a visual requirements analyst. Inspect the provided image, describe observable UI/layout details, and identify implementation considerations. Do not invent content that is not visible." },
+      { role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: dataUrl, detail: "auto" } }] },
+    ],
+    maxTokens: 1800,
+  });
+  const content = response.choices[0]?.message.content;
+  if (typeof content !== "string" || !content.trim()) throw new Error("The vision-capable provider returned an empty analysis.");
+  return content;
 }

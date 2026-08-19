@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
+import { LiveOffice } from "@/components/LiveOffice";
 import {
   Activity,
   Bot,
@@ -25,7 +26,7 @@ import {
   TerminalSquare,
   UsersRound,
 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type WorkspaceView =
   | "Office"
@@ -158,6 +159,10 @@ export default function Home() {
   const [workspaceInput, setWorkspaceInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [uploadedAttachment, setUploadedAttachment] = useState<string | null>(null);
+  const [visionAnalysis, setVisionAnalysis] = useState<string | null>(null);
+  const [draftContent, setDraftContent] = useState("");
+  const [commitMessage, setCommitMessage] = useState("");
+  const [ownerConfirmed, setOwnerConfirmed] = useState(false);
   const providerQuery = trpc.aether.providers.useQuery();
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
@@ -187,7 +192,16 @@ export default function Home() {
   const gitStatusQuery = trpc.aether.gitStatus.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const gitDiffQuery = trpc.aether.gitDiff.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const uploadMutation = trpc.aether.importUpload.useMutation({ onSuccess: (result) => { setUploadedAttachment(result.relativePath); directoryQuery.refetch(); } });
+  const inspectImageMutation = trpc.aether.inspectImage.useMutation({ onSuccess: (result) => setVisionAnalysis(result.analysis) });
+  const writeFileMutation = trpc.aether.writeFile.useMutation({ onSuccess: () => { fileQuery.refetch(); gitDiffQuery.refetch(); } });
+  const runTestsMutation = trpc.aether.runTests.useMutation();
+  const createCommitMutation = trpc.aether.createCommit.useMutation({ onSuccess: () => { gitStatusQuery.refetch(); gitDiffQuery.refetch(); setCommitMessage(""); } });
+  const gitHistoryQuery = trpc.aether.gitHistory.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.gitAvailable) });
   const workspaceLabel = useMemo(() => workspaceQuery.data?.selected ? workspaceQuery.data.root?.split("/").pop() ?? "Selected workspace" : submittedTask ? "Task staged" : "No workspace selected", [submittedTask, workspaceQuery.data]);
+
+  useEffect(() => {
+    if (fileQuery.data?.content !== undefined) setDraftContent(fileQuery.data.content);
+  }, [fileQuery.data?.content, selectedFile]);
 
   const handleTaskSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -228,7 +242,11 @@ export default function Home() {
     reader.readAsDataURL(file);
   };
 
-  const renderOffice = () => (
+  const inspectAttachedImage = () => {
+    if (uploadedAttachment) inspectImageMutation.mutate({ path: uploadedAttachment, prompt: submittedTask || "Inspect this visual reference and identify observable UI and implementation details for the development team." });
+  };
+
+  const renderOfficeLegacy = () => (
     <div className="space-y-5">
       <section className="office-hero overflow-hidden rounded-2xl border border-white/10 p-6 sm:p-7">
         <div className="relative z-10 flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
@@ -299,6 +317,8 @@ export default function Home() {
     </div>
   );
 
+  const renderOffice = () => <LiveOffice employees={liveEmployees} activity={dashboard?.activities[0]?.message} onOpenChat={() => setActiveView("Chat")} />;
+
   const renderChat = () => (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
       <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">
@@ -343,7 +363,9 @@ export default function Home() {
             <label className="flex cursor-pointer items-center justify-center rounded-md border border-white/10 px-3 text-xs text-slate-300 hover:bg-white/[0.06]"><input type="file" className="sr-only" onChange={(event) => uploadFile(event.target.files?.[0])} />Attach</label>
             <Button type="submit" className="bg-sky-300 text-slate-950 hover:bg-sky-200"><Plus className="mr-1.5 h-4 w-4" />Stage task</Button>
           </div>
-          {uploadedAttachment ? <p className="px-2 pb-1 pt-2 text-[11px] text-emerald-200">Attached to selected workspace: {uploadedAttachment}</p> : null}
+          {uploadedAttachment ? <div className="px-2 pb-1 pt-2"><p className="text-[11px] text-emerald-200">Attached to selected workspace: {uploadedAttachment}</p>{/\.(png|jpe?g|webp|gif)$/i.test(uploadedAttachment) ? <Button type="button" size="sm" variant="outline" disabled={inspectImageMutation.isPending} onClick={inspectAttachedImage} className="mt-2 border-sky-300/20 bg-sky-300/[0.06] text-sky-100 hover:bg-sky-300/[0.12]">{inspectImageMutation.isPending ? "Inspecting visual…" : "Inspect image with Manus"}</Button> : null}</div> : null}
+          {visionAnalysis ? <div className="mx-2 mb-2 rounded-lg border border-violet-300/15 bg-violet-300/[0.06] p-3 text-xs leading-5 text-violet-100"><p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-violet-200">Vision analysis</p>{visionAnalysis}</div> : null}
+          {inspectImageMutation.error ? <p className="px-2 pb-1 pt-2 text-[11px] text-rose-300">The visual reference could not be inspected. Confirm that it is an uploaded PNG, JPG, WEBP, or GIF.</p> : null}
           {uploadMutation.error ? <p className="px-2 pb-1 pt-2 text-[11px] text-rose-300">The attachment could not be imported. Select a workspace and use a supported file type.</p> : null}
         </form>
       </section>
@@ -426,9 +448,15 @@ export default function Home() {
     </div>
   );
 
-  const renderEditor = () => selectedFile ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">{selectedFile}</p><p className="mt-1 text-xs text-slate-400">Read-only workspace inspection. AI edits require an approved plan and controlled tool call.</p></div><Button size="sm" variant="outline" onClick={() => setActiveView("Files")} className="border-white/10 bg-white/[0.03] text-slate-200">Back to files</Button></div><pre className="mt-5 max-h-[580px] overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{fileQuery.isLoading ? "Reading file…" : fileQuery.data?.content ?? "No file content available."}</pre></section> : <EmptyWorkspace title="No file open" detail="Choose a file from the selected workspace to inspect it. Controlled AI edits will be shown as owner-reviewable diffs." action="Open Files to select a file." />;
+  const renderEditor = () => selectedFile ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">{selectedFile}</p><p className="mt-1 text-xs text-slate-400">Saving is a controlled operation: an approved TEAM PROPOSAL and explicit owner confirmation are required in Safe Mode.</p></div><Button size="sm" variant="outline" onClick={() => setActiveView("Files")} className="border-white/10 bg-white/[0.03] text-slate-200">Back to files</Button></div><textarea value={draftContent} onChange={(event) => setDraftContent(event.target.value)} className="mt-5 min-h-[420px] w-full rounded-xl border border-white/[0.08] bg-black/25 p-4 font-mono text-xs leading-6 text-slate-300 outline-none focus:border-sky-300/30" aria-label="Workspace file editor" />{latestMeeting?.state === "APPROVED" ? <div className="mt-4 flex flex-wrap items-center gap-3"><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />I confirm this controlled change</label><Button size="sm" disabled={!ownerConfirmed || writeFileMutation.isPending} onClick={() => writeFileMutation.mutate({ path: selectedFile, content: draftContent, who: "Owner", why: "Owner saved a reviewed workspace edit.", meetingId: latestMeeting.id, ownerConfirmed })} className="bg-sky-300 text-slate-950 hover:bg-sky-200">{writeFileMutation.isPending ? "Saving…" : "Save controlled change"}</Button></div> : <p className="mt-4 text-xs text-amber-200">Approve a TEAM PROPOSAL before meaningful workspace edits can be saved.</p>}{writeFileMutation.error ? <p className="mt-3 text-xs text-rose-300">The controlled save was blocked or failed. Review the approval state and workspace rules.</p> : null}</section> : <EmptyWorkspace title="No file open" detail="Choose a file from the selected workspace to inspect and edit it through the approval-gated tool layer." action="Open Files to select a file." />;
 
-  const renderGit = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">{!workspaceQuery.data?.gitAvailable ? <EmptyWorkspace title="Git workspace unavailable" detail="Select a directory that contains a Git repository to inspect branch status, diffs, history, and guarded commit actions." action="Automatic remote push is permanently disabled." /> : <><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Git workspace</p><p className="mt-1 text-xs text-slate-400">Read-only inspection is available now. Destructive actions require explicit owner confirmation.</p></div><Button size="sm" variant="outline" onClick={() => { gitStatusQuery.refetch(); gitDiffQuery.refetch(); }} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><div className="mt-5 grid gap-5 lg:grid-cols-2"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Status</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitStatusQuery.data || "Clean working tree."}</pre></div><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Diff</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitDiffQuery.data || "No uncommitted diff."}</pre></div></div></>}</section>;
+  const renderDiff = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Reviewable diff</p><p className="mt-1 text-xs text-slate-400">This is the real Git diff from the selected workspace. No remote push is implemented.</p></div><Button size="sm" variant="outline" onClick={() => gitDiffQuery.refetch()} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><pre className="mt-5 min-h-72 max-h-[620px] overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{workspaceQuery.data?.gitAvailable ? gitDiffQuery.data || "No uncommitted diff." : "Select a Git workspace to inspect diffs."}</pre></section>;
+
+  const renderTests = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Controlled tests</p><p className="mt-1 text-xs text-slate-400">Test execution runs only in the selected workspace and requires an approved plan plus owner confirmation.</p>{latestMeeting?.state === "APPROVED" ? <div className="mt-5"><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />I confirm this test run</label><Button size="sm" disabled={!ownerConfirmed || runTestsMutation.isPending} onClick={() => runTestsMutation.mutate({ who: "Owner", why: "Owner initiated the approved workspace test run.", meetingId: latestMeeting.id, ownerConfirmed })} className="mt-3 bg-sky-300 text-slate-950 hover:bg-sky-200">{runTestsMutation.isPending ? "Running tests…" : "Run tests"}</Button></div> : <p className="mt-5 text-xs text-amber-200">Approve a TEAM PROPOSAL before test execution.</p>}<pre className="mt-5 min-h-72 max-h-[500px] overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{runTestsMutation.data ? `${runTestsMutation.data.command}\n\n${runTestsMutation.data.stdout}\n${runTestsMutation.data.stderr}` : "No controlled test run has occurred."}</pre></section>;
+
+  const renderGit = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">{!workspaceQuery.data?.gitAvailable ? <EmptyWorkspace title="Git workspace unavailable" detail="Select a directory that contains a Git repository to inspect branch status, diffs, history, and guarded commit actions." action="Automatic remote push is permanently disabled." /> : <><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Git workspace</p><p className="mt-1 text-xs text-slate-400">No automatic remote push is implemented. Commits require explicit owner confirmation.</p></div><Button size="sm" variant="outline" onClick={() => { gitStatusQuery.refetch(); gitDiffQuery.refetch(); gitHistoryQuery.refetch(); }} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><div className="mt-5 grid gap-5 lg:grid-cols-2"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Status</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitStatusQuery.data || "Clean working tree."}</pre></div><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Diff</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitDiffQuery.data || "No uncommitted diff."}</pre></div></div><div className="mt-5 rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><p className="text-xs font-semibold text-white">Create local commit</p><div className="mt-3 flex flex-wrap gap-2"><Input value={commitMessage} onChange={(event) => setCommitMessage(event.target.value)} placeholder="Commit message" className="max-w-md border-white/10 bg-black/20 text-slate-100" /><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />Confirm</label><Button size="sm" disabled={!commitMessage.trim() || !ownerConfirmed || createCommitMutation.isPending} onClick={() => createCommitMutation.mutate({ message: commitMessage, who: "Owner", why: "Owner created a local commit.", ownerConfirmed })} className="bg-white text-slate-950 hover:bg-slate-200">Commit locally</Button></div></div><div className="mt-5"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Recent history</p>{gitHistoryQuery.data?.length ? <div className="space-y-2">{gitHistoryQuery.data.map((commit) => <div key={commit.hash} className="rounded-lg border border-white/[0.08] bg-black/15 p-3 text-xs text-slate-300"><span className="font-mono text-sky-200">{commit.shortHash}</span><span className="ml-3">{commit.subject}</span><span className="ml-3 text-slate-500">{commit.author}</span></div>)}</div> : <p className="text-xs text-slate-500">No commit history available.</p>}</div></>}</section>;
+
+  const renderEmployees = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Employee profiles and performance</p><p className="mt-1 text-xs text-slate-400">Statistics update only after a recorded evaluation; no fabricated performance data is shown.</p><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{dashboard?.employees.map((employee) => <article key={employee.id} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><div className="flex items-center justify-between"><p className="text-sm font-semibold text-white">{employee.id}</p><StatusPill status={employee.status as EmployeeStatus} /></div><p className="mt-3 text-xs text-slate-400">Completed tasks <span className="float-right text-slate-100">{employee.taskCount}</span></p><p className="mt-2 text-xs text-slate-400">Average score <span className="float-right text-slate-100">{employee.averageScore === null ? "—" : employee.averageScore.toFixed(1)}</span></p><p className="mt-2 text-xs text-slate-400">Recent scores <span className="float-right text-slate-100">{employee.recentPerformance.length ? employee.recentPerformance.join(", ") : "—"}</span></p></article>)}</div><div className="mt-5 rounded-xl border border-sky-300/15 bg-sky-300/[0.06] p-4 text-xs leading-5 text-sky-100">Evaluation rubric: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.</div></section>;
 
   const renderView = () => {
     if (activeView === "Office") return renderOffice();
@@ -451,7 +479,7 @@ export default function Home() {
 
   return (
     <div className="aether-shell min-h-screen bg-[#070b16] text-slate-100">
-      <aside className={cn("aether-sidebar fixed inset-y-0 left-0 z-30 flex flex-col border-r border-white/[0.08] bg-[#090f1e]/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200", sidebarOpen ? "w-[248px]" : "w-[76px]")}>
+      <aside className={cn("aether-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/[0.08] bg-[#090f1e]/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200 md:flex", sidebarOpen ? "w-[248px]" : "w-[76px]")}>
         <div className="flex h-11 items-center gap-3 px-1.5">
           <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-300 via-blue-400 to-violet-500 text-slate-950 shadow-lg shadow-blue-500/20"><Sparkles className="h-4 w-4" /></div>
           {sidebarOpen ? <div className="min-w-0"><p className="text-sm font-semibold tracking-[-0.02em] text-white">AetherOffice</p><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-sky-200/70">AI Software Company</p></div> : null}
@@ -475,7 +503,7 @@ export default function Home() {
         </div>
       </aside>
 
-      <main className={cn("min-h-screen transition-[padding] duration-200", sidebarOpen ? "pl-[248px]" : "pl-[76px]")}>
+      <main className={cn("min-h-screen transition-[padding] duration-200", sidebarOpen ? "md:pl-[248px]" : "md:pl-[76px]")}>
         <header className="sticky top-0 z-20 flex min-h-[72px] items-center justify-between gap-4 border-b border-white/[0.07] bg-[#070b16]/85 px-5 py-3 backdrop-blur-xl sm:px-7">
           <div><p className="text-sm font-semibold text-white">{activeView}</p><p className="mt-0.5 text-xs text-slate-500">{activeView === "Office" ? "Company overview" : "Local workspace"}</p></div>
           <div className="flex items-center gap-2">

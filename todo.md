@@ -28,3 +28,8 @@
 - [x] Replace static employee status presentation with real event-driven state transitions from meeting, tool, execution, review, and test events.
 - [x] Add a persisted DeepDiscuss round state machine with provider-backed messages, dynamic employee selection, and final synthesis.
 - [x] Enforce persisted Safe Mode, Team Mode, and Autonomous Mode policies in backend orchestration before any controlled tool execution.
+- [x] Replace the dashboard-style office overview with a live cartoon office game scene inspired by the Owner’s visual reference.
+- [x] Create distinct animated employee characters, a meeting table, desk workstations, and a spatial office layout with clear role identity.
+- [x] Animate employees meeting, walking to assigned workstations, typing/working, reviewing, testing, waiting, and completing tasks.
+- [x] Bind all visual character motion and office locations to real DeepDiscuss employee status transitions without fabricating work activity.
+- [x] Verify the cartoon office flow at desktop and mobile breakpoints while preserving reduced-motion accessibility.

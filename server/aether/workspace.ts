@@ -136,6 +136,20 @@ export async function readWorkspaceFile(relativePath: string, who: AuditRecord["
   });
 }
 
+export async function readWorkspaceImage(relativePath: string, who: AuditRecord["WHO"] = "Owner", why = "Inspect an uploaded visual reference.") {
+  return withAudit({ who, what: "read_file", file: relativePath, why }, async () => {
+    const extension = extname(relativePath).toLowerCase();
+    const mimeTypes: Record<string, string> = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
+    const mimeType = mimeTypes[extension];
+    if (!mimeType) throw new Error("Only supported image uploads can be sent to a vision-capable provider.");
+    const path = await resolvedExistingPath(relativePath);
+    const details = await stat(path);
+    if (!details.isFile() || details.size > 10 * 1024 * 1024) throw new Error("The image file is not safe to inspect.");
+    const bytes = await readFile(path);
+    return { dataUrl: `data:${mimeType};base64,${bytes.toString("base64")}`, mimeType, size: details.size };
+  });
+}
+
 export async function writeWorkspaceFile(relativePath: string, content: string, who: AuditRecord["WHO"], why: string) {
   return withAudit({ who, what: "write_file", file: relativePath, why }, async () => {
     if (Buffer.byteLength(content, "utf8") > MAX_FILE_BYTES) throw new Error("Writing more than 1 MB in one controlled operation is not allowed.");
