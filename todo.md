@@ -107,6 +107,8 @@
 - [x] Add a navigable expanded workspace file tree beyond the root-level file list.
 - [x] Add multi-file editor tabs with tab selection and close behavior.
 - [ ] Create an Owner-authorized GitHub repository and push the reviewed local project through browser-based GitHub authorization without sharing a PAT in chat.
+- [ ] Set the Owner-authorized GitHub repository to public visibility after verifying no secret-risk files are included.
+- [ ] Use a one-time secure GitHub token input solely to complete the Owner-confirmed public push, then remove the credential access.
 - [ ] Make Manus a temporary employee with a seven-day lifecycle and safe expiration behavior.
 - [ ] Add configurable model routing for Cohere North Mini Code through OpenRouter and Devstral Small 2 through the Mistral provider.
 - [ ] Verify the official provider route and model identifier for Nemotron 3 Ultra before adding it as a configurable employee.
