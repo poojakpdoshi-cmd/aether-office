@@ -21,6 +21,7 @@
 .text-free-office .office-hotspot > *,
 .text-free-office .manager-file-pile > *,
 .text-free-office .manager-provider-locker > *,
+.text-free-office .illustrated-agent-dot,
 .text-free-office .illustrated-agent-label,
 .text-free-office .illustrated-agent em { display: none; }
 .text-free-office .office-hotspot,
@@ -40,7 +41,8 @@
 .text-free-office .manager-file-pile:focus-visible,
 .text-free-office .manager-provider-locker:focus-visible,
 .text-free-office .office-work-zone:focus-visible,
-.text-free-office .office-laptop-zone:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
+.text-free-office .office-laptop-zone:focus-visible { outline: none; }
+.text-free-office .illustrated-idle .illustrated-agent-portrait { display: none; }
 
 .deep-discuss-room-frame { left: 32%; top: 35%; width: 36%; height: 42%; }
 .office-manager { left: 43%; top: 7%; }

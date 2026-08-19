@@ -142,10 +142,10 @@
 - [x] Update the managed artwork reference and confirm text-free launch, Manager Cabin, Discussion Room, desk, and laptop interactions against the supplied image.
 - [x] Run focused tests, type checking, build, visual verification, and save a checkpoint for the supplied corrected office image.
 
-- [ ] Replace the pushed office background with a genuinely corrected full 16:9 image that removes the unwanted manager-leg/pants defect.
-- [ ] Verify the corrected Manager Cabin visually and recheck all physical office hotspots before publishing the replacement.
+- [x] Replace the pushed office background with a genuinely corrected full 16:9 image that removes the unwanted manager-leg/pants defect.
+- [x] Verify the corrected Manager Cabin visually and recheck all physical office hotspots before publishing the replacement.
 - [ ] Push only the verified corrected artwork replacement and confirm GitHub matches the local checkpoint.
-- [ ] Install the newly supplied `1787153583735.png` as the exact manager-pants-corrected 16:9 background; do not generate, crop, or overlay it.
+- [x] Install the newly supplied `1787153583735.png` as the exact manager-pants-corrected 16:9 background; do not generate, crop, or overlay it.
 
 - [x] Analyze the supplied multi-agent office reference video and document its useful motion, meeting, activity, and monitoring patterns.
 - [x] Define an AetherOffice-native enhancement set that preserves real-event truth, local-first safety, text-free map launch, and physical hotspot navigation.
@@ -155,4 +155,10 @@
 - [x] Keep user tasks, meetings, approvals, activity history, and audit records restart-persistent through local runtime files without requiring a database.
 - [x] Add secure Gemini Pro provider setup and server-side validation through the encrypted Provider Locker flow, without exposing the key.
 - [x] Add regression coverage for local restart persistence and Gemini configuration safety.
-- [ ] Remove the unintended visible cyan focus ring from invisible office hotspots while keeping the map text-free and keyboard accessible.
+- [x] Remove the unintended visible cyan focus ring from invisible office hotspots while keeping the map text-free and keyboard accessible.
+- [x] Add an employee inspection workspace reached from physical employees and laptops, showing real terminal output, file access, activity, diffs, safe status summaries, provider/model, and task timing.
+- [x] Define and persist local-only agent-session events so employee views update from actual commands, file operations, browser activity, test results, and approved workspace changes.
+- [x] Add a local project preview panel with guarded navigation, server/port detection, reload, browser-console/network evidence, screenshots, and no secret exposure.
+- [x] Add controlled browser-test and proof-report workflows that capture real commands, screenshots, console/network findings, changed files, and test/build results.
+- [x] Design competition-team isolation for workspace, process, browser, evidence, and access boundaries before enabling parallel team execution. (Design documented; parallel execution remains deliberately disabled pending isolated-runner implementation and tests.)
+- [x] Verify that employee inspection and browser/proof details never fabricate activity, terminal output, browser results, or hidden chain-of-thought.

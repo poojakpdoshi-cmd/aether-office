@@ -8,6 +8,7 @@ export type ProviderStatus = {
   label: string;
   configured: boolean;
   route: "built-in" | "direct" | "gateway";
+  model?: string;
   secretEnvironmentVariable?: string;
   compatibilityWarning?: string;
 };
@@ -119,10 +120,14 @@ const adapters: Record<ProviderId, ProviderAdapter> = {
 };
 
 export async function listProviderStatuses(): Promise<ProviderStatus[]> {
-  return Promise.all(Object.values(providerMeta).map(async (metadata) => ({
-    ...metadata,
-    configured: await adapters[metadata.id].isConfigured(),
-  })));
+  return Promise.all(Object.values(providerMeta).map(async (metadata) => {
+    const effective = metadata.id === "manus" ? undefined : await getEffectiveProviderConfig(metadata.id);
+    return {
+      ...metadata,
+      configured: await adapters[metadata.id].isConfigured(),
+      model: metadata.id === "manus" ? "gpt-5-mini" : effective?.model?.slice(0, 120),
+    };
+  }));
 }
 
 export function getEmployeeProvider(employee: EmployeeId) {

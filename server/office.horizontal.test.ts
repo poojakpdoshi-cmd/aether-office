@@ -11,6 +11,7 @@ describe("horizontal text-free office map", () => {
     expect(officeSource).toContain('employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />');
     expect(floorStyles).toContain("aspect-ratio: 16 / 9");
     expect(floorStyles).toContain(".text-free-office .office-deep-discuss { left: 32%; top: 35%; width: 36%; height: 42%; }");
+    expect(floorStyles).toContain(".text-free-office .illustrated-agent-dot");
   });
 
   it("keeps the Discussion Room directly clickable without a visible frame", () => {
@@ -20,5 +21,6 @@ describe("horizontal text-free office map", () => {
     expect(floorStyles).not.toContain("manager-leg-repair");
     expect(globalStyles).toContain(".deep-discuss-room-frame{display:none}");
     expect(officeSource).toContain('className="office-hotspot office-deep-discuss"');
+    expect(floorStyles).toContain(".text-free-office .illustrated-agent-dot,");
   });
 });

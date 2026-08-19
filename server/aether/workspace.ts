@@ -1,9 +1,11 @@
 import { createHash, randomUUID } from "node:crypto";
+import { existsSync } from "node:fs";
 import { appendFile, lstat, mkdir, readFile, readdir, realpath, rename, rm, stat, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
+import { chromium } from "playwright-core";
 import type { ControlledTool, EmployeeId } from "../../shared/aether";
 import { addActivity } from "./state";
 
@@ -52,10 +54,64 @@ type ActiveExecution = {
   timeout: ReturnType<typeof setTimeout>;
 };
 
+type CompletedExecution = Pick<ActiveExecution, "execution" | "tool" | "who">;
+
+export type EmployeeInspectionSnapshot = {
+  employee: EmployeeId;
+  state: "IDLE" | "RUNNING_COMMAND" | "TESTING";
+  safeTaskSummary: string;
+  startedAt: string | null;
+  activeExecutions: WorkspaceExecution[];
+  recentExecutions: WorkspaceExecution[];
+  recentFiles: Array<{ path: string; tool: ControlledTool; when: string; result: AuditRecord["result"] }>;
+  activity: Array<{ tool: ControlledTool; path: string; when: string; result: AuditRecord["result"] }>;
+};
+
+export type ProjectPreviewSnapshot = {
+  selected: boolean;
+  url: string | null;
+  source: "configured" | "controlled-dev-server" | "unavailable";
+  lastCommand: Pick<WorkspaceExecution, "command" | "args" | "status" | "startedAt" | "completedAt" | "stdout" | "stderr"> | null;
+  lastTest: Pick<WorkspaceExecution, "command" | "args" | "status" | "startedAt" | "completedAt" | "stdout" | "stderr"> | null;
+};
+
+export type ProofReport = {
+  id: string;
+  createdAt: string;
+  workspaceName: string;
+  localReportDirectory: string;
+  markdown: string;
+  evidence: {
+    gitStatus: string | null;
+    gitDiff: string | null;
+    tests: Array<ReturnType<typeof safeExecutionEvidence>>;
+    audit: Array<Pick<AuditRecord, "WHO" | "WHAT" | "WHICH FILE" | "WHEN" | "result">>;
+    screenshots: string[];
+    browser: ProjectBrowserEvidence | null;
+  };
+};
+
+export type ProjectBrowserEvidence = {
+  id: string;
+  createdAt: string;
+  targetUrl: string;
+  finalUrl: string | null;
+  title: string | null;
+  httpStatus: number | null;
+  passed: boolean;
+  console: Array<{ level: string; text: string }>;
+  network: Array<{ method: string; status: number; url: string }>;
+  errors: string[];
+  localScreenshotPath: string | null;
+};
+
 const activeExecutions = new Map<string, ActiveExecution>();
-const completedExecutions = new Map<string, WorkspaceExecution>();
+const completedExecutions = new Map<string, CompletedExecution>();
+let configuredPreviewUrl: string | null = null;
 
 let workspaceRoot: string | null = process.env.AETHER_WORKSPACE ? resolve(process.env.AETHER_WORKSPACE) : null;
+let latestProofReport: ProofReport | null = null;
+let latestBrowserEvidence: ProjectBrowserEvidence | null = null;
 
 function getAuditPath(root: string) {
   const key = createHash("sha256").update(root).digest("hex").slice(0, 16);
@@ -65,6 +121,69 @@ function getAuditPath(root: string) {
 function requireWorkspace() {
   if (!workspaceRoot) throw new Error("No workspace is selected. Choose a project directory first.");
   return workspaceRoot;
+}
+
+export function redactSensitiveOutput(value: string) {
+  return value
+    .replace(/\b(?:AIza[\w-]{20,}|sk-[\w-]{16,}|nvapi-[\w-]{16,}|xai-[\w-]{16,})\b/gi, "[REDACTED]")
+    .replace(/\b((?:api[_ -]?key|token|secret|password)\s*[:=]\s*)[^\s"']+/gi, "$1[REDACTED]");
+}
+
+function safeExecutionEvidence(execution: WorkspaceExecution | null) {
+  if (!execution) return null;
+  return {
+    command: execution.command,
+    args: execution.args,
+    status: execution.status,
+    startedAt: execution.startedAt,
+    completedAt: execution.completedAt,
+    stdout: redactSensitiveOutput(execution.stdout),
+    stderr: redactSensitiveOutput(execution.stderr),
+  };
+}
+
+function assertLoopbackPreviewUrl(rawUrl: string) {
+  let parsed: URL;
+  try { parsed = new URL(rawUrl); } catch { throw new Error("A local preview URL must be a valid absolute URL."); }
+  if (parsed.protocol !== "http:" || !["localhost", "127.0.0.1", "[::1]"].includes(parsed.hostname) || !parsed.port) {
+    throw new Error("Only an explicit http://localhost, 127.0.0.1, or [::1] preview URL with a port is allowed.");
+  }
+  parsed.username = "";
+  parsed.password = "";
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+function extractPreviewUrl(output: string) {
+  const match = output.match(/https?:\/\/(?:localhost|127\.0\.0\.1|\[::1\]):\d{2,5}(?:\/[^\s"']*)?/i);
+  return match ? assertLoopbackPreviewUrl(match[0]) : null;
+}
+
+function reportDirectoryFor(root: string) {
+  const key = createHash("sha256").update(root).digest("hex").slice(0, 16);
+  return join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "reports", key);
+}
+
+function compactOutput(value: string) {
+  return redactSensitiveOutput(value).slice(0, 20_000);
+}
+
+function safeBrowserEvidenceUrl(rawUrl: string) {
+  try {
+    const parsed = new URL(rawUrl);
+    parsed.username = "";
+    parsed.password = "";
+    parsed.search = "";
+    parsed.hash = "";
+    return parsed.toString();
+  } catch {
+    return "[unavailable URL]";
+  }
+}
+
+function findChromiumExecutable() {
+  const candidates = [process.env.AETHER_CHROMIUM_PATH, "/usr/bin/chromium", "/usr/bin/chromium-browser", "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"].filter((candidate): candidate is string => Boolean(candidate));
+  return candidates.find((candidate) => existsSync(candidate)) ?? null;
 }
 
 function ensureInsideWorkspace(root: string, candidate: string) {
@@ -134,6 +253,9 @@ export async function selectWorkspace(path: string) {
   const details = await stat(actual);
   if (!details.isDirectory()) throw new Error("The selected workspace must be a directory.");
   workspaceRoot = actual;
+  configuredPreviewUrl = null;
+  latestBrowserEvidence = null;
+  latestProofReport = null;
   addActivity({ kind: "workspace", message: "Owner selected a local project workspace." });
   return getWorkspaceSummary();
 }
@@ -355,8 +477,8 @@ function appendExecutionOutput(existing: string, chunk: Buffer) {
   return `${existing}${chunk.toString("utf8").slice(0, MAX_EXECUTION_OUTPUT_BYTES - existing.length)}`;
 }
 
-function rememberCompletedExecution(execution: WorkspaceExecution) {
-  completedExecutions.set(execution.id, execution);
+function rememberCompletedExecution(execution: WorkspaceExecution, active: ActiveExecution) {
+  completedExecutions.set(execution.id, { execution, who: active.who, tool: active.tool });
   while (completedExecutions.size > MAX_EXECUTION_HISTORY) {
     const first = completedExecutions.keys().next().value;
     if (first) completedExecutions.delete(first);
@@ -390,7 +512,7 @@ function launchWorkspaceExecution(input: { command: string; args: string[]; who:
     execution.completedAt = new Date().toISOString();
     execution.status = active.cancelled ? "cancelled" : exitCode === 0 ? "completed" : "failed";
     activeExecutions.delete(id);
-    rememberCompletedExecution(execution);
+    rememberCompletedExecution(execution, active);
     void appendAudit({ WHO: input.who, WHAT: input.tool, "WHICH FILE": `${input.command} ${input.args.join(" ")}`.trim(), WHEN: execution.completedAt, WHY: input.why, result: execution.status === "completed" ? "success" : "error" });
   });
   return execution;
@@ -413,7 +535,179 @@ export async function startWorkspaceTests(who: AuditRecord["WHO"], why: string) 
 }
 
 export function getWorkspaceExecution(id: string) {
-  return activeExecutions.get(id)?.execution ?? completedExecutions.get(id) ?? null;
+  return activeExecutions.get(id)?.execution ?? completedExecutions.get(id)?.execution ?? null;
+}
+
+export function configureProjectPreview(url: string) {
+  requireWorkspace();
+  configuredPreviewUrl = assertLoopbackPreviewUrl(url);
+  return getProjectPreview();
+}
+
+export function getProjectPreview(): ProjectPreviewSnapshot {
+  const selected = Boolean(workspaceRoot);
+  const executions = [
+    ...Array.from(activeExecutions.values()).map((entry) => entry.execution),
+    ...Array.from(completedExecutions.values()).map((entry) => entry.execution),
+  ].sort((left, right) => right.startedAt.localeCompare(left.startedAt));
+  const lastCommand = executions.find((execution) => !execution.args.includes("test")) ?? null;
+  const lastTest = executions.find((execution) => execution.args.includes("test")) ?? null;
+  const detectedUrl = configuredPreviewUrl ?? executions.map((execution) => extractPreviewUrl(`${execution.stdout}\n${execution.stderr}`)).find((url): url is string => Boolean(url)) ?? null;
+  return {
+    selected,
+    url: detectedUrl,
+    source: configuredPreviewUrl ? "configured" : detectedUrl ? "controlled-dev-server" : "unavailable",
+    lastCommand: safeExecutionEvidence(lastCommand),
+    lastTest: safeExecutionEvidence(lastTest),
+  };
+}
+
+export function getLatestBrowserEvidence() {
+  return latestBrowserEvidence;
+}
+
+export async function runProjectBrowserTest(): Promise<ProjectBrowserEvidence> {
+  const root = requireWorkspace();
+  const preview = getProjectPreview();
+  if (!preview.url) throw new Error("Configure a loopback project preview before running a browser test.");
+  const executablePath = findChromiumExecutable();
+  if (!executablePath) throw new Error("A local Chromium-compatible browser was not found. Set AETHER_CHROMIUM_PATH to enable controlled browser tests.");
+  const createdAt = new Date().toISOString();
+  const id = `browser-${createdAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
+  const evidenceDirectory = join(reportDirectoryFor(root), "browser-evidence");
+  const screenshotPath = join(evidenceDirectory, `${id}.png`);
+  const console: ProjectBrowserEvidence["console"] = [];
+  const network: ProjectBrowserEvidence["network"] = [];
+  const errors: string[] = [];
+  let finalUrl: string | null = null;
+  let title: string | null = null;
+  let httpStatus: number | null = null;
+  let screenshotSaved = false;
+  const browser = await chromium.launch({ executablePath, headless: true, args: ["--disable-dev-shm-usage"] });
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    page.on("console", (message) => {
+      if (console.length < 100) console.push({ level: message.type(), text: compactOutput(message.text()).slice(0, 2_000) });
+    });
+    page.on("pageerror", (error) => { if (errors.length < 50) errors.push(compactOutput(error.message).slice(0, 2_000)); });
+    page.on("response", (response) => {
+      const request = response.request();
+      const resourceType = request.resourceType();
+      if (network.length < 150 && ["document", "script", "stylesheet", "xhr", "fetch"].includes(resourceType)) {
+        network.push({ method: request.method(), status: response.status(), url: safeBrowserEvidenceUrl(response.url()) });
+      }
+    });
+    const response = await page.goto(preview.url, { waitUntil: "networkidle", timeout: 15_000 });
+    finalUrl = safeBrowserEvidenceUrl(page.url());
+    title = compactOutput(await page.title()).slice(0, 300);
+    httpStatus = response?.status() ?? null;
+    await mkdir(evidenceDirectory, { recursive: true, mode: 0o700 });
+    await page.screenshot({ path: screenshotPath, fullPage: true, type: "png" });
+    screenshotSaved = true;
+  } catch (error) {
+    errors.push(compactOutput(error instanceof Error ? error.message : "Browser test failed.").slice(0, 2_000));
+  } finally {
+    await browser.close();
+  }
+  const evidence: ProjectBrowserEvidence = {
+    id,
+    createdAt,
+    targetUrl: preview.url,
+    finalUrl,
+    title,
+    httpStatus,
+    passed: Boolean(httpStatus && httpStatus >= 200 && httpStatus < 400 && errors.length === 0 && screenshotSaved),
+    console,
+    network,
+    errors,
+    localScreenshotPath: screenshotSaved ? screenshotPath : null,
+  };
+  latestBrowserEvidence = evidence;
+  await appendAudit({ WHO: "Owner", WHAT: "run_tests", "WHICH FILE": `local browser test: ${safeBrowserEvidenceUrl(preview.url)}`, WHEN: createdAt, WHY: "Owner ran an approved local browser evidence test.", result: evidence.passed ? "success" : "error" });
+  return evidence;
+}
+
+export function getLatestProofReport() {
+  return latestProofReport;
+}
+
+export async function generateProofReport(): Promise<ProofReport> {
+  const root = requireWorkspace();
+  const createdAt = new Date().toISOString();
+  const id = `proof-${createdAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
+  const executions = [
+    ...Array.from(activeExecutions.values()).map((entry) => entry.execution),
+    ...Array.from(completedExecutions.values()).map((entry) => entry.execution),
+  ].sort((left, right) => right.startedAt.localeCompare(left.startedAt));
+  const tests = executions.filter((execution) => execution.args.includes("test")).slice(0, 5).map(safeExecutionEvidence);
+  const audit = (await readAuditLog(100)).slice(0, 50).map((record) => ({ WHO: record.WHO, WHAT: record.WHAT, "WHICH FILE": redactSensitiveOutput(record["WHICH FILE"]), WHEN: record.WHEN, result: record.result }));
+  let gitStatus: string | null = null;
+  let gitDiff: string | null = null;
+  try { gitStatus = compactOutput(await getGitStatus("Owner", "Collect local Git status for an owner-requested proof report.")); } catch { /* Non-Git workspaces have no Git evidence. */ }
+  try { gitDiff = compactOutput(await getGitDiff("Owner", "Collect local Git diff for an owner-requested proof report.")); } catch { /* Non-Git workspaces have no Git evidence. */ }
+  const browser = latestBrowserEvidence;
+  const screenshots = browser?.localScreenshotPath ? [browser.localScreenshotPath] : [];
+  const reportDirectory = reportDirectoryFor(root);
+  const markdown = [
+    "# AetherOffice Proof Report",
+    "",
+    `- **Report ID:** ${id}`,
+    `- **Created:** ${createdAt}`,
+    `- **Workspace:** ${basename(root)}`,
+    "- **Evidence boundary:** local controlled execution, local Git inspection, and local audit events only.",
+    "- **Excluded:** provider credentials, raw audit rationale, private prompts, unrestricted browser data, and fabricated screenshots.",
+    "",
+    "## Controlled Test Evidence",
+    tests.length ? tests.map((test, index) => `### Test ${index + 1}\n\n\`\`\`text\n$ ${test?.command ?? ""} ${test?.args.join(" ") ?? ""}\nstatus: ${test?.status ?? ""}\n${test?.stdout ?? ""}${test?.stderr ? `\n${test.stderr}` : ""}\n\`\`\``).join("\n\n") : "No controlled test execution has been recorded.",
+    "",
+    "## Git Status",
+    "```text",
+    gitStatus || "No Git status is available for this workspace.",
+    "```",
+    "",
+    "## Git Diff",
+    "```diff",
+    gitDiff || "No local Git diff is available for this workspace.",
+    "```",
+    "",
+    "## Recent Controlled Audit Events",
+    audit.length ? audit.map((record) => `- ${record.WHEN} · ${record.WHO} · ${record.WHAT} · ${record["WHICH FILE"]} · ${record.result}`).join("\n") : "No controlled audit events have been recorded.",
+    "",
+    "## Browser Evidence",
+    browser ? [
+      `- **Target:** ${browser.targetUrl}`,
+      `- **Final URL:** ${browser.finalUrl ?? "unavailable"}`,
+      `- **HTTP status:** ${browser.httpStatus ?? "unavailable"}`,
+      `- **Result:** ${browser.passed ? "passed" : "failed"}`,
+      `- **Console records:** ${browser.console.length}`,
+      `- **Network records:** ${browser.network.length}`,
+      `- **Captured errors:** ${browser.errors.length}`,
+      `- **Screenshot:** ${browser.localScreenshotPath ?? "not captured"}`,
+    ].join("\n") : "No controlled browser test has been recorded.",
+    "",
+    "## Screenshots",
+    screenshots.length ? screenshots.map((path) => `- ${path}`).join("\n") : "No screenshots were captured by this report. AetherOffice does not claim visual proof unless an actual local screenshot capture is added to the evidence set.",
+    "",
+  ].join("\n");
+  const report: ProofReport = { id, createdAt, workspaceName: basename(root), localReportDirectory: reportDirectory, markdown, evidence: { gitStatus, gitDiff, tests, audit, screenshots, browser } };
+  await mkdir(reportDirectory, { recursive: true, mode: 0o700 });
+  await writeFile(join(reportDirectory, `${id}.md`), markdown, { encoding: "utf8", mode: 0o600 });
+  await writeFile(join(reportDirectory, `${id}.json`), `${JSON.stringify(report, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+  latestProofReport = report;
+  await appendAudit({ WHO: "Owner", WHAT: "read_file", "WHICH FILE": "local proof report", WHEN: createdAt, WHY: "Owner generated a local evidence report.", result: "success" });
+  return report;
+}
+
+export async function getEmployeeInspection(employee: EmployeeId): Promise<EmployeeInspectionSnapshot> {
+  const audit = (await readAuditLog(250)).filter((record) => record.WHO === employee);
+  const active = Array.from(activeExecutions.values()).filter((entry) => entry.who === employee).map((entry) => entry.execution);
+  const completed = Array.from(completedExecutions.values()).filter((entry) => entry.who === employee).map((entry) => entry.execution).sort((left, right) => right.startedAt.localeCompare(left.startedAt)).slice(0, 10);
+  const latest = active[0] ?? completed[0] ?? null;
+  const state = active.some((execution) => execution.command === "pnpm" && execution.args.includes("test")) ? "TESTING" : active.length ? "RUNNING_COMMAND" : "IDLE";
+  const safeTaskSummary = active.length ? `Running controlled command: ${active[0].command} ${active[0].args.join(" ")}`.trim() : audit[0] ? `Latest controlled action: ${audit[0].WHAT}` : "No recorded controlled workspace activity yet.";
+  const activity = audit.slice(0, 30).map((record) => ({ tool: record.WHAT, path: record["WHICH FILE"], when: record.WHEN, result: record.result }));
+  const recentFiles = audit.filter((record) => record.WHAT !== "run_command" && record.WHAT !== "run_tests").slice(0, 20).map((record) => ({ path: record["WHICH FILE"], tool: record.WHAT, when: record.WHEN, result: record.result }));
+  return { employee, state, safeTaskSummary, startedAt: latest?.startedAt ?? null, activeExecutions: active, recentExecutions: completed, recentFiles, activity };
 }
 
 export async function cancelWorkspaceExecution(id: string, who: AuditRecord["WHO"], why: string) {

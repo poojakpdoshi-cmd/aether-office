@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { existsSync } from "node:fs";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+import { createServer } from "node:http";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cancelWorkspaceExecution, createGitCommit, createWorkspaceFile, getWorkspaceExecution, getWorkspaceTree, readWorkspaceFile, revertGitCommit, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
+import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
 import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
@@ -34,6 +36,71 @@ describe("controlled workspace tools", () => {
     const auditPath = join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "audit", `${key}.ndjson`);
     expect(await readFile(auditPath, "utf8")).toContain('"WHO":"Gemini"');
     expect(await readFile(auditPath, "utf8")).toContain('"WHY":"Implement requested module."');
+  });
+
+  it("returns an employee inspection snapshot from real controlled file activity without exposing audit reasons", async () => {
+    await createWorkspaceFile("src/inspection.ts", "export const inspection = true;\n", "Gemini", "Implement requested inspection feature.");
+    const inspection = await getEmployeeInspection("Gemini");
+    expect(inspection.employee).toBe("Gemini");
+    expect(inspection.recentFiles).toContainEqual(expect.objectContaining({ path: "src/inspection.ts", tool: "create_file", result: "success" }));
+    expect(inspection.activity).toContainEqual(expect.objectContaining({ path: "src/inspection.ts", tool: "create_file" }));
+    expect(JSON.stringify(inspection)).not.toContain("Implement requested inspection feature.");
+  });
+
+  it("accepts only loopback project previews and redacts key-like command evidence", async () => {
+    await expect(Promise.resolve().then(() => configureProjectPreview("https://example.com"))).rejects.toThrow("Only an explicit http://localhost");
+    const preview = configureProjectPreview("http://127.0.0.1:5173/app?mode=local#private");
+    expect(preview.url).toBe("http://127.0.0.1:5173/app?mode=local");
+    const execution = startWorkspaceCommand("python3", ["-c", "print('api_key=AIza123456789012345678901234567890')"], "Owner", "Capture bounded preview evidence.");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (getWorkspaceExecution(execution.id)?.status !== "running") break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    expect(getProjectPreview().lastCommand?.stdout).toContain("[REDACTED]");
+    expect(getProjectPreview().lastCommand?.stdout).not.toContain("AIza123456789012345678901234567890");
+  });
+
+  it("persists a proof report from verified local evidence without raw reasons, credentials, or invented screenshots", async () => {
+    await createWorkspaceFile("src/proof.ts", "export const proof = true;\n", "Gemini", "Private implementation rationale must not appear in evidence.");
+    const execution = startWorkspaceCommand("python3", ["-c", "print('token=sk-local-example-12345678901234567890')"], "Owner", "Produce controlled output for proof testing.");
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      if (getWorkspaceExecution(execution.id)?.status !== "running") break;
+      await new Promise((resolve) => setTimeout(resolve, 25));
+    }
+    const report = await generateProofReport();
+    expect(report.markdown).toContain("AetherOffice Proof Report");
+    expect(report.markdown).toContain("src/proof.ts");
+    expect(report.markdown).not.toContain("Private implementation rationale");
+    expect(report.markdown).not.toContain("sk-local-example-12345678901234567890");
+    expect(report.evidence.screenshots).toEqual([]);
+    expect(await readFile(join(report.localReportDirectory, `${report.id}.md`), "utf8")).toBe(report.markdown);
+  });
+
+  it("runs a real loopback browser test with redacted console, network, and screenshot evidence", async () => {
+    if (!existsSync("/usr/bin/chromium")) return;
+    const fixture = createServer((request, response) => {
+      if (request.url === "/data") { response.writeHead(200, { "content-type": "application/json" }); response.end('{"ok":true}'); return; }
+      response.writeHead(200, { "content-type": "text/html" });
+      response.end("<title>Local Browser Fixture</title><script>console.warn('browser fixture signal'); fetch('/data')</script>");
+    });
+    await new Promise<void>((resolve) => fixture.listen(0, "127.0.0.1", resolve));
+    const address = fixture.address();
+    const port = typeof address === "object" && address ? address.port : 0;
+    try {
+      configureProjectPreview(`http://127.0.0.1:${port}`);
+      const browser = await runProjectBrowserTest();
+      expect(browser.passed).toBe(true);
+      expect(browser.title).toBe("Local Browser Fixture");
+      expect(browser.console.some((entry) => entry.text.includes("browser fixture signal"))).toBe(true);
+      expect(browser.network.some((entry) => entry.url.includes("127.0.0.1"))).toBe(true);
+      expect(browser.localScreenshotPath).toBeTruthy();
+      expect(existsSync(browser.localScreenshotPath ?? "")).toBe(true);
+      const report = await generateProofReport();
+      expect(report.evidence.screenshots).toEqual([browser.localScreenshotPath]);
+      expect(report.markdown).toContain("## Browser Evidence");
+    } finally {
+      await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
+    }
   });
 
   it("returns a bounded navigable tree while excluding Git and dependency directories", async () => {
