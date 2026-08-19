@@ -33,3 +33,23 @@
 - [x] Animate employees meeting, walking to assigned workstations, typing/working, reviewing, testing, waiting, and completing tasks.
 - [x] Bind all visual character motion and office locations to real DeepDiscuss employee status transitions without fabricating work activity.
 - [x] Verify the cartoon office flow at desktop and mobile breakpoints while preserving reduced-motion accessibility.
+- [ ] Replace the current flat isometric office board with a larger, more spacious anime workplace scene.
+- [ ] Create recognizably anime-style employee characters with distinct hair, clothing, expressions, and work poses instead of letter avatars.
+- [ ] Add spacious anime office areas for the meeting room, individual work bays, lounge, research/library zone, test station, and delivery area.
+- [ ] Preserve real status-driven gathering, walking, desk work, review, testing, waiting, error, and completion behavior in the new anime scene.
+- [ ] Verify the redesigned anime office at desktop and mobile breakpoints before presenting it to the Owner.
+- [x] Replace the anime/cartoon office scene with a spacious semi-realistic modern workplace visual direction.
+- [x] Create human-like semi-realistic employees with believable professional clothing, proportions, desks, and natural work poses.
+- [x] Add realistic office lighting, meeting room furniture, workstations, glass walls, lounge detail, and depth while preserving a clear game-like overview.
+- [x] Preserve the real status-driven meeting, walking, working, review, testing, waiting, error, and completed actions in the realistic scene.
+- [x] Verify the realistic office scene at desktop and mobile breakpoints before presenting it to the Owner.
+- [x] Replace the photographic office background with a large, detailed, hand-drawn modern office illustration inspired by the supplied reference.
+- [ ] Add illustrated desks, bookshelves, windows, plants, filing cabinets, meeting space, noticeboards, lounge details, and visible workplace activity.
+- [ ] Use expressive hand-drawn human employee characters with individual identities and work poses rather than photo-real portraits or schematic avatars.
+- [ ] Keep the office visually spacious while showing multiple AI employees and animated status-driven meeting, movement, work, review, test, wait, error, and completion scenes.
+- [x] Verify the illustrated office at desktop and mobile breakpoints before presenting it to the Owner.
+- [x] Add a Live Cameras workspace view with Manager Cabin, Meeting Cabin, Office Floor, and employee Laptop Camera feeds.
+- [x] Show each camera’s current occupants, task phase, and genuine status only from real DeepDiscuss, provider, workspace, tool, test, and review events.
+- [ ] Add a per-employee laptop activity overlay describing the current file/tool/task stage without exposing API keys, prompts containing secrets, or unrelated file content.
+- [x] Add camera selection, focused preview, and accessible current-activity text for the live workplace.
+- [ ] Verify camera previews across desktop and mobile breakpoints and confirm fake activity is never displayed as real work.

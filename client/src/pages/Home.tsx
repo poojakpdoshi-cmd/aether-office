@@ -30,6 +30,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 type WorkspaceView =
   | "Office"
+  | "Cameras"
   | "Chat"
   | "Files"
   | "Editor"
@@ -61,6 +62,7 @@ type Employee = {
 
 const navigation = [
   { label: "Office" as const, icon: LayoutDashboard },
+  { label: "Cameras" as const, icon: Activity },
   { label: "Chat" as const, icon: MessageSquareMore },
   { label: "Files" as const, icon: Files },
   { label: "Editor" as const, icon: FileCode2 },
@@ -163,6 +165,7 @@ export default function Home() {
   const [draftContent, setDraftContent] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
   const [ownerConfirmed, setOwnerConfirmed] = useState(false);
+  const [focusedCamera, setFocusedCamera] = useState("Office Floor");
   const providerQuery = trpc.aether.providers.useQuery();
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
@@ -458,14 +461,22 @@ export default function Home() {
 
   const renderEmployees = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Employee profiles and performance</p><p className="mt-1 text-xs text-slate-400">Statistics update only after a recorded evaluation; no fabricated performance data is shown.</p><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{dashboard?.employees.map((employee) => <article key={employee.id} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><div className="flex items-center justify-between"><p className="text-sm font-semibold text-white">{employee.id}</p><StatusPill status={employee.status as EmployeeStatus} /></div><p className="mt-3 text-xs text-slate-400">Completed tasks <span className="float-right text-slate-100">{employee.taskCount}</span></p><p className="mt-2 text-xs text-slate-400">Average score <span className="float-right text-slate-100">{employee.averageScore === null ? "—" : employee.averageScore.toFixed(1)}</span></p><p className="mt-2 text-xs text-slate-400">Recent scores <span className="float-right text-slate-100">{employee.recentPerformance.length ? employee.recentPerformance.join(", ") : "—"}</span></p></article>)}</div><div className="mt-5 rounded-xl border border-sky-300/15 bg-sky-300/[0.06] p-4 text-xs leading-5 text-sky-100">Evaluation rubric: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.</div></section>;
 
+  const renderCameras = () => {
+    const verifiedEvents = dashboard?.activities ?? [];
+    const lastEventFor = (employee?: string) => verifiedEvents.find((event) => !employee || event.employee === employee)?.message ?? "No verified activity recorded yet.";
+    const inMeeting = liveEmployees.filter((employee) => employee.status === "IN_MEETING");
+    return <div className="space-y-5"><section className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div><p className="text-sm font-semibold text-white">Live Cameras</p><p className="mt-1 max-w-2xl text-xs leading-5 text-slate-400">These are activity cameras, not synthetic video. Every occupancy, laptop line, and status is derived from the current AetherOffice event stream.</p><p className="mt-3 text-xs font-medium text-sky-200">Focused preview: {focusedCamera}</p></div><Badge className="border-emerald-300/20 bg-emerald-300/10 text-emerald-100 hover:bg-emerald-300/10"><span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />Local monitoring active</Badge></section><section className="grid gap-5 xl:grid-cols-2"><CameraCard title="Manager Cabin" subtitle="Manus · orchestration view" status={liveEmployees.find((employee) => employee.name === "Manus")?.status ?? "IDLE"} activity={lastEventFor("Manus")} tint="from-violet-500/20 via-slate-900 to-slate-950" occupants={["Manus"]} onClick={() => setFocusedCamera("Manager Cabin")} selected={focusedCamera === "Manager Cabin"} /><CameraCard title="Meeting Cabin" subtitle="DeepDiscuss collaboration view" status={inMeeting.length ? "IN_MEETING" : "IDLE"} activity={inMeeting.length ? `${inMeeting.map((employee) => employee.name).join(", ")} currently in the meeting cabin.` : "No verified team meeting is active."} tint="from-sky-500/20 via-slate-900 to-slate-950" occupants={inMeeting.map((employee) => employee.name)} onClick={() => setFocusedCamera("Meeting Cabin")} selected={focusedCamera === "Meeting Cabin"} /></section><section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><div className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Employee Laptop Cameras</p><p className="mt-1 text-xs text-slate-400">Current verified work stage per employee.</p></div><TerminalSquare className="h-4 w-4 text-sky-300" /></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{liveEmployees.map((employee) => <button type="button" key={employee.name} onClick={() => setFocusedCamera(`${employee.name} laptop`)} className={cn("overflow-hidden rounded-xl border bg-black/20 text-left", focusedCamera === `${employee.name} laptop` ? "border-sky-300/50 ring-1 ring-sky-300/20" : "border-white/[0.08]")}><div className={cn("h-20 bg-gradient-to-br p-3", employee.accent)}><div className="flex items-start justify-between"><span className="grid h-8 w-8 place-items-center rounded-lg bg-slate-950/35 text-xs font-bold text-white">{employee.shortName}</span><StatusPill status={employee.status} /></div></div><div className="p-3"><p className="text-xs font-semibold text-white">{employee.name} laptop</p><p className="mt-1 text-[11px] leading-5 text-slate-400">{lastEventFor(employee.name)}</p><p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.1em] text-sky-200">{employee.status} · {employee.focus}</p></div></button>)}</div></div><button type="button" onClick={() => setFocusedCamera("Office Floor")} className={cn("rounded-2xl border bg-[#0d1527]/80 p-5 text-left", focusedCamera === "Office Floor" ? "border-sky-300/50 ring-1 ring-sky-300/20" : "border-white/10")}><p className="text-sm font-semibold text-white">Office Floor Camera</p><p className="mt-1 text-xs leading-5 text-slate-400">Current team distribution.</p><div className="mt-5 space-y-2">{liveEmployees.map((employee) => <div key={employee.name} className="flex items-center justify-between rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2"><span className="text-xs text-slate-200">{employee.name}</span><StatusPill status={employee.status} /></div>)}</div><Separator className="my-5 bg-white/10" /><p className="text-xs leading-5 text-slate-500">Sensitive values, API keys, and unapproved file contents are never displayed in camera previews.</p></button></section></div>;
+  };
+
   const renderView = () => {
     if (activeView === "Office") return renderOffice();
+    if (activeView === "Cameras") return renderCameras();
     if (activeView === "Chat") return renderChat();
     if (activeView === "Settings") return renderSettings();
     if (activeView === "Files") return renderFiles();
     if (activeView === "Editor") return renderEditor();
     if (activeView === "Git") return renderGit();
-    const details: Record<Exclude<WorkspaceView, "Office" | "Chat" | "Settings">, [string, string, string]> = {
+    const details: Record<Exclude<WorkspaceView, "Office" | "Cameras" | "Chat" | "Settings">, [string, string, string]> = {
       Files: ["Workspace not selected", "Select a local project directory from the CLI or local setup screen. AetherOffice will scope all controlled tools to that directory.", "Files remain inaccessible until the Owner selects a workspace."],
       Editor: ["No file open", "The editor shows real workspace files and unsaved changes only after a local project has been selected.", "Choose a workspace first."],
       Diff: ["No proposed changes", "Before/after diffs will appear here when an employee produces a real patch for owner review.", "No modifications occur before approval."],
@@ -531,6 +542,10 @@ export default function Home() {
 
 function Metric({ label, value, sublabel }: { label: string; value: string; sublabel: string }) {
   return <div className="rounded-xl border border-white/10 bg-[#071021]/45 p-3"><p className="text-[10px] font-medium uppercase tracking-[0.12em] text-slate-400">{label}</p><p className="mt-2 text-lg font-semibold leading-none text-white">{value}</p><p className="mt-1 text-[10px] text-slate-400">{sublabel}</p></div>;
+}
+
+function CameraCard({ title, subtitle, status, activity, tint, occupants, onClick, selected }: { title: string; subtitle: string; status: EmployeeStatus; activity: string; tint: string; occupants: string[]; onClick: () => void; selected: boolean }) {
+  return <button type="button" onClick={onClick} className={cn("overflow-hidden rounded-2xl border bg-[#0d1527]/80 text-left", selected ? "border-sky-300/50 ring-1 ring-sky-300/20" : "border-white/10")}><div className={cn("relative h-44 bg-gradient-to-br p-5", tint)}><div className="absolute inset-4 rounded-xl border border-white/15 bg-black/15" /><div className="relative flex items-start justify-between"><span className="rounded-md border border-white/15 bg-black/25 px-2 py-1 text-[10px] font-semibold tracking-[0.12em] text-white">LIVE</span><StatusPill status={status} /></div><div className="absolute bottom-5 left-5 right-5"><p className="text-sm font-semibold text-white">{title}</p><p className="mt-1 text-xs text-slate-300">{subtitle}</p></div></div><div className="p-4"><p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-500">Verified activity</p><p className="mt-2 text-xs leading-5 text-slate-300">{activity}</p><p className="mt-3 text-[11px] text-sky-200">Occupants: {occupants.length ? occupants.join(", ") : "None"}</p></div></button>;
 }
 
 function ProposalSection({ label, values }: { label: string; values: string[] }) {

@@ -1,78 +1,37 @@
 import { cn } from "@/lib/utils";
 
-type OfficeEmployee = {
-  name: string;
-  shortName: string;
-  role: string;
-  status: string;
-  accent: string;
-};
+type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
+type Props = { employees: OfficeEmployee[]; activity?: string; onOpenChat: () => void };
 
-type Props = {
-  employees: OfficeEmployee[];
-  activity?: string;
-  onOpenChat: () => void;
+const stations: Record<string, { x: string; y: string }> = {
+  Manus: { x: "16%", y: "44%" }, Gemini: { x: "38%", y: "43%" }, DeepSeek: { x: "77%", y: "40%" }, Mistral: { x: "25%", y: "74%" }, Arcee: { x: "54%", y: "75%" }, Grok: { x: "85%", y: "72%" },
 };
-
-const desks: Record<string, { x: string; y: string; room: string }> = {
-  Manus: { x: "19%", y: "25%", room: "Strategy desk" },
-  Gemini: { x: "73%", y: "24%", room: "Build desk" },
-  DeepSeek: { x: "82%", y: "49%", room: "Architecture desk" },
-  Mistral: { x: "69%", y: "75%", room: "Implementation desk" },
-  Arcee: { x: "36%", y: "76%", room: "Review desk" },
-  Grok: { x: "20%", y: "56%", room: "Research nook" },
+const illustratedEmployees: Record<string, string> = {
+  Manus: "/manus-storage/illustrated-manus_46107b3d.png", Gemini: "/manus-storage/illustrated-gemini_908df82a.png", DeepSeek: "/manus-storage/illustrated-deepseek_8bbe4ac7.png", Mistral: "/manus-storage/illustrated-mistral_e37410fe.png", Arcee: "/manus-storage/illustrated-arcee_e66515d0.png", Grok: "/manus-storage/illustrated-grok_1ba33ae9.png",
 };
-
-function locationFor(employee: OfficeEmployee) {
-  if (employee.status === "IN_MEETING") return { x: "50%", y: "49%", motion: "meeting" };
-  if (employee.status === "THINKING") return { ...desks[employee.name], motion: "walking" };
-  if (employee.status === "CODING") return { ...desks[employee.name], motion: "working" };
-  if (employee.status === "REVIEWING") return { ...desks[employee.name], motion: "reviewing" };
-  if (employee.status === "TESTING") return { ...desks[employee.name], motion: "testing" };
-  if (employee.status === "WAITING") return { x: "31%", y: "48%", motion: "waiting" };
-  if (employee.status === "COMPLETED") return { x: "87%", y: "81%", motion: "celebrating" };
-  if (employee.status === "ERROR") return { x: "50%", y: "17%", motion: "error" };
-  return { ...desks[employee.name], motion: "idle" };
+function location(employee: OfficeEmployee) {
+  if (employee.status === "IN_MEETING") return { x: "50%", y: "55%", state: "meeting" };
+  if (employee.status === "THINKING") return { ...stations[employee.name], state: "walking" };
+  if (employee.status === "CODING") return { ...stations[employee.name], state: "coding" };
+  if (employee.status === "REVIEWING") return { ...stations[employee.name], state: "reviewing" };
+  if (employee.status === "TESTING") return { x: "70%", y: "58%", state: "testing" };
+  if (employee.status === "WAITING") return { x: "10%", y: "78%", state: "waiting" };
+  if (employee.status === "COMPLETED") return { x: "91%", y: "83%", state: "complete" };
+  if (employee.status === "ERROR") return { x: "51%", y: "20%", state: "error" };
+  return { ...stations[employee.name], state: "idle" };
 }
 
 export function LiveOffice({ employees, activity, onOpenChat }: Props) {
-  return (
-    <section className="live-office-shell">
-      <header className="live-office-head">
-        <div>
-          <p className="live-office-kicker">AetherOffice · live simulation</p>
-          <h1>AI Company Floor</h1>
-          <p>Watch the team gather, work, review, and ship—in response to real task activity.</p>
-        </div>
-        <button className="office-task-button" onClick={onOpenChat}>Start a team task</button>
-      </header>
-
-      <div className="office-legend">
-        <span><i className="legend-dot meeting" />Meeting</span><span><i className="legend-dot working" />At desk</span><span><i className="legend-dot walking" />Moving</span><span><i className="legend-dot idle" />Available</span>
-      </div>
-
-      <div className="office-stage" aria-label="Animated isometric AI office">
-        <div className="office-floor" />
-        <div className="office-wall office-wall-top"><span>AETHER SOFTWARE CO.</span><span className="wall-window" /></div>
-        <div className="office-wall office-wall-right"><span className="plant" /><span className="bookshelf" /></div>
-        <div className="office-lounge"><span className="coffee" />Coffee & research</div>
-        <div className="office-meeting-zone"><div className="meeting-table"><span>DEEP<br />DISCUSS</span></div><div className="meeting-chairs"><i /><i /><i /><i /></div></div>
-        {Object.entries(desks).map(([name, desk]) => <div key={name} className="office-desk" style={{ left: desk.x, top: desk.y }}><span className="desk-monitor" /><span className="desk-lamp" /><small>{desk.room}</small></div>)}
-        <div className="office-printer"><span>PRINT</span></div>
-        <div className="office-door">SHIP<br />ROOM</div>
-
-        {employees.map((employee) => {
-          const spot = locationFor(employee);
-          return <button key={employee.name} onClick={onOpenChat} title={`${employee.name}: ${employee.status}`} className={cn("office-agent", `agent-${spot.motion}`)} style={{ left: spot.x, top: spot.y }}>
-            <span className={cn("agent-avatar", employee.accent)}>{employee.shortName}</span>
-            <span className="agent-name">{employee.name}</span>
-            <span className="agent-status">{employee.status}</span>
-            {["working", "reviewing", "testing"].includes(spot.motion) ? <span className="typing-lines">{spot.motion === "testing" ? "✓" : spot.motion === "reviewing" ? "⌕" : "⌨"}</span> : null}
-          </button>;
-        })}
-      </div>
-
-      <footer className="office-live-feed"><span className="feed-pulse" />{activity || "Office is quiet. Stage a task to call the team into a meeting."}</footer>
-    </section>
-  );
+  return <section className="real-office-shell illustrated-office-shell">
+    <header className="real-office-head"><div><p>AEtherOffice · illustrated live workplace</p><h1>AI Studio — Live Floor</h1><span>Watch the team meet, move through the office, and return to work in response to real activity.</span></div><button onClick={onOpenChat}>Start a discussion</button></header>
+    <div className="real-office-stage illustrated-office-stage" aria-label="Large detailed illustrated AI office">
+      <img className="real-office-backdrop" src="/manus-storage/aether-illustrated-office_8e766605.jpg" alt="Large hand-drawn modern software office" />
+      <div className="illustrated-readability" /><div className="illustrated-office-sign">AETHER<br /><small>SOFTWARE STUDIO</small></div>
+      <span className="illustrated-zone illustrated-meeting">DEEPDISCUSS</span><span className="illustrated-zone illustrated-test">TEST LAB</span><span className="illustrated-zone illustrated-lounge">LOUNGE</span>
+      {employees.map((employee) => { const pos = location(employee); return <button key={employee.name} onClick={onOpenChat} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} title={`${employee.name}: ${employee.status}`}>
+        <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name]} alt="" /><span className="illustrated-agent-dot" /><span className="illustrated-agent-label"><b>{employee.name}</b><i>{employee.status}</i></span>{["coding", "reviewing", "testing"].includes(pos.state) ? <em>{pos.state === "testing" ? "✓" : pos.state === "reviewing" ? "⌕" : "⌨"}</em> : null}
+      </button>; })}
+    </div>
+    <footer className="real-office-feed"><i />{activity || "The office is ready. Start a task to gather the team for a genuine DeepDiscuss meeting."}</footer>
+  </section>;
 }
