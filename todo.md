@@ -96,3 +96,5 @@
 - [x] Verify the selected office floor is readable and interactive at desktop and mobile breakpoints without inspecting or altering the Owner image.
 - [x] Remove the extra employee-addition system and all visible employee-add controls from the local office interface.
 - [x] Start DeepDiscuss directly from a Manager-submitted command and return the Owner to the Discussion Room without exposing a separate office start control.
+- [x] Make localhost launch directly into the animated office map with no visible written text, headings, labels, buttons, panels, or instructions.
+- [x] Preserve direct clickable cabins, employees, desk files/photos, Provider Locker, Discussion Room, and work areas through invisible accessible interaction targets.

@@ -28,4 +28,15 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain('officeFocus === "Manager Desk Files"');
     expect(homePage).toContain('Manager requested files or photos');
   });
+
+  it("launches the Office view as a text-free animated map with accessible invisible targets", () => {
+    expect(officeComponent).toContain('className="text-free-office"');
+    expect(officeComponent).not.toContain('AEtherOffice · illustrated local workplace');
+    expect(officeComponent).not.toContain('MANAGER CABIN');
+    expect(officeComponent).not.toContain('DEEPDISCUSS ROOM');
+    expect(officeComponent).not.toContain('WAITING AREA');
+    expect(compactFloorStyles).toContain('.text-free-office');
+    expect(homePage).toContain('useState<string | null>(null)');
+    expect(homePage).toContain('activeView !== "Office" ? <header');
+  });
 });
