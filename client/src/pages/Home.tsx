@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -9,16 +8,13 @@ import { LiveOffice } from "@/components/LiveOffice";
 import {
   Activity,
   Bot,
-  ChevronRight,
   CircleDot,
   FileCode2,
   Files,
   FlaskConical,
   FolderGit2,
   GitBranch,
-  LayoutDashboard,
   MessageSquareMore,
-  PanelLeftClose,
   Plus,
   Settings2,
   ShieldCheck,
@@ -59,19 +55,6 @@ type Employee = {
   status: EmployeeStatus;
   accent: string;
 };
-
-const navigation = [
-  { label: "Office" as const, icon: LayoutDashboard },
-  { label: "Cameras" as const, icon: Activity },
-  { label: "Chat" as const, icon: MessageSquareMore },
-  { label: "Files" as const, icon: Files },
-  { label: "Editor" as const, icon: FileCode2 },
-  { label: "Diff" as const, icon: GitBranch },
-  { label: "Tests" as const, icon: FlaskConical },
-  { label: "Git" as const, icon: FolderGit2 },
-  { label: "Employees" as const, icon: UsersRound },
-  { label: "Settings" as const, icon: Settings2 },
-];
 
 const employees: Employee[] = [
   {
@@ -158,7 +141,6 @@ function EmptyWorkspace({ title, detail, action }: { title: string; detail: stri
 
 export default function Home() {
   const [activeView, setActiveView] = useState<WorkspaceView>("Office");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [task, setTask] = useState("");
   const [submittedTask, setSubmittedTask] = useState<string | null>(null);
   const [mode, setMode] = useState("Safe Mode");
@@ -514,30 +496,6 @@ export default function Home() {
   return (
     <div className="aether-shell min-h-screen bg-[#070b16] text-slate-100">
       {/* The office map is the primary navigation; no sidebar is rendered. */}
-      {false ? <aside className={cn("aether-sidebar fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-white/[0.08] bg-[#090f1e]/95 px-3 py-4 backdrop-blur-xl transition-[width] duration-200 md:flex", sidebarOpen ? "w-[248px]" : "w-[76px]")}>
-        <div className="flex h-11 items-center gap-3 px-1.5">
-          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-sky-300 via-blue-400 to-violet-500 text-slate-950 shadow-lg shadow-blue-500/20"><Sparkles className="h-4 w-4" /></div>
-          {sidebarOpen ? <div className="min-w-0"><p className="text-sm font-semibold tracking-[-0.02em] text-white">AetherOffice</p><p className="text-[10px] font-medium uppercase tracking-[0.16em] text-sky-200/70">AI Software Company</p></div> : null}
-        </div>
-        <button onClick={() => setSidebarOpen((value) => !value)} className="mt-6 flex h-9 items-center gap-3 rounded-lg px-2 text-xs text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-100" aria-label="Toggle navigation">
-          <PanelLeftClose className={cn("h-4 w-4 shrink-0 transition-transform", !sidebarOpen && "rotate-180")} />
-          {sidebarOpen ? <span>Collapse workspace</span> : null}
-        </button>
-        <ScrollArea className="mt-5 flex-1">
-          <nav className="space-y-1 pr-1">
-            {navigation.map((item) => {
-              const Icon = item.icon;
-              const selected = activeView === item.label;
-              return <button key={item.label} onClick={() => setActiveView(item.label)} title={item.label} className={cn("group flex w-full items-center gap-3 rounded-lg px-2.5 py-2.5 text-left text-sm transition-colors", selected ? "bg-sky-300/[0.11] text-sky-100 shadow-sm" : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-100")}><Icon className={cn("h-4 w-4 shrink-0", selected && "text-sky-300")} />{sidebarOpen ? <span>{item.label}</span> : null}{selected && sidebarOpen ? <ChevronRight className="ml-auto h-3.5 w-3.5 text-sky-300" /> : null}</button>;
-            })}
-          </nav>
-        </ScrollArea>
-        <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
-          <div className="flex items-center gap-2"><TerminalSquare className="h-4 w-4 text-emerald-300" />{sidebarOpen ? <span className="text-xs font-medium text-slate-200">Local engine</span> : null}</div>
-          {sidebarOpen ? <p className="mt-1.5 text-[11px] leading-4 text-slate-500">Not connected · 127.0.0.1 only</p> : null}
-        </div>
-      </aside> : null}
-
       <main className="min-h-screen">
         <header className="sticky top-0 z-20 flex min-h-[72px] items-center justify-between gap-4 border-b border-white/[0.07] bg-[#070b16]/85 px-5 py-3 backdrop-blur-xl sm:px-7">
           <div><p className="text-sm font-semibold text-white">{activeView}</p><p className="mt-0.5 text-xs text-slate-500">{activeView === "Office" ? "Company overview" : "Local workspace"}</p></div>

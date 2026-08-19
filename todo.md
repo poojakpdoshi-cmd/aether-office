@@ -66,7 +66,7 @@
 - [ ] Prepare the local Git repository for a safe GitHub handoff without adding remotes, tokens, API keys, encrypted vault files, runtime state, or local configuration to Git.
 - [ ] Document where the Owner enters provider secrets locally and how GitHub authorization will occur without sharing a PAT in chat.
 - [ ] Verify the button-free interaction flow and confirm the Git repository contains no secrets before handoff.
-- [ ] Remove the sidebar and dashboard-style office navigation from the local office experience.
+- [x] Remove the sidebar and dashboard-style office navigation from the local office experience.
 - [ ] Make a physical files/photo area on the Manager’s desk the direct upload trigger for owner-provided documents and images.
 - [ ] Show the Manager’s upload request only after the Owner clicks the physical desk files/photos, without adding visible office buttons.
 - [ ] Stop generating office artwork and replace the current office scene only when the Owner supplies their chosen office image.
