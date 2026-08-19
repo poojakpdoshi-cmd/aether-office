@@ -79,7 +79,7 @@
 - [x] Animate cabin work states—coding/building, reviewing, testing, waiting, error, and completed—only from real orchestration and controlled-tool events.
 - [x] Add a physical Provider Locker in Manager Cabin as the local-only entry point for encrypted AI-provider API key configuration.
 - [x] Confirm the Provider Locker returns only connection state and never exposes secret values in the browser, audit logs, or Git.
-- [ ] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
+- [x] Verify compact floor interaction, realistic status-based movement, and supplied-artwork mapping after the Owner provides the final image.
 - [x] Generate multiple selectable top-down/isometric office-map concepts that merge the supplied compact cabin layout with illustrated people working at desks. (Superseded because the Owner selected the final compact floor map.)
 - [x] Include a distinct Manager Cabin, enclosed Discussion Room, corridors, individual AI work cabins, laptop/desk areas, and enough clear floor space for status-driven movement. (Superseded because the Owner selected the final compact floor map.)
 - [x] Keep the illustrated employee count controlled and reserve visual characters for configured AI employees rather than every person in the concept art. (Superseded because the Owner selected the final compact floor map.)
