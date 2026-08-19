@@ -53,3 +53,10 @@
 - [ ] Add a per-employee laptop activity overlay describing the current file/tool/task stage without exposing API keys, prompts containing secrets, or unrelated file content.
 - [x] Add camera selection, focused preview, and accessible current-activity text for the live workplace.
 - [ ] Verify camera previews across desktop and mobile breakpoints and confirm fake activity is never displayed as real work.
+- [x] Make Manager Cabin the first screen shown when the local AetherOffice application opens.
+- [x] Replace the Start a discussion control with a clickable Manager Cabin and Manager character command flow.
+- [x] Display the exact manager prompt: “Work is going, sir. Do you want to change, edit, or give more information?” with Change, Edit, and More Information actions.
+- [x] Create a separate enclosed DeepDiscuss Room rather than using a central DeepDiscuss table in the office overview.
+- [x] Reframe the office view so the full workspace is visible at launch, with clickable Manager Cabin, DeepDiscuss Room, employee desks, lounge, test area, and work zones.
+- [x] Open a verified status and activity detail panel when the Owner taps an employee, room, or workspace zone.
+- [x] Verify the complete manager-first local interaction flow on desktop and mobile without introducing unrequested features.

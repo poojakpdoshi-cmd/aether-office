@@ -166,6 +166,7 @@ export default function Home() {
   const [commitMessage, setCommitMessage] = useState("");
   const [ownerConfirmed, setOwnerConfirmed] = useState(false);
   const [focusedCamera, setFocusedCamera] = useState("Office Floor");
+  const [officeFocus, setOfficeFocus] = useState<string | null>("Manager Cabin");
   const providerQuery = trpc.aether.providers.useQuery();
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
@@ -320,7 +321,14 @@ export default function Home() {
     </div>
   );
 
-  const renderOffice = () => <LiveOffice employees={liveEmployees} activity={dashboard?.activities[0]?.message} onOpenChat={() => setActiveView("Chat")} />;
+  const renderOffice = () => {
+    const focusedEmployee = liveEmployees.find((employee) => employee.name === officeFocus || (officeFocus === "Manager" && employee.name === "Manus"));
+    const deskEmployee = officeFocus?.endsWith(" Desk") ? officeFocus.replace(" Desk", "") : undefined;
+    const relatedEmployee = focusedEmployee ?? liveEmployees.find((employee) => employee.name === deskEmployee);
+    const roomActivity = officeFocus === "DeepDiscuss Room" ? (latestMeeting ? `Meeting state: ${latestMeeting.state.replaceAll("_", " ")}. ${latestMeeting.messages.length} verified discussion message(s) recorded.` : "No verified DeepDiscuss meeting is active.") : officeFocus === "Test Lab" ? (runTestsMutation.data ? `Last controlled test command: ${runTestsMutation.data.command}` : "No controlled test run has occurred.") : officeFocus === "Lounge" ? (liveEmployees.some((employee) => employee.status === "WAITING") ? "One or more employees are genuinely waiting for the next verified task event." : "No employee is currently waiting in the lounge.") : undefined;
+    const verifiedActivity = relatedEmployee ? dashboard?.activities.find((event) => event.employee === relatedEmployee.name)?.message : roomActivity;
+    return <div className="space-y-5"><LiveOffice employees={liveEmployees} activity={dashboard?.activities[0]?.message} onOpenManager={() => setOfficeFocus("Manager Cabin")} onInspect={setOfficeFocus} />{officeFocus ? <section className="rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{officeFocus === "Manager Cabin" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager Cabin</h2><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">Tap the Manager to give an instruction, change the task, edit its detail, or add more information.</p><Button onClick={() => setOfficeFocus("Manager")} className="mt-4 bg-sky-300 text-slate-950 hover:bg-sky-200">Talk to Manager</Button></> : officeFocus === "Manager" ? <><h2 className="mt-2 text-lg font-semibold text-white">Manager · Manus</h2><p className="mt-2 text-sm leading-6 text-slate-200">Work is going, sir. Do you want to change, edit, or give more information?</p><div className="mt-4 flex flex-wrap gap-2"><Button onClick={() => setActiveView("Chat")} className="bg-sky-300 text-slate-950 hover:bg-sky-200">Change</Button><Button variant="outline" onClick={() => setActiveView("Editor")} className="border-white/10 bg-white/[0.04] text-slate-100">Edit</Button><Button variant="outline" onClick={() => setActiveView("Chat")} className="border-white/10 bg-white/[0.04] text-slate-100">More Information</Button></div></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee ? `${relatedEmployee.role} · ${relatedEmployee.status}` : "Room status"}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">{verifiedActivity || "No verified activity has been recorded for this room or employee yet."}</p></>}</div><Button variant="outline" size="sm" onClick={() => setOfficeFocus(null)} className="border-white/10 bg-white/[0.04] text-slate-100">Close</Button></div></section> : null}</div>;
+  };
 
   const renderChat = () => (
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
