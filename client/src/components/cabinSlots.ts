@@ -16,6 +16,9 @@ export const COMPACT_CABIN_SLOTS: readonly CompactCabinSlot[] = [
   { id: "right-north-cabin", employee: "Arcee", station: { x: "90%", y: "21%" }, laptop: { left: "89%", top: "20%" }, desk: { x: "91%", y: "24%" } },
   { id: "left-middle-cabin", employee: "SambaNova", station: { x: "10%", y: "47%" }, laptop: { left: "10%", top: "46%" }, desk: { x: "12%", y: "50%" } },
   { id: "right-middle-cabin", employee: "Grok", station: { x: "90%", y: "47%" }, laptop: { left: "89%", top: "46%" }, desk: { x: "91%", y: "50%" } },
+  { id: "left-south-cabin", employee: "North Mini Code", station: { x: "10%", y: "73%" }, laptop: { left: "10%", top: "72%" }, desk: { x: "12%", y: "76%" } },
+  { id: "right-south-cabin", employee: "Devstral Small 2", station: { x: "90%", y: "73%" }, laptop: { left: "89%", top: "72%" }, desk: { x: "91%", y: "76%" } },
+  { id: "systems-cabin", employee: "Nemotron 3 Ultra", station: { x: "50%", y: "87%" }, laptop: { left: "51%", top: "86%" }, desk: { x: "50%", y: "90%" } },
 ];
 
 export function allocateCompactCabinSlots(employeeNames: readonly string[]) {

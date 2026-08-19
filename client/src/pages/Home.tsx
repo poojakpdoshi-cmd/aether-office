@@ -138,9 +138,33 @@ const employees: Employee[] = [
     status: "IDLE",
     accent: "from-amber-300 to-orange-500",
   },
+  {
+    name: "North Mini Code",
+    shortName: "NC",
+    role: "Agentic Coding Specialist",
+    focus: "Repository-level coding and developer workflows",
+    status: "IDLE",
+    accent: "from-teal-300 to-cyan-500",
+  },
+  {
+    name: "Devstral Small 2",
+    shortName: "DS",
+    role: "Software Engineering Specialist",
+    focus: "Implementation sequencing and maintainable code",
+    status: "IDLE",
+    accent: "from-rose-300 to-pink-500",
+  },
+  {
+    name: "Nemotron 3 Ultra",
+    shortName: "N3",
+    role: "Reasoning & Systems Specialist",
+    focus: "Architecture, long-context reasoning, and risk analysis",
+    status: "IDLE",
+    accent: "from-indigo-300 to-blue-500",
+  },
 ];
 
-const providers = ["Manus", "Gemini", "Mistral", "DeepSeek", "Arcee", "Grok", "SambaNova", "OpenRouter"];
+const providers = ["Manus", "Gemini", "Mistral", "DeepSeek", "Arcee", "Grok", "SambaNova", "OpenRouter", "North Mini Code", "Devstral Small 2", "Nemotron 3 Ultra"];
 
 function StatusPill({ status }: { status: EmployeeStatus }) {
   return (
@@ -176,6 +200,7 @@ export default function Home() {
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("");
   const [baseUrl, setBaseUrl] = useState("");
+  const [compatibilityAcknowledged, setCompatibilityAcknowledged] = useState(false);
   const [workspaceInput, setWorkspaceInput] = useState("");
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [openFiles, setOpenFiles] = useState<string[]>([]);
@@ -210,6 +235,7 @@ export default function Home() {
       setApiKey("");
       setModel("");
       setBaseUrl("");
+      setCompatibilityAcknowledged(false);
       setSetupProvider(null);
       providerQuery.refetch();
     },
@@ -219,7 +245,8 @@ export default function Home() {
   const dashboard = dashboardQuery.data;
   const latestMeeting = dashboard?.meetings[0];
   const configuredEmployeeNames = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id === "sambanova" ? "SambaNova" : provider.label));
-  const liveEmployees = employees.filter((employee) => employee.name === "Manus" || configuredEmployeeNames.has(employee.name)).map((employee) => ({
+  const activeEmployeeNames = new Set<string>(dashboard?.employees.map((profile) => profile.id) ?? []);
+  const liveEmployees = employees.filter((employee) => activeEmployeeNames.has(employee.name) && configuredEmployeeNames.has(employee.name)).map((employee) => ({
     ...employee,
     status: (dashboard?.employees.find((profile) => profile.id === employee.name)?.status ?? employee.status) as EmployeeStatus,
   }));
@@ -327,10 +354,11 @@ export default function Home() {
     event.preventDefault();
     if (!setupProvider || setupProvider === "Manus") return;
     configureProviderMutation.mutate({
-      provider: setupProvider.toLowerCase() as "gemini" | "mistral" | "deepseek" | "arcee" | "grok" | "sambanova" | "openrouter",
+      provider: ({ "North Mini Code": "northmini", "Devstral Small 2": "devstral", "Nemotron 3 Ultra": "nemotron" }[setupProvider] ?? setupProvider.toLowerCase()) as "gemini" | "mistral" | "deepseek" | "arcee" | "grok" | "sambanova" | "openrouter" | "northmini" | "devstral" | "nemotron",
       apiKey,
       ...(model.trim() ? { model: model.trim() } : {}),
       ...(baseUrl.trim() ? { baseUrl: baseUrl.trim() } : {}),
+      ...(setupProvider === "Devstral Small 2" ? { compatibilityAcknowledged } : {}),
     });
   };
 
@@ -610,7 +638,7 @@ export default function Home() {
 
   const renderGit = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5">{!workspaceQuery.data?.gitAvailable ? <EmptyWorkspace title="Git workspace unavailable" detail="Select a directory that contains a Git repository to inspect branch status, diffs, history, and guarded commit actions." action="Automatic remote push is permanently disabled." /> : <><div className="flex items-center justify-between"><div><p className="text-sm font-semibold text-white">Git workspace</p><p className="mt-1 text-xs text-slate-400">No automatic remote push is implemented. Commits require explicit owner confirmation.</p></div><Button size="sm" variant="outline" onClick={() => { gitStatusQuery.refetch(); gitDiffQuery.refetch(); gitHistoryQuery.refetch(); }} className="border-white/10 bg-white/[0.03] text-slate-200">Refresh</Button></div><div className="mt-5 grid gap-5 lg:grid-cols-2"><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Status</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitStatusQuery.data || "Clean working tree."}</pre></div><div><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Diff</p><pre className="min-h-40 overflow-auto rounded-xl border border-white/[0.08] bg-black/25 p-4 text-xs leading-6 text-slate-300">{gitDiffQuery.data || "No uncommitted diff."}</pre></div></div><div className="mt-5 rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><p className="text-xs font-semibold text-white">Create local commit</p><div className="mt-3 flex flex-wrap gap-2"><Input value={commitMessage} onChange={(event) => setCommitMessage(event.target.value)} placeholder="Commit message" className="max-w-md border-white/10 bg-black/20 text-slate-100" /><label className="flex items-center gap-2 text-xs text-slate-300"><input type="checkbox" checked={ownerConfirmed} onChange={(event) => setOwnerConfirmed(event.target.checked)} />Confirm</label><Button size="sm" disabled={!commitMessage.trim() || !ownerConfirmed || createCommitMutation.isPending} onClick={() => createCommitMutation.mutate({ message: commitMessage, who: "Owner", why: "Owner created a local commit.", ownerConfirmed })} className="bg-white text-slate-950 hover:bg-slate-200">Commit locally</Button></div></div><div className="mt-5"><p className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">Recent history</p>{gitHistoryQuery.data?.length ? <div className="space-y-2">{gitHistoryQuery.data.map((commit) => <div key={commit.hash} className="rounded-lg border border-white/[0.08] bg-black/15 p-3 text-xs text-slate-300"><span className="font-mono text-sky-200">{commit.shortHash}</span><span className="ml-3">{commit.subject}</span><span className="ml-3 text-slate-500">{commit.author}</span></div>)}</div> : <p className="text-xs text-slate-500">No commit history available.</p>}</div></>}</section>;
 
-  const renderEmployees = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Employee profiles and performance</p><p className="mt-1 text-xs text-slate-400">Statistics update only after a recorded evaluation; no fabricated performance data is shown.</p><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{dashboard?.employees.map((employee) => <article key={employee.id} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><div className="flex items-center justify-between"><p className="text-sm font-semibold text-white">{employee.id}</p><StatusPill status={employee.status as EmployeeStatus} /></div><p className="mt-3 text-xs text-slate-400">Completed tasks <span className="float-right text-slate-100">{employee.taskCount}</span></p><p className="mt-2 text-xs text-slate-400">Average score <span className="float-right text-slate-100">{employee.averageScore === null ? "—" : employee.averageScore.toFixed(1)}</span></p><p className="mt-2 text-xs text-slate-400">Recent scores <span className="float-right text-slate-100">{employee.recentPerformance.length ? employee.recentPerformance.join(", ") : "—"}</span></p></article>)}</div><div className="mt-5 rounded-xl border border-sky-300/15 bg-sky-300/[0.06] p-4 text-xs leading-5 text-sky-100">Evaluation rubric: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.</div></section>;
+  const renderEmployees = () => <section className="rounded-2xl border border-white/10 bg-[#0d1527]/80 p-5"><p className="text-sm font-semibold text-white">Employee profiles and performance</p><p className="mt-1 text-xs text-slate-400">Statistics update only after a recorded evaluation; no fabricated performance data is shown.</p>{dashboard?.expiredTemporaryEmployees.length ? <div className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[0.08] p-4 text-xs leading-5 text-amber-100">Temporary assignment ended: {dashboard.expiredTemporaryEmployees.join(", ")}. The expired employee is removed from the office and cannot join new discussions.</div> : null}<div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{dashboard?.employees.map((employee) => <article key={employee.id} className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><div className="flex items-center justify-between"><p className="text-sm font-semibold text-white">{employee.id}</p><StatusPill status={employee.status as EmployeeStatus} /></div><p className="mt-3 text-xs text-slate-400">Completed tasks <span className="float-right text-slate-100">{employee.taskCount}</span></p><p className="mt-2 text-xs text-slate-400">Average score <span className="float-right text-slate-100">{employee.averageScore === null ? "—" : employee.averageScore.toFixed(1)}</span></p><p className="mt-2 text-xs text-slate-400">Recent scores <span className="float-right text-slate-100">{employee.recentPerformance.length ? employee.recentPerformance.join(", ") : "—"}</span></p></article>)}</div><div className="mt-5 rounded-xl border border-sky-300/15 bg-sky-300/[0.06] p-4 text-xs leading-5 text-sky-100">Evaluation rubric: Correctness 30%, Requirements 20%, Code Quality 20%, Security 10%, Performance 10%, Maintainability 10%.</div></section>;
 
   const renderCameras = () => {
     const overlayFor = (employee: (typeof liveEmployees)[number]) => {
@@ -663,9 +691,10 @@ export default function Home() {
             <div className="flex items-start justify-between gap-5"><div><p className="text-lg font-semibold text-white">Configure {setupProvider}</p><p className="mt-1 text-xs leading-5 text-slate-400">The key is transmitted only to the local backend, encrypted at rest, and never sent back to this browser.</p></div><button type="button" onClick={() => { setSetupProvider(null); setApiKey(""); }} className="text-sm text-slate-400 hover:text-white">Close</button></div>
             <label className="mt-5 block text-xs font-medium text-slate-300">API key<Input required type="password" value={apiKey} autoComplete="new-password" onChange={(event) => setApiKey(event.target.value)} className="mt-2 border-white/10 bg-black/20 text-slate-100" placeholder="Paste key once; it is never displayed again" /></label>
             <div className="mt-4 grid gap-4 sm:grid-cols-2"><label className="block text-xs font-medium text-slate-300">Model <span className="font-normal text-slate-500">(optional)</span><Input value={model} onChange={(event) => setModel(event.target.value)} className="mt-2 border-white/10 bg-black/20 text-slate-100" placeholder="Provider model ID" /></label><label className="block text-xs font-medium text-slate-300">Endpoint <span className="font-normal text-slate-500">(optional)</span><Input value={baseUrl} onChange={(event) => setBaseUrl(event.target.value)} className="mt-2 border-white/10 bg-black/20 text-slate-100" placeholder="https://…/chat/completions" /></label></div>
+            {setupProvider === "Devstral Small 2" ? <label className="mt-4 block rounded-lg border border-amber-300/20 bg-amber-300/[0.08] p-3 text-xs leading-5 text-amber-100"><input className="mr-2" type="checkbox" checked={compatibilityAcknowledged} onChange={(event) => setCompatibilityAcknowledged(event.target.checked)} />I understand Devstral Small 2 is retired by Mistral. I have confirmed that this endpoint and account still support it.</label> : null}
             <p className="mt-4 rounded-lg border border-emerald-300/15 bg-emerald-300/[0.06] p-3 text-xs leading-5 text-emerald-100">No API keys are saved in frontend state after this form submits, logged by the application, or added to the Git repository.</p>
             {configureProviderMutation.error ? <p className="mt-3 text-xs text-rose-300">The provider could not be saved. Check the local configuration and try again.</p> : null}
-            <div className="mt-5 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setSetupProvider(null)} className="border-white/10 bg-white/[0.03] text-slate-200">Cancel</Button><Button type="submit" disabled={!apiKey.trim() || configureProviderMutation.isPending} className="bg-sky-300 text-slate-950 hover:bg-sky-200">{configureProviderMutation.isPending ? "Securing…" : "Save securely"}</Button></div>
+            <div className="mt-5 flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setSetupProvider(null)} className="border-white/10 bg-white/[0.03] text-slate-200">Cancel</Button><Button type="submit" disabled={!apiKey.trim() || (setupProvider === "Devstral Small 2" && !compatibilityAcknowledged) || configureProviderMutation.isPending} className="bg-sky-300 text-slate-950 hover:bg-sky-200">{configureProviderMutation.isPending ? "Securing…" : "Save securely"}</Button></div>
           </form>
         </div>
       ) : null}

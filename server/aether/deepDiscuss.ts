@@ -4,6 +4,7 @@ import {
   addDiscussionMessage,
   createMeeting,
   failMeeting,
+  isEmployeeActive,
   resetEmployeeStatuses,
   setEmployeeStatus,
   setProposal,
@@ -19,6 +20,9 @@ const employeeInstructions: Record<EmployeeId, string> = {
   Arcee: "You are Arcee, code and security reviewer. Focus on threat modeling, unsafe assumptions, review criteria, and safeguard gaps.",
   Grok: "You are Grok, technical researcher. Focus on alternatives, dependency risks, integration constraints, and validation research.",
   SambaNova: "You are SambaNova, rapid analysis worker. Focus on concise implementation observations, missing requirements, and rapid risk scans.",
+  "North Mini Code": "You are North Mini Code, an agentic coding specialist. Focus on repository-level implementation plans, concise patches, and practical developer workflows.",
+  "Devstral Small 2": "You are Devstral Small 2, a software engineering specialist. Focus on reliable code implementation, refactoring order, and testable modular changes.",
+  "Nemotron 3 Ultra": "You are Nemotron 3 Ultra, a reasoning and systems specialist. Focus on complex architecture, long-context constraints, tool boundaries, and high-confidence risk analysis.",
 };
 
 export function selectEmployeesForTask(task: string): EmployeeId[] {
@@ -99,15 +103,18 @@ async function runRound(
 }
 
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {
-  setEmployeeStatus("Manus", "THINKING");
+  const synthesisEmployee = isEmployeeActive("Manus") ? "Manus" : messages[0]?.employee;
+  if (!synthesisEmployee) throw new Error("No active employee is available to synthesize the TEAM PROPOSAL.");
+  setEmployeeStatus(synthesisEmployee, "THINKING");
   const source = messages.map((message) => `${message.employee}: ${message.content}`).join("\n\n").slice(0, 16000);
-  const adapter = getProviderAdapter("manus");
+  const provider = getEmployeeProvider(synthesisEmployee);
+  const adapter = getProviderAdapter(provider);
   const content = await adapter.generate({
-    system: "You are Manus, the AI company manager. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
+    system: "You are the active AI company meeting synthesizer. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
     user: `Owner task:\n${task}\n\nTeam discussion:\n${source}`,
   });
   const proposal = parseProposal(content, task);
-  addDiscussionMessage(meetingId, { employee: "Manus", provider: "manus", round: "synthesis", content: JSON.stringify(proposal) });
+  addDiscussionMessage(meetingId, { employee: synthesisEmployee, provider, round: "synthesis", content: JSON.stringify(proposal) });
   return proposal;
 }
 

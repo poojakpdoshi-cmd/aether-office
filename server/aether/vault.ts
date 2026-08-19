@@ -8,6 +8,7 @@ type StoredProviderConfig = {
   apiKey: string;
   model?: string;
   baseUrl?: string;
+  compatibilityAcknowledged?: boolean;
 };
 
 type VaultPayload = Partial<Record<ProviderId, StoredProviderConfig>>;
@@ -93,6 +94,7 @@ export async function saveProviderConfig(provider: Exclude<ProviderId, "manus">,
     apiKey: config.apiKey.trim(),
     ...(config.model?.trim() ? { model: config.model.trim() } : {}),
     ...(config.baseUrl?.trim() ? { baseUrl: config.baseUrl.trim().replace(/\/$/, "") } : {}),
+    ...(config.compatibilityAcknowledged ? { compatibilityAcknowledged: true } : {}),
   };
   await writeVault(payload);
 }

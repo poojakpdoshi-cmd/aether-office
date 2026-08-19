@@ -28,7 +28,7 @@ export const appRouter = router({
     dashboard: publicProcedure.query(() => getDashboardState()),
     providers: publicProcedure.query(() => listProviderStatuses()),
     configureProvider: publicProcedure
-      .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional() }))
+      .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
       .mutation(({ input }) => configureProvider(input)),
     recognizeEmployee: publicProcedure
       .input(z.object({ apiKey: z.string().trim().min(8).max(1000) }))

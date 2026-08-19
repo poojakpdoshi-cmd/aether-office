@@ -1,6 +1,7 @@
 import type { EmployeeId, ProviderId } from "../../shared/aether";
 import { invokeLLM } from "../_core/llm";
 import { readProviderConfig, removeProviderConfig, saveProviderConfig } from "./vault";
+import { isEmployeeActive } from "./state";
 
 export type ProviderStatus = {
   id: ProviderId;
@@ -8,6 +9,7 @@ export type ProviderStatus = {
   configured: boolean;
   route: "built-in" | "direct" | "gateway";
   secretEnvironmentVariable?: string;
+  compatibilityWarning?: string;
 };
 
 export type ProviderAdapter = {
@@ -26,6 +28,9 @@ const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
   grok: { id: "grok", label: "Grok", route: "direct", secretEnvironmentVariable: "GROK_API_KEY" },
   sambanova: { id: "sambanova", label: "SambaNova", route: "direct", secretEnvironmentVariable: "SAMBANOVA_API_KEY" },
   openrouter: { id: "openrouter", label: "OpenRouter", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY" },
+  northmini: { id: "northmini", label: "North Mini Code", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY" },
+  devstral: { id: "devstral", label: "Devstral Small 2", route: "direct", secretEnvironmentVariable: "DEVSTRAL_API_KEY", compatibilityWarning: "Mistral lists this retired model as unsupported after 2026-03-31. Confirm your account endpoint still serves it before enabling." },
+  nemotron: { id: "nemotron", label: "Nemotron 3 Ultra", route: "direct", secretEnvironmentVariable: "NVIDIA_API_KEY" },
 };
 
 const employeeProvider: Record<EmployeeId, ProviderId> = {
@@ -36,6 +41,9 @@ const employeeProvider: Record<EmployeeId, ProviderId> = {
   Arcee: "arcee",
   Grok: "grok",
   SambaNova: "sambanova",
+  "North Mini Code": "northmini",
+  "Devstral Small 2": "devstral",
+  "Nemotron 3 Ultra": "nemotron",
 };
 
 function getTextContent(content: string | unknown[]) {
@@ -105,6 +113,9 @@ const adapters: Record<ProviderId, ProviderAdapter> = {
   grok: directAdapter("grok"),
   sambanova: directAdapter("sambanova"),
   openrouter: directAdapter("openrouter"),
+  northmini: directAdapter("northmini"),
+  devstral: directAdapter("devstral"),
+  nemotron: directAdapter("nemotron"),
 };
 
 export async function listProviderStatuses(): Promise<ProviderStatus[]> {
@@ -123,7 +134,10 @@ export function getProviderAdapter(provider: ProviderId) {
 }
 
 export async function isEmployeeAvailable(employee: EmployeeId) {
-  return adapters[employeeProvider[employee]].isConfigured();
+  const provider = employeeProvider[employee];
+  if (!isEmployeeActive(employee) || !(await adapters[provider].isConfigured())) return false;
+  if (provider === "devstral") return Boolean((await readProviderConfig("devstral"))?.compatibilityAcknowledged);
+  return true;
 }
 
 export async function getConfiguredVisionProvider() {
@@ -131,7 +145,7 @@ export async function getConfiguredVisionProvider() {
   return { provider: "Manus" as const, model: "gemini-3-flash-preview" as const };
 }
 
-type EffectiveProviderConfig = { apiKey: string; model?: string; baseUrl?: string };
+type EffectiveProviderConfig = { apiKey: string; model?: string; baseUrl?: string; compatibilityAcknowledged?: boolean };
 
 const environmentDefaults: Partial<Record<ProviderId, Omit<EffectiveProviderConfig, "apiKey">>> = {
   gemini: { baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", model: "gemini-3.7-flash" },
@@ -140,18 +154,27 @@ const environmentDefaults: Partial<Record<ProviderId, Omit<EffectiveProviderConf
   grok: { baseUrl: "https://api.x.ai/v1/chat/completions", model: "grok-4" },
   sambanova: { baseUrl: "https://api.sambanova.ai/v1/chat/completions", model: "Meta-Llama-3.3-70B-Instruct" },
   openrouter: { baseUrl: "https://openrouter.ai/api/v1/chat/completions" },
+  northmini: { baseUrl: "https://openrouter.ai/api/v1/chat/completions", model: "cohere/north-mini-code:free" },
+  devstral: { baseUrl: "https://api.mistral.ai/v1/chat/completions", model: "labs-devstral-small-2512" },
+  nemotron: { baseUrl: "https://integrate.api.nvidia.com/v1/chat/completions", model: "nvidia/nemotron-3-ultra-550b-a55b" },
 };
 
 async function getEffectiveProviderConfig(provider: ProviderId): Promise<EffectiveProviderConfig | undefined> {
   if (provider === "manus") return undefined;
   const persisted = await readProviderConfig(provider);
   if (persisted) return { ...environmentDefaults[provider], ...persisted };
+  const compatibleGateway = provider === "northmini" ? "openrouter" : provider === "devstral" ? "mistral" : undefined;
+  if (compatibleGateway) {
+    const inherited = await readProviderConfig(compatibleGateway);
+    if (inherited) return { ...environmentDefaults[provider], apiKey: inherited.apiKey, baseUrl: inherited.baseUrl ?? environmentDefaults[provider]?.baseUrl };
+  }
   const environmentVariable = providerMeta[provider].secretEnvironmentVariable;
   const apiKey = environmentVariable ? process.env[environmentVariable] : undefined;
   return apiKey ? { apiKey, ...environmentDefaults[provider] } : undefined;
 }
 
-export async function configureProvider(input: { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string }) {
+export async function configureProvider(input: { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean }) {
+  if (input.provider === "devstral" && !input.compatibilityAcknowledged) throw new Error("Devstral Small 2 is retired. Owner acknowledgement and endpoint compatibility are required before configuration.");
   await saveProviderConfig(input.provider, input);
   const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider);
   return status;

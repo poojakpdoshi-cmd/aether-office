@@ -7,6 +7,7 @@ const compactFloorStyles = readFileSync(fileURLToPath(new URL("../../client/src/
 const homePage = readFileSync(fileURLToPath(new URL("../../client/src/pages/Home.tsx", import.meta.url)), "utf8");
 const officeArtworkPolicy = readFileSync(fileURLToPath(new URL("../../client/src/components/officeArtwork.ts", import.meta.url)), "utf8");
 const laptopOverlayPolicy = readFileSync(fileURLToPath(new URL("../../client/src/lib/laptopOverlay.ts", import.meta.url)), "utf8");
+const cabinSlots = readFileSync(fileURLToPath(new URL("../../client/src/components/cabinSlots.ts", import.meta.url)), "utf8");
 
 describe("Owner-selected compact office floor", () => {
   it("uses the selected asset and provides direct room, desk, object, and corridor targets", () => {
@@ -60,13 +61,16 @@ describe("Owner-selected compact office floor", () => {
   });
 
   it("limits the map roster to configured providers and maps real statuses to meeting and workstation positions", () => {
-    expect(homePage).toContain('employee.name === "Manus" || configuredEmployeeNames.has(employee.name)');
+    expect(homePage).toContain('activeEmployeeNames.has(employee.name) && configuredEmployeeNames.has(employee.name)');
     expect(officeComponent).toContain('if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" }');
     expect(officeComponent).toContain('const { assignments } = allocateCompactCabinSlots(employees.map((employee) => employee.name))');
     expect(officeComponent).toContain('if (employee.status === "THINKING") return { ...slot.station, state: "walking" }');
     expect(officeComponent).toContain('if (employee.status === "CODING") return { ...slot.station, state: "coding" }');
     expect(officeComponent).toContain('if (employee.status === "REVIEWING") return { ...slot.station, state: "reviewing" }');
     expect(officeComponent).toContain('if (employee.status === "TESTING") return { x: "50%", y: "92%", state: "testing" }');
+    expect(cabinSlots).toContain('employee: "North Mini Code"');
+    expect(cabinSlots).toContain('employee: "Devstral Small 2"');
+    expect(cabinSlots).toContain('employee: "Nemotron 3 Ultra"');
   });
 
   it("routes the physical Provider Locker to local-only secret-safe provider configuration", () => {

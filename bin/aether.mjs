@@ -33,7 +33,9 @@ if (!existsSync(entry)) {
   process.exit(1);
 }
 
-const child = spawn(process.execPath, [entry], {
+const localSecretsFile = join(packageRoot, ".env.local");
+const nodeArguments = existsSync(localSecretsFile) ? [`--env-file=${localSecretsFile}`, entry] : [entry];
+const child = spawn(process.execPath, nodeArguments, {
   cwd: packageRoot,
   env: { ...process.env, NODE_ENV: "production", AETHER_LOCAL_ONLY: "true", AETHER_WORKSPACE: workspace, PORT: process.env.PORT || "4173" },
   stdio: ["inherit", "pipe", "pipe"],

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { applyProposalAction, createMeeting, getDashboardState, resetStateForTests, setApprovalMode, setProposal } from "./state";
+import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, resetStateForTests, setApprovalMode, setProposal } from "./state";
 
 describe("AetherOffice owner approvals", () => {
   beforeEach(() => resetStateForTests());
@@ -27,5 +27,13 @@ describe("AetherOffice owner approvals", () => {
     const result = applyProposalAction(meeting.id, "Modify Plan", "Add accessibility checks.");
     expect(result.state).toBe("CHANGES_REQUESTED");
     expect(getDashboardState().activities.some((activity) => activity.message.includes("Modify Plan"))).toBe(true);
+  });
+
+  it("removes temporary Manus at expiry and reports the assignment end to the Owner", () => {
+    const afterSevenDays = Date.now() + 8 * 24 * 60 * 60 * 1000;
+    expect(isEmployeeActive("Manus", afterSevenDays)).toBe(false);
+    const dashboard = getDashboardState(afterSevenDays);
+    expect(dashboard.employees.some((employee) => employee.id === "Manus")).toBe(false);
+    expect(dashboard.expiredTemporaryEmployees).toContain("Manus");
   });
 });

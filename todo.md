@@ -106,3 +106,14 @@
 - [x] Implement and test compositor-friendly real-status walking and work-state motion, preserving responsive mobile scale and CSS reduced-motion support.
 - [x] Add a navigable expanded workspace file tree beyond the root-level file list.
 - [x] Add multi-file editor tabs with tab selection and close behavior.
+- [ ] Create an Owner-authorized GitHub repository and push the reviewed local project through browser-based GitHub authorization without sharing a PAT in chat.
+- [ ] Make Manus a temporary employee with a seven-day lifecycle and safe expiration behavior.
+- [ ] Add configurable model routing for Cohere North Mini Code through OpenRouter and Devstral Small 2 through the Mistral provider.
+- [ ] Verify the official provider route and model identifier for Nemotron 3 Ultra before adding it as a configurable employee.
+- [ ] Expand approved-office cabin allocation so each configured additional employee has a real desk, laptop, and workstation interaction target.
+- [ ] Add owner-visible temporary-Manus expiry handling and end-to-end expiry behavior coverage at and after the seven-day limit.
+- [ ] Gate retired Devstral Small 2 behind an explicit compatibility warning and configured-provider validation before it can be selected for a meeting.
+- [ ] Resolve Nemotron 3 Ultra to one concrete supported route based on the Owner’s key provider and test that configuration path.
+- [ ] Configure Nemotron 3 Ultra for the Owner-selected NVIDIA API Catalog endpoint and model identifier.
+- [ ] Verify the North Mini Code, Devstral Small 2, and Nemotron 3 Ultra office desk, laptop, and workstation hotspots with the employees configured and present.
+- [x] Create a local Git-ignored provider secrets template that the Owner can fill without putting keys in chat or source control.

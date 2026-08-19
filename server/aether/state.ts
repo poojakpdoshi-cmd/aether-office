@@ -15,13 +15,16 @@ import {
 } from "../../shared/aether";
 
 const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averageScore" | "recentPerformance">> = [
-  { id: "Manus", role: "CEO · Orchestrator", provider: "manus" },
+  { id: "Manus", role: "Temporary CEO · Orchestrator", provider: "manus", temporaryUntil: Date.now() + 7 * 24 * 60 * 60 * 1000 },
   { id: "Gemini", role: "Lead Developer", provider: "gemini" },
   { id: "Mistral", role: "Software Engineer", provider: "mistral" },
   { id: "DeepSeek", role: "Senior Engineer", provider: "deepseek" },
   { id: "Arcee", role: "Quality Reviewer", provider: "arcee" },
   { id: "Grok", role: "Researcher", provider: "grok" },
   { id: "SambaNova", role: "Fast Analysis Worker", provider: "sambanova" },
+  { id: "North Mini Code", role: "Agentic Coding Specialist", provider: "northmini" },
+  { id: "Devstral Small 2", role: "Software Engineering Specialist", provider: "devstral" },
+  { id: "Nemotron 3 Ultra", role: "Reasoning & Systems Specialist", provider: "nemotron" },
 ];
 
 const employeeProfiles = new Map<EmployeeId, EmployeeProfile>(
@@ -52,6 +55,8 @@ function hydrateState() {
     const stored = JSON.parse(readFileSync(filePath, "utf8")) as { approvalMode?: ApprovalMode; employees?: EmployeeProfile[]; meetings?: Meeting[]; activities?: ActivityEvent[] };
     if (stored.approvalMode) approvalMode = stored.approvalMode;
     stored.employees?.forEach((employee) => employeeProfiles.set(employee.id, employee));
+    const manus = employeeProfiles.get("Manus");
+    if (manus && manus.temporaryUntil === undefined) manus.temporaryUntil = Date.now() + 7 * 24 * 60 * 60 * 1000;
     stored.meetings?.forEach((meeting) => meetings.set(meeting.id, meeting));
     if (stored.activities) activities.push(...stored.activities.slice(-200));
   } catch {
@@ -59,13 +64,19 @@ function hydrateState() {
   }
 }
 
-export function getDashboardState() {
+export function getDashboardState(now = Date.now()) {
   return {
     approvalMode,
-    employees: Array.from(employeeProfiles.values()),
+    employees: Array.from(employeeProfiles.values()).filter((employee) => isEmployeeActive(employee.id, now)),
+    expiredTemporaryEmployees: Array.from(employeeProfiles.values()).filter((employee) => Boolean(employee.temporaryUntil && employee.temporaryUntil <= now)).map((employee) => employee.id),
     meetings: Array.from(meetings.values()).sort((a, b) => b.updatedAt - a.updatedAt),
     activities: [...activities].sort((a, b) => b.createdAt - a.createdAt).slice(0, 50),
   };
+}
+
+export function isEmployeeActive(employee: EmployeeId, at = Date.now()) {
+  const profile = employeeProfiles.get(employee);
+  return Boolean(profile && (!profile.temporaryUntil || profile.temporaryUntil > at));
 }
 
 export function setApprovalMode(mode: ApprovalMode) {
@@ -78,6 +89,7 @@ export function setApprovalMode(mode: ApprovalMode) {
 export function setEmployeeStatus(employee: EmployeeId, status: EmployeeStatus) {
   const profile = employeeProfiles.get(employee);
   if (!profile) throw new Error(`Unknown employee: ${employee}`);
+  if (!isEmployeeActive(employee)) throw new Error(`${employee} is no longer active in this local office.`);
   profile.status = status;
   persistState();
 }
