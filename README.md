@@ -12,7 +12,7 @@ The planned public distribution target is `@aetheroffice/cli`. The Owner must fi
 npm install --global @aetheroffice/cli
 ```
 
-The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. npm installs the global `AetherOffice` executable; no Git clone, source editing, or project-local dependency installation is required for end users.
+The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. npm installs the global `aetheroffice` executable; no Git clone, source editing, project-local dependency installation, `.env` file, or manually set environment variable is required for end users.
 
 ## Run
 
@@ -20,32 +20,32 @@ Run AetherOffice inside the directory you want it to access:
 
 ```bash
 cd /path/to/your/project
-AetherOffice
+aetheroffice
 ```
 
 You may also provide a workspace path directly:
 
 ```bash
-AetherOffice /absolute/path/to/your/project
+aetheroffice /absolute/path/to/your/project
 ```
 
 The CLI starts the local backend and local web interface on `127.0.0.1`, chooses an available local port when the preferred port is occupied, opens the default browser where possible, and prints the URL when it cannot open a browser. Press `Ctrl+C` in the terminal to stop AetherOffice cleanly.
 
 ## First run
 
-When no usable external provider is configured, `AetherOffice` begins an interactive terminal setup wizard before it starts the workspace. The wizard asks you to choose only the provider or providers you intend to use; it does **not** require every provider key. It then requests each selected credential one by one with masked terminal input, stores each one in the encrypted local vault, validates that at least one usable provider is configured, and automatically starts the selected local workspace immediately after the final provider entry.
+When no usable external provider is configured, `aetheroffice` begins an interactive terminal setup wizard before it starts the workspace. It walks through each supported configurable provider **one at a time** in a fixed order—without a provider-selection screen. Every credential is masked, never printed, and written only to the existing encrypted local vault. You can explicitly skip any provider. After the sequence, at least one usable provider is required; if none were configured, the wizard retries. Once one or more providers are ready, AetherOffice automatically starts the selected local workspace and opens localhost.
 
 | Provider route | Credential requested by setup | Important behavior |
 |---|---|---|
-| Gemini | `GEMINI_API_KEY` | Direct provider route. |
-| Mistral | `MISTRAL_API_KEY` | Direct provider route. |
-| DeepSeek | `DEEPSEEK_API_KEY` | Direct provider route. |
-| Arcee | `ARCEE_API_KEY` | Also requests the actual chat-completions endpoint and model identifier because no default is configured. |
-| Grok | `GROK_API_KEY` | Direct xAI route. |
-| SambaNova | `SAMBANOVA_API_KEY` | Direct provider route. |
-| OpenRouter / North Mini Code | `OPENROUTER_API_KEY` | One OpenRouter key supports its gateway route and the configured North Mini Code route. |
-| Devstral Small 2 | `DEVSTRAL_API_KEY` | Requires an explicit acknowledgement because this retired Mistral-compatible model may no longer be served. |
-| Nemotron 3 Ultra | `NVIDIA_API_KEY` | Uses the fixed NVIDIA API Catalog endpoint and model route. |
+| Google Gemini | Gemini API key | General AI reasoning and assistance. |
+| Mistral | Mistral API key | Software planning and implementation. |
+| DeepSeek | DeepSeek API key | Backend, systems, and debugging work. |
+| Arcee AI | Arcee API key | Also asks for an endpoint and model because they are necessary for this configurable route. |
+| Grok | Grok API key | Research and comparative analysis. |
+| SambaNova | SambaNova API key | Fast analysis and synthesis. |
+| OpenRouter / North Mini Code | OpenRouter API key | Gateway access for North Mini Code and compatible models. |
+| Devstral Small 2 | Devstral API key | Explicitly retired-gated; it warns and requires acknowledgement before configuration. |
+| Nemotron 3 Ultra | NVIDIA API key | Reasoning and systems work through NVIDIA API Catalog. |
 
 Enter credentials only in the interactive wizard or through the physical **Provider Locker** inside the locally running Manager Cabin. Never paste an API key into a GitHub issue, source file, commit, browser console, or chat message.
 
@@ -55,13 +55,13 @@ The automatic first-run flow does not run optional provider connection checks, s
 
 | Command | Purpose |
 |---|---|
-| `AetherOffice` | Configure on first run, then open the current directory as the controlled workspace. |
-| `AetherOffice <workspace>` | Open a specific existing directory as the controlled workspace. |
-| `AetherOffice setup` | Add or replace selected encrypted provider configuration without starting the browser interface. |
-| `AetherOffice doctor` | Check the Node version, installed bundle, local configuration presence, provider readiness, and preferred loopback port without reading or printing credentials. |
-| `AetherOffice --help` | Show safe usage guidance. |
-| `AetherOffice --version` | Print the installed package version. |
-| `aether` | Compatibility alias for `AetherOffice`. |
+| `aetheroffice` | **Primary command.** Configure on first run, then open the current directory as the controlled workspace. |
+| `aetheroffice <workspace>` | Open a specific existing directory as the controlled workspace. |
+| `aetheroffice setup` | Reconfigure encrypted provider credentials without starting the browser interface. |
+| `aetheroffice doctor` | Check the Node version, installed bundle, local configuration presence, provider readiness, and preferred loopback port without reading or printing credentials. |
+| `aetheroffice --help` | Show safe usage guidance. |
+| `aetheroffice --version` | Print the installed package version. |
+| `AetherOffice`, `aether` | Compatibility aliases for `aetheroffice`. |
 
 Use npm for package lifecycle operations:
 
@@ -70,7 +70,7 @@ npm update --global @aetheroffice/cli
 npm uninstall --global @aetheroffice/cli
 ```
 
-There is intentionally no `AetherOffice update` command: software updates should remain visible and user-controlled through npm.
+There is intentionally no `aetheroffice update` command: software updates should remain visible and user-controlled through npm.
 
 ## Local configuration and security
 
@@ -91,12 +91,12 @@ Uninstalling the npm package removes the executable and installed program files,
 
 | Situation | Recommended action |
 |---|---|
-| `AetherOffice` is not found | Verify npm’s global binary directory is on your `PATH`, then reopen the terminal. |
-| Setup cannot mask input | Run `AetherOffice setup` from a normal interactive terminal, or start AetherOffice and use the physical Provider Locker. Do not use a shared/logged terminal session for credentials. |
-| No provider is ready | Run `AetherOffice setup`, select an actual provider you have an account for, and enter its key. |
+| `aetheroffice` is not found | Verify npm’s global binary directory is on your `PATH`, then reopen the terminal. |
+| Setup cannot mask input | Run `aetheroffice setup` from a normal interactive terminal, or start AetherOffice and use the physical Provider Locker. Do not use a shared/logged terminal session for credentials. |
+| No provider is ready | Run `aetheroffice setup`, safely skip providers you do not use, and enter a key for at least one provider you have an account for. |
 | A provider connection check fails | Check your key, billing/account access, selected model, and endpoint; rerun setup. For Devstral, confirm the retired model is still available to your Mistral account. |
 | The preferred port is occupied | The server searches the next available local port. Run `AetherOffice doctor` to see the preferred-port result. |
-| A workspace is rejected | Supply an existing directory, for example `AetherOffice /absolute/path/to/project`. |
+| A workspace is rejected | Supply an existing directory, for example `aetheroffice /absolute/path/to/project`. |
 | A vault is unreadable | Keep a backup of your local configuration directory if needed, then rerun setup to create fresh provider settings. |
 
 ## Development

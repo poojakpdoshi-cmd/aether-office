@@ -23,6 +23,7 @@
     "access": "public"
   },
   "bin": {
+    "aetheroffice": "bin/aether-office.mjs",
     "AetherOffice": "bin/aether-office.mjs",
     "aether": "bin/aether.mjs"
   },

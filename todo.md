@@ -190,3 +190,10 @@
 - [x] Verify and push the owner-approved audited-fix checkpoint to the existing public GitHub repository without including local secrets, vault files, runtime state, or generated evidence.
 
 - [x] Verify the pushed audited-fix implementation commit directly against the reported DeepDiscuss, chat, navigation, and provider requirements.
+
+- [x] Implement a real production first-run `aetheroffice` wizard that sequentially prompts each supported configurable provider using masked vault-backed credentials and safe skips.
+- [x] Require at least one usable configured provider before launch, preserve reconfiguration through `aetheroffice setup`, and automatically launch localhost after successful first-run setup.
+- [x] Add the lowercase `aetheroffice` npm bin while preserving existing `AetherOffice` and `aether` compatibility aliases.
+- [x] Update official quick-start documentation to use `npm install --global @aetheroffice/cli` followed by `aetheroffice` alone.
+- [x] Add production CLI regression coverage for sequential prompts, skips, provider readiness, encrypted-vault persistence, existing-config bypass, automatic launch, lowercase bin, and existing optional commands.
+- [ ] Run package-level validation, save a checkpoint, and push the owner-approved production CLI implementation.

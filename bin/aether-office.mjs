@@ -16,11 +16,11 @@ const cliConfigEntry = join(packageRoot, "dist", "cli-config.js");
 const usage = `AetherOffice — local-first AI software company
 
 Usage:
-  AetherOffice [workspace]    Configure if needed, then open a local workspace
-  AetherOffice setup          Configure encrypted local AI provider credentials
-  AetherOffice doctor         Diagnose the installed package and local setup safely
-  AetherOffice --help         Show this help message
-  AetherOffice --version      Show the installed package version
+  aetheroffice [workspace]    Configure if needed, then open a local workspace
+  aetheroffice setup          Reconfigure encrypted local AI provider credentials
+  aetheroffice doctor         Diagnose the installed package and local setup safely
+  aetheroffice --help         Show this help message
+  aetheroffice --version      Show the installed package version
 
 The application starts only on 127.0.0.1. API keys remain in the local encrypted vault and are never printed by this CLI.
 `;
@@ -93,53 +93,91 @@ async function promptSecret(question) {
   });
 }
 
-function parseSelections(value, options) {
-  const selection = [...new Set(value.split(",").map((item) => Number.parseInt(item.trim(), 10)).filter((item) => Number.isInteger(item) && item > 0 && item <= options.length))];
-  if (selection.length === 0) throw new Error("Select at least one listed provider number.");
-  return selection.map((index) => options[index - 1]);
+export async function runSequentialProviderWizard(cli, prompts = { visible: promptVisible, secret: promptSecret, write: (message) => process.stdout.write(message) }) {
+  const options = cli.getCliProviderOptions();
+  const configured = [];
+  const skipped = [];
+  prompts.write("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n        AETHER OFFICE\n        First-Time Setup\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\nLet's configure your AI providers. You may safely skip any provider.\n");
+
+  for (let index = 0; index < options.length; index += 1) {
+    const option = options[index];
+    prompts.write(`\nProvider ${index + 1} of ${options.length}\n${option.label}\n${option.purpose}\n`);
+    if (option.requiresCompatibilityAcknowledgement) {
+      prompts.write("⚠ This retired provider is not production-ready and may no longer be served.\n");
+      const acknowledged = await prompts.visible("Type I UNDERSTAND to configure this compatibility route, or press Enter to skip: ");
+      if (acknowledged !== "I UNDERSTAND") {
+        skipped.push(option.label);
+        prompts.write(`○ ${option.label} skipped.\n`);
+        await prompts.visible("Press Enter to continue... ");
+        continue;
+      }
+    }
+
+    const skipBeforeCredential = await prompts.visible("Skip this provider? [y/N] ");
+    if (skipBeforeCredential.toLowerCase() === "y") {
+      skipped.push(option.label);
+      prompts.write(`○ ${option.label} skipped.\n`);
+      await prompts.visible("Press Enter to continue... ");
+      continue;
+    }
+
+    let completed = false;
+    while (!completed) {
+      const apiKey = await prompts.secret(`Please enter your ${option.credentialLabel}: `);
+      if (!apiKey) {
+        const skip = await prompts.visible("No credential was entered. Skip this provider? [y/N] ");
+        if (skip.toLowerCase() === "y") {
+          skipped.push(option.label);
+          prompts.write(`○ ${option.label} skipped.\n`);
+          completed = true;
+          continue;
+        }
+        prompts.write("A credential is required to configure this provider.\n");
+        continue;
+      }
+      let baseUrl;
+      let model;
+      if (option.requiresEndpointAndModel) {
+        baseUrl = await prompts.visible("API endpoint: ");
+        model = await prompts.visible("Model: ");
+        if (!baseUrl || !model) {
+          prompts.write("Arcee requires both an API endpoint and model.\n");
+          continue;
+        }
+      }
+      try {
+        await cli.configureCliProvider({ provider: option.id, apiKey, ...(baseUrl ? { baseUrl } : {}), ...(model ? { model } : {}), ...(option.requiresCompatibilityAcknowledgement ? { compatibilityAcknowledged: true } : {}) });
+        configured.push(option.label);
+        prompts.write(`✓ ${option.label} configured successfully.\n`);
+        completed = true;
+      } catch {
+        const skip = await prompts.visible(`✗ ${option.label} could not be configured. Skip this provider? [y/N] `);
+        if (skip.toLowerCase() === "y") {
+          skipped.push(option.label);
+          prompts.write(`○ ${option.label} skipped.\n`);
+          completed = true;
+        } else prompts.write("Please try again.\n");
+      }
+    }
+    await prompts.visible("Press Enter to continue... ");
+  }
+  return { configured, skipped };
 }
 
-async function runSetup({ launchAfterSetup = false } = {}) {
+export async function runSetup({ launchAfterSetup = false } = {}) {
   const cli = await loadCliConfig();
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error("AetherOffice setup requires an interactive terminal so credentials can be entered safely.");
   }
 
-  const options = cli.getCliProviderOptions();
-  process.stdout.write("\nWelcome to AetherOffice\n\nFirst-time setup stores only the providers you choose in your local encrypted vault. Provider keys are not printed or sent to the browser.\n\n");
-  options.forEach((option, index) => process.stdout.write(`  ${index + 1}. ${option.label} (${option.secretName})\n`));
-  const chosen = parseSelections(await promptVisible("\nChoose one or more provider numbers, separated by commas: "), options);
-
-  for (const option of chosen) {
-    process.stdout.write(`\nConfiguring ${option.label}.\n`);
-    if (option.requiresCompatibilityAcknowledgement) {
-      const acknowledged = await promptVisible("This model is retired and may no longer be served by Mistral. Type I UNDERSTAND to continue: ");
-      if (acknowledged !== "I UNDERSTAND") throw new Error("Devstral Small 2 was not configured because the required acknowledgement was not given.");
-    }
-
-    const apiKey = await promptSecret(`Enter ${option.secretName}: `);
-    if (!apiKey) throw new Error(`${option.secretName} cannot be empty.`);
-    let baseUrl;
-    let model;
-    if (option.requiresEndpointAndModel) {
-      baseUrl = await promptVisible("Enter the Arcee chat-completions endpoint: ");
-      model = await promptVisible("Enter the Arcee model identifier: ");
-    }
-    await cli.configureCliProvider({
-      provider: option.id,
-      apiKey,
-      ...(baseUrl ? { baseUrl } : {}),
-      ...(model ? { model } : {}),
-      ...(option.requiresCompatibilityAcknowledgement ? { compatibilityAcknowledged: true } : {}),
-    });
-    process.stdout.write(`✓ ${option.label} is encrypted in your local AetherOffice vault.\n`);
-
+  let summary;
+  while (!(await cli.hasConfiguredExternalProvider())) {
+    summary = await runSequentialProviderWizard(cli);
+    if (await cli.hasConfiguredExternalProvider()) break;
+    process.stdout.write("\nNo AI provider has been configured. AetherOffice cannot start without at least one usable provider.\n");
+    await promptVisible("Press Enter to retry setup... ");
   }
-
-  if (!(await cli.hasConfiguredExternalProvider())) {
-    throw new Error("Setup completed without a usable external provider. Run AetherOffice setup again and configure at least one provider.");
-  }
-  process.stdout.write(launchAfterSetup ? "\n✓ Local configuration validated. Starting your local office now…\n" : "\n✓ Local configuration validated. Run AetherOffice to open your workspace.\n");
+  process.stdout.write(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nSetup complete!\n${summary?.configured.map((label) => `✓ ${label} configured`).join("\n") || "✓ Existing provider configuration detected"}\nCredentials have been securely stored.\n${launchAfterSetup ? "Starting AetherOffice..." : "Setup is ready."}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`);
 }
 
 async function runDoctor() {

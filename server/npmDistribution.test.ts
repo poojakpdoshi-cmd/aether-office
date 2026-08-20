@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const projectRoot = resolve(import.meta.dirname, "..");
 
 describe("npm CLI distribution manifest", () => {
-  it("ships the production runtime and both global command entry points without source-checkout-only files", async () => {
+  it("ships the production runtime and lowercase primary command plus compatibility aliases without source-checkout-only files", async () => {
     const manifest = JSON.parse(await readFile(resolve(projectRoot, "package.json"), "utf8")) as {
       name: string;
       bin: Record<string, string>;
@@ -15,7 +15,7 @@ describe("npm CLI distribution manifest", () => {
     };
 
     expect(manifest.name).toBe("@aetheroffice/cli");
-    expect(manifest.bin).toMatchObject({ AetherOffice: "bin/aether-office.mjs", aether: "bin/aether.mjs" });
+    expect(manifest.bin).toMatchObject({ aetheroffice: "bin/aether-office.mjs", AetherOffice: "bin/aether-office.mjs", aether: "bin/aether.mjs" });
     expect(manifest.files).toEqual(expect.arrayContaining(["dist", "bin", "README.md", "LICENSE"]));
     expect(manifest.files.join(" ")).not.toMatch(/\.env|server|client|scripts|test/i);
     expect(manifest.engines.node).toBe(">=22");
@@ -25,7 +25,8 @@ describe("npm CLI distribution manifest", () => {
   it("documents an interactive encrypted setup path and never places an example credential in the published README", async () => {
     const readme = await readFile(resolve(projectRoot, "README.md"), "utf8");
     expect(readme).toContain("npm install --global @aetheroffice/cli");
-    expect(readme).toContain("AetherOffice setup");
+    expect(readme).toContain("aetheroffice");
+    expect(readme).toContain("one at a time");
     expect(readme).toContain("~/.aether-office/");
     expect(readme).not.toMatch(/(?:ghp_|github_pat_|sk-or-v1-|AIza[\w-]{20,}|nvapi-[\w-]{20,})/);
   });

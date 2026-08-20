@@ -5,27 +5,31 @@ export type CliProviderOption = {
   id: Exclude<ProviderId, "manus">;
   label: string;
   secretName: string;
+  credentialLabel: string;
+  purpose: string;
   storageProvider: Exclude<ProviderId, "manus">;
   requiresCompatibilityAcknowledgement?: boolean;
   requiresEndpointAndModel?: boolean;
 };
 
 const cliProviderOptions: CliProviderOption[] = [
-  { id: "gemini", label: "Gemini", secretName: "GEMINI_API_KEY", storageProvider: "gemini" },
-  { id: "mistral", label: "Mistral", secretName: "MISTRAL_API_KEY", storageProvider: "mistral" },
-  { id: "deepseek", label: "DeepSeek", secretName: "DEEPSEEK_API_KEY", storageProvider: "deepseek" },
-  { id: "arcee", label: "Arcee", secretName: "ARCEE_API_KEY", storageProvider: "arcee", requiresEndpointAndModel: true },
-  { id: "grok", label: "Grok", secretName: "GROK_API_KEY", storageProvider: "grok" },
-  { id: "sambanova", label: "SambaNova", secretName: "SAMBANOVA_API_KEY", storageProvider: "sambanova" },
-  { id: "openrouter", label: "OpenRouter / North Mini Code", secretName: "OPENROUTER_API_KEY", storageProvider: "openrouter" },
+  { id: "gemini", label: "Google Gemini", secretName: "GEMINI_API_KEY", credentialLabel: "Gemini API key", purpose: "Gemini provides general AI reasoning and assistance.", storageProvider: "gemini" },
+  { id: "mistral", label: "Mistral", secretName: "MISTRAL_API_KEY", credentialLabel: "Mistral API key", purpose: "Mistral supports software planning and implementation.", storageProvider: "mistral" },
+  { id: "deepseek", label: "DeepSeek", secretName: "DEEPSEEK_API_KEY", credentialLabel: "DeepSeek API key", purpose: "DeepSeek supports backend, systems, and debugging work.", storageProvider: "deepseek" },
+  { id: "arcee", label: "Arcee AI", secretName: "ARCEE_API_KEY", credentialLabel: "Arcee API key", purpose: "Arcee provides configurable specialist analysis through your endpoint and model.", storageProvider: "arcee", requiresEndpointAndModel: true },
+  { id: "grok", label: "Grok", secretName: "GROK_API_KEY", credentialLabel: "Grok API key", purpose: "Grok supports research and comparative analysis.", storageProvider: "grok" },
+  { id: "sambanova", label: "SambaNova", secretName: "SAMBANOVA_API_KEY", credentialLabel: "SambaNova API key", purpose: "SambaNova is prioritized for fast analysis and synthesis.", storageProvider: "sambanova" },
+  { id: "openrouter", label: "OpenRouter / North Mini Code", secretName: "OPENROUTER_API_KEY", credentialLabel: "OpenRouter API key", purpose: "OpenRouter enables North Mini Code and compatible gateway models.", storageProvider: "openrouter" },
   {
     id: "devstral",
     label: "Devstral Small 2 (retired-model compatibility route)",
     secretName: "DEVSTRAL_API_KEY",
+    credentialLabel: "Devstral API key",
+    purpose: "Devstral is a retired compatibility route and requires explicit endpoint support acknowledgement.",
     storageProvider: "devstral",
     requiresCompatibilityAcknowledgement: true,
   },
-  { id: "nemotron", label: "Nemotron 3 Ultra (NVIDIA API Catalog)", secretName: "NVIDIA_API_KEY", storageProvider: "nemotron" },
+  { id: "nemotron", label: "Nemotron 3 Ultra (NVIDIA API Catalog)", secretName: "NVIDIA_API_KEY", credentialLabel: "NVIDIA API key", purpose: "Nemotron supports reasoning and systems work through NVIDIA API Catalog.", storageProvider: "nemotron" },
 ];
 
 export function getCliProviderOptions() {
