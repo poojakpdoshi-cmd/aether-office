@@ -175,4 +175,4 @@
 - [x] Replace fragile custom sidebar toggle and width state with deterministic SidebarTrigger-driven library behavior.
 - [x] Parallelize independent selected-provider calls within each DeepDiscuss round while preserving the required analysis, critique, debate, and synthesis sequence.
 - [x] Verify the existing workspace upload UI reaches the controlled importUpload route and reports safe success and error states.
-- [ ] Add focused regression coverage for sidebar behavior, parallel DeepDiscuss execution, and upload integration; run full validation and save a checkpoint.
+- [x] Add focused regression coverage for sidebar behavior, parallel DeepDiscuss execution, and upload integration; run full validation and save a checkpoint.
