@@ -7,7 +7,7 @@ import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether
 import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
 import { evaluateImplementation } from "./aether/evaluation";
 import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
-import { applyProposalAction, assertExecutionAllowed, getDashboardState, setApprovalMode } from "./aether/state";
+import { applyProposalAction, assertExecutionAllowed, getDashboardState, provisionEmployees, setApprovalMode } from "./aether/state";
 import { competitionIsolationStatus } from "./aether/teamIsolation";
 import { BROWSER_TEST_SCENARIOS, cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getGitDiff, getGitHistory, getGitStatus, getLatestBrowserEvidence, getLatestProofReport, getProjectPreview, getWorkspaceExecution, getWorkspaceSummary, getWorkspaceTree, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, startWorkspaceCommand, startWorkspaceTests, writeWorkspaceFile } from "./aether/workspace";
 
@@ -29,6 +29,7 @@ export const appRouter = router({
     dashboard: publicProcedure.query(() => getDashboardState()),
     competitionIsolation: publicProcedure.query(() => competitionIsolationStatus()),
     providers: publicProcedure.query(() => listProviderStatuses()),
+    provisionEmployees: publicProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured) throw new Error(`${status?.label ?? input.provider} must be configured before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),
     configureProvider: publicProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
       .mutation(({ input }) => configureProvider(input)),

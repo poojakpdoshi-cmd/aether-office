@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, resetStateForTests, setApprovalMode, setEmployeeStatus, setProposal, setTemporaryUntilForTests } from "./state";
+import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, provisionEmployees, resetStateForTests, setApprovalMode, setEmployeeStatus, setProposal, setTemporaryUntilForTests } from "./state";
 
 describe("AetherOffice owner approvals", () => {
   beforeEach(() => resetStateForTests());
@@ -35,6 +35,15 @@ describe("AetherOffice owner approvals", () => {
     const dashboard = getDashboardState(afterSevenDays);
     expect(dashboard.employees.some((employee) => employee.id === "Manus")).toBe(false);
     expect(dashboard.expiredTemporaryEmployees).toContain("Manus");
+  });
+
+  it("provisions only a bounded number of distinct local employees for a provider", () => {
+    const first = provisionEmployees("gemini", 2);
+    expect(first.created.map((employee) => employee.id)).toEqual(["Gemini Worker 1", "Gemini Worker 2"]);
+    expect(() => provisionEmployees("gemini", 6)).toThrow("between 1 and 5");
+    const second = provisionEmployees("gemini", 1);
+    expect(second.created[0]?.id).toBe("Gemini Worker 3");
+    expect(getDashboardState().employees.filter((employee) => employee.provider === "gemini")).toHaveLength(4);
   });
 
   it("treats the exact temporaryUntil boundary as expired across dashboard and state updates", () => {

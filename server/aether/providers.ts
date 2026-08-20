@@ -131,8 +131,19 @@ export async function listProviderStatuses(): Promise<ProviderStatus[]> {
   }));
 }
 
-export function getEmployeeProvider(employee: EmployeeId) {
-  return employeeProvider[employee];
+export function getEmployeeProvider(employee: EmployeeId): ProviderId {
+  if (employeeProvider[employee]) return employeeProvider[employee];
+  if (employee.startsWith("Gemini Worker ")) return "gemini";
+  if (employee.startsWith("Mistral Worker ")) return "mistral";
+  if (employee.startsWith("DeepSeek Worker ")) return "deepseek";
+  if (employee.startsWith("Arcee Worker ")) return "arcee";
+  if (employee.startsWith("Grok Worker ")) return "grok";
+  if (employee.startsWith("SambaNova Worker ")) return "sambanova";
+  if (employee.startsWith("OpenRouter Worker ")) return "openrouter";
+  if (employee.startsWith("North Mini Code Worker ")) return "northmini";
+  if (employee.startsWith("Devstral Small 2 Worker ")) return "devstral";
+  if (employee.startsWith("Nemotron 3 Ultra Worker ")) return "nemotron";
+  return "manus";
 }
 
 export function getProviderAdapter(provider: ProviderId) {
@@ -140,7 +151,7 @@ export function getProviderAdapter(provider: ProviderId) {
 }
 
 export async function isEmployeeAvailable(employee: EmployeeId) {
-  const provider = employeeProvider[employee];
+  const provider = getEmployeeProvider(employee);
   if (!isEmployeeActive(employee) || !(await adapters[provider].isConfigured())) return false;
   if (provider === "devstral") return Boolean((await readProviderConfig("devstral"))?.compatibilityAcknowledged);
   return true;

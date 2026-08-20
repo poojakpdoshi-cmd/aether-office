@@ -200,15 +200,15 @@
 
 - [x] Verify, commit if needed, and push the owner-approved current repository state to GitHub.
 
-- [ ] Add a physical Manager desk FILES/PHOTOS interaction that opens the existing controlled upload flow.
-- [ ] Add a hidden exit-door hotspot that opens a slide-out management panel while keeping the default office launch text-free and sidebar-free.
-- [ ] Add Settings & Connections inside the exit panel with encrypted provider setup/status and no browser-exposed API keys.
-- [ ] Add controlled one-to-many employee provisioning from a configured provider with bounded count, explicit confirmation, and no fake employees.
-- [ ] Add regression coverage for physical navigation, upload routing, provider secrecy, and employee provisioning safeguards.
-- [ ] Run full validation, save a checkpoint, and push the owner-approved physical management workflow.
+- [x] Add a physical Manager desk FILES/PHOTOS interaction that opens the existing controlled upload flow.
+- [x] Add a hidden exit-door hotspot that opens a slide-out management panel while keeping the default office launch text-free and sidebar-free.
+- [x] Add Settings & Connections inside the exit panel with encrypted provider setup/status and no browser-exposed API keys.
+- [x] Add controlled one-to-many employee provisioning from a configured provider with bounded count, explicit confirmation, and no fake employees.
+- [x] Add regression coverage for physical navigation, upload routing, provider secrecy, and employee provisioning safeguards.
+- [x] Run full validation, save a checkpoint, and push the owner-approved physical management workflow.
 
 - [x] Add a hidden physical exit-door hotspot that opens the management slide-out only after direct map interaction.
 - [x] Add Settings & Connections inside the exit-door management panel, reusing encrypted provider configuration without exposing secrets.
-- [ ] Support bounded one-to-many employee provisioning from one configured provider key with explicit owner confirmation and no fabricated employees or activity.
+- [x] Support bounded one-to-many employee provisioning from one configured provider key with explicit owner confirmation and no fabricated employees or activity.
 - [x] Wire the Manager desk FILES/PHOTOS physical hotspot to the existing controlled upload flow.
 - [x] Add regression coverage for exit-door navigation, text-free launch, and Manager desk upload wiring.

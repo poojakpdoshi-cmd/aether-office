@@ -21,7 +21,7 @@ export type ApprovalMode = (typeof APPROVAL_MODES)[number];
 export type ProposalAction = (typeof PROPOSAL_ACTIONS)[number];
 export type DeepDiscussRound = (typeof DEEP_DISCUSS_ROUNDS)[number];
 export type ProviderId = (typeof PROVIDER_IDS)[number];
-export type EmployeeId = "Manus" | "Gemini" | "Mistral" | "DeepSeek" | "Arcee" | "Grok" | "SambaNova" | "North Mini Code" | "Devstral Small 2" | "Nemotron 3 Ultra";
+export type EmployeeId = string;
 
 export type EmployeeProfile = {
   id: EmployeeId;

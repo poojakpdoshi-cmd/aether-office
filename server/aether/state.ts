@@ -11,6 +11,7 @@ import {
   type EmployeeStatus,
   type Meeting,
   type ProposalAction,
+  type ProviderId,
   type TeamProposal,
 } from "../../shared/aether";
 
@@ -200,6 +201,27 @@ function requireMeeting(meetingId: string) {
   const meeting = meetings.get(meetingId);
   if (!meeting) throw new Error("Meeting not found.");
   return meeting;
+}
+
+const providerEmployeeLabels: Record<ProviderId, { label: string; role: string }> = {
+  manus: { label: "Manus", role: "Temporary CEO · Orchestrator" }, gemini: { label: "Gemini", role: "Lead Developer" }, mistral: { label: "Mistral", role: "Software Engineer" }, deepseek: { label: "DeepSeek", role: "Senior Engineer" }, arcee: { label: "Arcee", role: "Quality Reviewer" }, grok: { label: "Grok", role: "Researcher" }, sambanova: { label: "SambaNova", role: "Fast Analysis Worker" }, openrouter: { label: "OpenRouter", role: "Configured Provider Worker" }, northmini: { label: "North Mini Code", role: "Agentic Coding Specialist" }, devstral: { label: "Devstral Small 2", role: "Software Engineering Specialist" }, nemotron: { label: "Nemotron 3 Ultra", role: "Reasoning & Systems Specialist" },
+};
+
+export function provisionEmployees(provider: ProviderId, count: number) {
+  if (!Number.isInteger(count) || count < 1 || count > 5) throw new Error("Provision between 1 and 5 employees at a time.");
+  const descriptor = providerEmployeeLabels[provider];
+  if (!descriptor) throw new Error("Unsupported provider.");
+  const created: EmployeeProfile[] = [];
+  for (let index = 1; created.length < count; index += 1) {
+    const id = `${descriptor.label} Worker ${index}`;
+    if (employeeProfiles.has(id)) continue;
+    const profile: EmployeeProfile = { id, role: descriptor.role, provider, status: "IDLE", taskCount: 0, averageScore: null, recentPerformance: [] };
+    employeeProfiles.set(id, profile);
+    created.push(profile);
+  }
+  addActivity({ kind: "system", message: `Owner provisioned ${created.length} ${descriptor.label} employee${created.length === 1 ? "" : "s"}.` });
+  persistState();
+  return { created, totalForProvider: Array.from(employeeProfiles.values()).filter((employee) => employee.provider === provider).length };
 }
 
 export function resetStateForTests() {
