@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
+import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, importWorkspaceUpload, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
 import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
@@ -36,6 +36,13 @@ describe("controlled workspace tools", () => {
     const auditPath = join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "audit", `${key}.ndjson`);
     expect(await readFile(auditPath, "utf8")).toContain('"WHO":"Gemini"');
     expect(await readFile(auditPath, "utf8")).toContain('"WHY":"Implement requested module."');
+  });
+
+  it("imports an owner upload only beneath the selected workspace and rejects unsupported file types", async () => {
+    const imported = await importWorkspaceUpload({ fileName: "brief.md", mimeType: "text/markdown", base64: Buffer.from("# Owner brief\n").toString("base64"), who: "Owner", why: "Owner uploaded a file to the selected workspace." });
+    expect(imported.relativePath).toMatch(/^\.aether-office\/uploads\//);
+    expect(await readFile(join(root, imported.relativePath), "utf8")).toBe("# Owner brief\n");
+    await expect(importWorkspaceUpload({ fileName: "unsafe.exe", mimeType: "application/octet-stream", base64: Buffer.from("x").toString("base64"), who: "Owner", why: "Rejected upload test." })).rejects.toThrow("not allowed");
   });
 
   it("returns an employee inspection snapshot from real controlled file activity without exposing audit reasons", async () => {

@@ -85,21 +85,27 @@ async function runRound(
     : "No earlier responses are available for this first round.";
 
   for (const employee of employees) {
-    for (const teammate of employees) {
-      if (teammate !== employee) setEmployeeStatus(teammate, "WAITING");
-    }
     setEmployeeStatus(employee, round === "analysis" ? "THINKING" : "REVIEWING");
+    addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `Discussing ${round}` } });
+  }
+  const contributions = await runConcurrentRoundJobs(employees, async (employee) => {
     const provider = getEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
-    addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `Discussing ${round}` } });
     const content = await adapter.generate({
       system: `${employeeInstructions[employee]} You are participating in the ${round} round of an owner-approved software planning meeting. Do not claim that files, tests, or tools have run. Be concise, concrete, and cite risks.`,
       user: `Owner task:\n${task}\n\nEarlier team material:\n${previousSummary}\n\nProvide your ${round} contribution.`,
     });
-    addDiscussionMessage(meetingId, { employee, provider, round, content });
-    addActivity({ kind: "provider", message: `${employee} completed ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} complete` } });
-    setEmployeeStatus(employee, "WAITING");
+    return { employee, provider, content };
+  });
+  for (const contribution of contributions) {
+    addDiscussionMessage(meetingId, { employee: contribution.employee, provider: contribution.provider, round, content: contribution.content });
+    addActivity({ kind: "provider", message: `${contribution.employee} completed ${round}.`, employee: contribution.employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} complete` } });
+    setEmployeeStatus(contribution.employee, "WAITING");
   }
+}
+
+export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
+  return Promise.all(employees.map((employee) => work(employee)));
 }
 
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {

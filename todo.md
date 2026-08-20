@@ -171,3 +171,8 @@
 - [x] Verify and refine the first-run `AetherOffice` terminal flow so encrypted provider setup completes key-by-key and automatically starts localhost after the final confirmation.
 
 - [x] Verify the current checkpoint changes and push the owner-approved reviewed AetherOffice update to the existing public GitHub repository without including local secrets, vault files, runtime state, or generated evidence.
+
+- [x] Replace fragile custom sidebar toggle and width state with deterministic SidebarTrigger-driven library behavior.
+- [x] Parallelize independent selected-provider calls within each DeepDiscuss round while preserving the required analysis, critique, debate, and synthesis sequence.
+- [x] Verify the existing workspace upload UI reaches the controlled importUpload route and reports safe success and error states.
+- [ ] Add focused regression coverage for sidebar behavior, parallel DeepDiscuss execution, and upload integration; run full validation and save a checkpoint.

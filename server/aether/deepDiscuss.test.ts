@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseProposal, selectEmployeesForTask, selectSynthesisEmployee } from "./deepDiscuss";
+import { parseProposal, runConcurrentRoundJobs, selectEmployeesForTask, selectSynthesisEmployee } from "./deepDiscuss";
 import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -29,5 +29,21 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     resetStateForTests();
     setTemporaryUntilForTests("Manus", Date.now() - 1);
     expect(selectSynthesisEmployee([{ employee: "Mistral" }, { employee: "Gemini" }])).toBe("Mistral");
+  });
+
+  it("starts independent employee work in parallel while keeping result order deterministic", async () => {
+    const employees = ["Manus", "Gemini", "Mistral"] as const;
+    const started: string[] = [];
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+    const work = runConcurrentRoundJobs([...employees], async (employee) => {
+      started.push(employee);
+      await gate;
+      return `${employee}-complete`;
+    });
+    await Promise.resolve();
+    expect(started).toEqual([...employees]);
+    release?.();
+    await expect(work).resolves.toEqual(["Manus-complete", "Gemini-complete", "Mistral-complete"]);
   });
 });
