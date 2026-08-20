@@ -12,7 +12,7 @@
 }
 
 .text-free-office { display: grid; min-height: 100dvh; place-items: center; overflow: hidden; background: #070b16; }
-.text-free-office .real-office-stage { width: min(100vw, 177.778dvh); height: auto; min-height: 0; margin: 0; aspect-ratio: 16 / 9; background: #070b16; }
+.text-free-office .real-office-stage { position: relative; width: min(100vw, 177.778dvh); height: auto; min-height: 0; margin: 0; aspect-ratio: 16 / 9; overflow: hidden; background: #070b16; }
 .text-free-office .office-ambient-backdrop { display: none; }
 .text-free-office .real-office-backdrop { z-index: 1; object-fit: cover; filter: saturate(.84) brightness(.96); }
 .text-free-office .office-map-overlay { position: absolute; z-index: 2; inset: 0; }
@@ -62,7 +62,7 @@
 
 .text-free-office .office-exit-door-hotspot { position: absolute; z-index: 9; right: 1.5%; bottom: 3%; width: 8%; height: 18%; border: 0; background: transparent; padding: 0; color: transparent; cursor: pointer; }
 .text-free-office .office-exit-door-hotspot:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
-.office-exit-panel { position: fixed; z-index: 50; top: auto; right: clamp(16px, 4vw, 56px); bottom: clamp(16px, 4vh, 40px); display: flex; max-height: min(72dvh, 610px); width: min(340px, calc(100vw - 32px)); flex-direction: column; overflow: auto; border: 1px solid rgba(148, 163, 184, .24); border-radius: 22px; background: linear-gradient(155deg, rgba(25, 32, 48, .96), rgba(9, 14, 25, .985)); padding: 18px; box-shadow: 0 22px 70px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(18px); animation: office-panel-in 220ms cubic-bezier(.23,1,.32,1); }
+.office-exit-panel { position: absolute; z-index: 20; top: auto; right: 2.5%; bottom: 2.5%; display: flex; max-height: 86%; width: min(340px, 32%); flex-direction: column; overflow: auto; border: 1px solid rgba(148, 163, 184, .24); border-radius: 22px; background: linear-gradient(155deg, rgba(25, 32, 48, .96), rgba(9, 14, 25, .985)); padding: 18px; box-shadow: 0 22px 70px rgba(0, 0, 0, .48), inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(18px); animation: office-panel-in 220ms cubic-bezier(.23,1,.32,1); }
 .office-exit-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 12px; }
 .office-panel-close { display: grid; height: 32px; width: 32px; place-items: center; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: rgba(255,255,255,.05); color: #cbd5e1; font-size: 22px; line-height: 1; }
 .office-panel-action { display: flex; align-items: flex-start; gap: 10px; border: 1px solid rgba(255,255,255,.09); border-radius: 13px; background: rgba(255,255,255,.045); padding: 11px 12px; text-align: left; color: #e2e8f0; transition: transform 160ms ease-out, background 160ms ease-out, border-color 160ms ease-out; }
@@ -71,5 +71,5 @@
 .office-panel-action strong { font-size: 12px; font-weight: 650; letter-spacing: .01em; }
 .office-panel-action small { margin-top: 4px; color: #94a3b8; font-size: 11px; line-height: 1.45; }
 @keyframes office-panel-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: translateX(0); } }
-@media (max-width: 760px) { .office-exit-panel { right: 12px; bottom: 12px; width: calc(100vw - 24px); max-height: 76dvh; border-radius: 18px; padding: 15px; } }
+@media (max-width: 760px) { .office-exit-panel { right: 3%; bottom: 3%; width: min(340px, 74%); max-height: 88%; border-radius: 18px; padding: 15px; } }
 @media (prefers-reduced-motion: reduce) { .office-exit-panel { animation: none; } .office-panel-action { transition: none; } }

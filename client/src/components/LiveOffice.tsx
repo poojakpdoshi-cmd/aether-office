@@ -1,10 +1,10 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { allocateCompactCabinSlots, type CompactCabinSlot } from "./cabinSlots";
 import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 
 export type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
-type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFiles: () => void; onProviderLocker: () => void; onExitDoor: () => void; onInspect: (target: string) => void };
+type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFiles: () => void; onProviderLocker: () => void; onExitDoor: () => void; onInspect: (target: string) => void; managementPanel?: ReactNode };
 
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, Arcee: { x: "50%", y: "57%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
 const illustratedEmployees: Record<string, string> = {
@@ -44,7 +44,7 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   };
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onInspect }: Props) {
+export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onInspect, managementPanel }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
@@ -95,6 +95,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
           <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name] ?? illustratedEmployees.Mistral} alt="" />{employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />}
         </button>; })}
       </div>
+      {managementPanel}
     </div>
   </section>;
 }

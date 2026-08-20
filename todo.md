@@ -216,3 +216,7 @@
 - [x] Fix the exit-door management drawer so it does not cover the office map on desktop or mobile.
 - [x] Restyle the exit-door drawer to a compact, video-inspired physical control panel with clear hierarchy and restrained glass/dark treatment.
 - [x] Verify drawer geometry, responsive behavior, and text-free office launch after the visual fix.
+
+- [x] Constrain the exit-door panel to the office viewport container so it cannot leak into the surrounding preview/management UI.
+- [x] Prevent page-level overflow and preview-level scroll artifacts when the management panel opens.
+- [x] Verify the corrected office viewport at desktop and mobile sizes with a regression test.

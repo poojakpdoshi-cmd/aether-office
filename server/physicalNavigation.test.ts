@@ -12,6 +12,9 @@ describe("physical office navigation", () => {
     expect(office).toContain("manager-file-pile");
     expect(office).toContain("onExitDoor");
     expect(styles).toContain(".text-free-office .office-exit-door-hotspot");
+    expect(styles).toContain(".text-free-office .real-office-stage { position: relative;");
+    expect(styles).toContain("overflow: hidden;");
+    expect(styles).toContain(".office-exit-panel { position: absolute;");
   });
 
   it("keeps management UI conditional instead of visible at office launch", () => {
