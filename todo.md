@@ -212,3 +212,7 @@
 - [x] Support bounded one-to-many employee provisioning from one configured provider key with explicit owner confirmation and no fabricated employees or activity.
 - [x] Wire the Manager desk FILES/PHOTOS physical hotspot to the existing controlled upload flow.
 - [x] Add regression coverage for exit-door navigation, text-free launch, and Manager desk upload wiring.
+
+- [x] Fix the exit-door management drawer so it does not cover the office map on desktop or mobile.
+- [x] Restyle the exit-door drawer to a compact, video-inspired physical control panel with clear hierarchy and restrained glass/dark treatment.
+- [x] Verify drawer geometry, responsive behavior, and text-free office launch after the visual fix.
