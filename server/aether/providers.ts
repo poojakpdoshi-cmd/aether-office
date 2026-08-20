@@ -11,6 +11,7 @@ export type ProviderStatus = {
   model?: string;
   secretEnvironmentVariable?: string;
   compatibilityWarning?: string;
+  availability: "ready" | "retired-gated";
 };
 
 export type ProviderAdapter = {
@@ -21,17 +22,17 @@ export type ProviderAdapter = {
 };
 
 const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
-  manus: { id: "manus", label: "Manus", route: "built-in" },
-  gemini: { id: "gemini", label: "Gemini", route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY" },
-  mistral: { id: "mistral", label: "Mistral", route: "direct", secretEnvironmentVariable: "MISTRAL_API_KEY" },
-  deepseek: { id: "deepseek", label: "DeepSeek", route: "direct", secretEnvironmentVariable: "DEEPSEEK_API_KEY" },
-  arcee: { id: "arcee", label: "Arcee", route: "direct", secretEnvironmentVariable: "ARCEE_API_KEY" },
-  grok: { id: "grok", label: "Grok", route: "direct", secretEnvironmentVariable: "GROK_API_KEY" },
-  sambanova: { id: "sambanova", label: "SambaNova", route: "direct", secretEnvironmentVariable: "SAMBANOVA_API_KEY" },
-  openrouter: { id: "openrouter", label: "OpenRouter", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY" },
-  northmini: { id: "northmini", label: "North Mini Code", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY" },
-  devstral: { id: "devstral", label: "Devstral Small 2", route: "direct", secretEnvironmentVariable: "DEVSTRAL_API_KEY", compatibilityWarning: "Mistral lists this retired model as unsupported after 2026-03-31. Confirm your account endpoint still serves it before enabling." },
-  nemotron: { id: "nemotron", label: "Nemotron 3 Ultra", route: "direct", secretEnvironmentVariable: "NVIDIA_API_KEY" },
+  manus: { id: "manus", label: "Manus", route: "built-in", availability: "ready" },
+  gemini: { id: "gemini", label: "Gemini", route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY", availability: "ready" },
+  mistral: { id: "mistral", label: "Mistral", route: "direct", secretEnvironmentVariable: "MISTRAL_API_KEY", availability: "ready" },
+  deepseek: { id: "deepseek", label: "DeepSeek", route: "direct", secretEnvironmentVariable: "DEEPSEEK_API_KEY", availability: "ready" },
+  arcee: { id: "arcee", label: "Arcee", route: "direct", secretEnvironmentVariable: "ARCEE_API_KEY", availability: "ready" },
+  grok: { id: "grok", label: "Grok", route: "direct", secretEnvironmentVariable: "GROK_API_KEY", availability: "ready" },
+  sambanova: { id: "sambanova", label: "SambaNova", route: "direct", secretEnvironmentVariable: "SAMBANOVA_API_KEY", availability: "ready" },
+  openrouter: { id: "openrouter", label: "OpenRouter", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY", availability: "ready" },
+  northmini: { id: "northmini", label: "North Mini Code", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY", availability: "ready" },
+  devstral: { id: "devstral", label: "Devstral Small 2", route: "direct", secretEnvironmentVariable: "DEVSTRAL_API_KEY", availability: "retired-gated", compatibilityWarning: "Retired compatibility route. It is unavailable until the owner explicitly acknowledges endpoint support; do not treat it as production-ready." },
+  nemotron: { id: "nemotron", label: "Nemotron 3 Ultra", route: "direct", secretEnvironmentVariable: "NVIDIA_API_KEY", availability: "ready" },
 };
 
 const employeeProvider: Record<EmployeeId, ProviderId> = {

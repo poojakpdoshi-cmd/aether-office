@@ -133,7 +133,8 @@ export function AIChatBox({
   const [minHeightForLastMessage, setMinHeightForLastMessage] = useState(0);
 
   useEffect(() => {
-    if (containerRef.current && inputAreaRef.current) {
+    const recalculateLastMessageHeight = () => {
+      if (containerRef.current && inputAreaRef.current) {
       const containerHeight = containerRef.current.offsetHeight;
       const inputHeight = inputAreaRef.current.offsetHeight;
       const scrollAreaHeight = containerHeight - inputHeight;
@@ -146,10 +147,20 @@ export function AIChatBox({
       const calculatedHeight = scrollAreaHeight - 32 - userMessageReservedHeight;
 
       setMinHeightForLastMessage(Math.max(0, calculatedHeight));
-    }
+      }
+    };
+    recalculateLastMessageHeight();
+    const observer = typeof ResizeObserver === "undefined" ? undefined : new ResizeObserver(recalculateLastMessageHeight);
+    if (containerRef.current) observer?.observe(containerRef.current);
+    if (inputAreaRef.current) observer?.observe(inputAreaRef.current);
+    window.addEventListener("resize", recalculateLastMessageHeight);
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", recalculateLastMessageHeight);
+    };
   }, []);
 
-  // Scroll to bottom helper function with smooth animation
+  // Programmatic message sends should snap so streaming or rapid updates do not fight browser scrolling.
   const scrollToBottom = () => {
     const viewport = scrollAreaRef.current?.querySelector(
       '[data-radix-scroll-area-viewport]'
@@ -159,7 +170,7 @@ export function AIChatBox({
       requestAnimationFrame(() => {
         viewport.scrollTo({
           top: viewport.scrollHeight,
-          behavior: 'smooth'
+          behavior: 'auto'
         });
       });
     }

@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { parseProposal, runConcurrentRoundJobs, selectEmployeesForTask, selectSynthesisEmployee } from "./deepDiscuss";
+import { describe, expect, it, vi } from "vitest";
+import { classifyTaskCapabilities, parseProposal, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
 import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -45,5 +45,35 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     expect(started).toEqual([...employees]);
     release?.();
     await expect(work).resolves.toEqual(["Manus-complete", "Gemini-complete", "Mistral-complete"]);
+  });
+
+  it("keeps successful settled provider work when another provider fails", async () => {
+    const outcomes = await settleConcurrentRoundJobs(["Gemini", "Mistral"], async (employee) => {
+      if (employee === "Mistral") throw new Error("fixture provider unavailable");
+      return "verified Gemini contribution";
+    });
+    expect(outcomes[0]).toMatchObject({ status: "fulfilled", value: "verified Gemini contribution" });
+    expect(outcomes[1]).toMatchObject({ status: "rejected" });
+  });
+
+  it("classifies task domains before selecting role-aligned employees", () => {
+    expect(classifyTaskCapabilities("Make the login page secure and faster")).toEqual(expect.arrayContaining(["frontend", "security", "backend"]));
+    expect(selectEmployeesForTask("Make the login page secure and faster")).toEqual(expect.arrayContaining(["Manus", "Gemini", "Arcee", "DeepSeek"]));
+  });
+
+  it("prefers latency-priority active contributors for synthesis with ordered fallback", () => {
+    resetStateForTests();
+    expect(selectLatencyPrioritySynthesisEmployees([{ employee: "DeepSeek" }, { employee: "Gemini" }, { employee: "SambaNova" }])).toEqual(["SambaNova", "Gemini", "DeepSeek"]);
+  });
+
+  it("bounds a slow provider response so the round can settle and continue", async () => {
+    vi.useFakeTimers();
+    try {
+      const outcome = expect(withProviderRoundDeadline(new Promise<string>(() => undefined), "Gemini", "analysis")).rejects.toThrow("latency budget");
+      await vi.advanceTimersByTimeAsync(6_000);
+      await outcome;
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

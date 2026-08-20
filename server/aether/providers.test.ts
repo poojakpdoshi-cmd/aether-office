@@ -32,6 +32,12 @@ describe("recognizeProviderKey", () => {
     expect(getProviderDefaults("devstral")).toMatchObject({ baseUrl: "https://api.mistral.ai/v1/chat/completions", model: "labs-devstral-small-2512" });
   });
 
+  it("labels Devstral as retired-gated rather than a normal production-ready provider", async () => {
+    const devstral = (await listProviderStatuses()).find((provider) => provider.id === "devstral");
+    expect(devstral).toMatchObject({ availability: "retired-gated" });
+    expect(devstral?.compatibilityWarning).toContain("do not treat it as production-ready");
+  });
+
   it("requires explicit Owner acknowledgement before accepting the retired Devstral Small 2 route", async () => {
     await expect(configureProvider({ provider: "devstral", apiKey: "local-test-key-value", compatibilityAcknowledged: false })).rejects.toThrow("retired");
   });
@@ -44,7 +50,7 @@ describe("recognizeProviderKey", () => {
       await configureProvider({ provider: "devstral", apiKey: "devstral-test-key", compatibilityAcknowledged: true });
       await configureProvider({ provider: "nemotron", apiKey: "nvidia-test-key" });
       const statuses = await listProviderStatuses();
-      expect(statuses.find((provider) => provider.id === "devstral")).toMatchObject({ configured: true, route: "direct" });
+      expect(statuses.find((provider) => provider.id === "devstral")).toMatchObject({ configured: true, route: "direct", availability: "retired-gated" });
       expect(statuses.find((provider) => provider.id === "nemotron")).toMatchObject({ configured: true, route: "direct", secretEnvironmentVariable: "NVIDIA_API_KEY" });
     } finally {
       if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;

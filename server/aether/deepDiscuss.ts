@@ -25,16 +25,52 @@ const employeeInstructions: Record<EmployeeId, string> = {
   "Nemotron 3 Ultra": "You are Nemotron 3 Ultra, a reasoning and systems specialist. Focus on complex architecture, long-context constraints, tool boundaries, and high-confidence risk analysis.",
 };
 
-export function selectEmployeesForTask(task: string): EmployeeId[] {
-  const normalized = task.toLowerCase();
-  const selected = new Set<EmployeeId>(["Manus"]);
-  if (/ui|frontend|react|css|design|component|landing page|screen/.test(normalized)) selected.add("Gemini");
-  if (/algorithm|performance|database|backend|api|architecture|concurrency|debug/.test(normalized)) selected.add("DeepSeek");
-  if (/security|auth|permission|review|vulnerab/.test(normalized)) selected.add("Arcee");
-  if (/research|compare|alternative|competitor|library|technology/.test(normalized)) selected.add("Grok");
-  if (/test|bug|refactor|implement|code|build/.test(normalized)) selected.add("Mistral");
+const DEFAULT_PROVIDER_ROUND_TIMEOUT_MS = 6_000;
 
-  if (selected.size === 1) selected.add("Mistral");
+function providerRoundTimeoutMs() {
+  const configured = Number.parseInt(process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS || "", 10);
+  return Number.isFinite(configured) && configured >= 1_000 && configured <= 60_000 ? configured : DEFAULT_PROVIDER_ROUND_TIMEOUT_MS;
+}
+
+export async function withProviderRoundDeadline<T>(operation: Promise<T>, employee: EmployeeId, round: DeepDiscussRound): Promise<T> {
+  const timeoutMs = providerRoundTimeoutMs();
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      operation,
+      new Promise<T>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${employee} exceeded the ${timeoutMs}ms ${round} round latency budget.`)), timeoutMs);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
+export type TaskCapability = "frontend" | "backend" | "security" | "research" | "coding" | "debugging" | "vision" | "general";
+
+const capabilitySignals: Array<{ capability: Exclude<TaskCapability, "general">; signal: RegExp; employees: EmployeeId[] }> = [
+  { capability: "frontend", signal: /ui|frontend|react|css|design|component|landing page|page|screen|layout|responsive|form/i, employees: ["Gemini"] },
+  { capability: "backend", signal: /algorithm|performance|database|backend|api|architecture|concurrency|server|latency|faster|speed/i, employees: ["DeepSeek"] },
+  { capability: "security", signal: /security|auth|permission|review|vulnerab|login|credential|secret/i, employees: ["Arcee"] },
+  { capability: "research", signal: /research|compare|alternative|competitor|library|technology|evaluate/i, employees: ["Grok"] },
+  { capability: "coding", signal: /test|bug|refactor|implement|code|build|patch|fix/i, employees: ["Mistral"] },
+  { capability: "debugging", signal: /debug|error|broken|regression|failure|crash|issue/i, employees: ["DeepSeek", "Mistral"] },
+  { capability: "vision", signal: /image|photo|screenshot|visual|mockup|video/i, employees: ["Gemini"] },
+];
+
+export function classifyTaskCapabilities(task: string): TaskCapability[] {
+  const matched = capabilitySignals.filter((entry) => entry.signal.test(task)).map((entry) => entry.capability);
+  return matched.length ? Array.from(new Set(matched)) : ["general"];
+}
+
+export function selectEmployeesForTask(task: string): EmployeeId[] {
+  const capabilities = new Set(classifyTaskCapabilities(task));
+  const selected = new Set<EmployeeId>(["Manus"]);
+  for (const rule of capabilitySignals) {
+    if (capabilities.has(rule.capability)) rule.employees.forEach((employee) => selected.add(employee));
+  }
+  if (capabilities.has("general")) selected.add("Mistral");
   return Array.from(selected);
 }
 
@@ -49,19 +85,28 @@ export async function runDeepDiscuss(task: string) {
   try {
     resetEmployeeStatuses();
     for (const employee of selectedEmployees) setEmployeeStatus(employee, "IN_MEETING");
-    await runRound(meeting.id, task, selectedEmployees, "analysis", []);
+    const failedEmployees = new Set<EmployeeId>();
+    const analysisOutcome = await runRound(meeting.id, task, selectedEmployees, "analysis", []);
+    analysisOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const analysis = meeting.messages.filter((message) => message.round === "analysis");
-    await runRound(meeting.id, task, selectedEmployees, "critique", analysis);
+    const critiqueOutcome = await runRound(meeting.id, task, selectedEmployees, "critique", analysis);
+    critiqueOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const critique = meeting.messages.filter((message) => message.round === "critique");
-    await runRound(meeting.id, task, selectedEmployees, "debate", [...analysis, ...critique]);
+    const debateOutcome = await runRound(meeting.id, task, selectedEmployees, "debate", [...analysis, ...critique]);
+    debateOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const proposal = await synthesizePlan(meeting.id, task, meeting.messages);
     setProposal(meeting.id, proposal);
     for (const employee of selectedEmployees) {
-      setEmployeeStatus(employee, "THINKING");
-      addActivity({ kind: "system", message: `${employee} left the Discussion Room and moved to their assigned cabin to prepare the approved work.`, employee, camera: { fileScope: "Planned workspace file", activeTool: "Planning board", taskStage: "Preparing" } });
+      if (failedEmployees.has(employee)) {
+        setEmployeeStatus(employee, "ERROR");
+        addActivity({ kind: "system", message: `${employee} had a provider failure during this meeting. Verified successful contributions remain available for the proposal.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: "Provider attention needed" } });
+      } else {
+        setEmployeeStatus(employee, "THINKING");
+        addActivity({ kind: "system", message: `${employee} left the Discussion Room and moved to their assigned cabin to prepare the approved work.`, employee, camera: { fileScope: "Planned workspace file", activeTool: "Planning board", taskStage: "Preparing" } });
+      }
     }
     return meeting;
   } catch (error) {
@@ -88,45 +133,74 @@ async function runRound(
     setEmployeeStatus(employee, round === "analysis" ? "THINKING" : "REVIEWING");
     addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `Discussing ${round}` } });
   }
-  const contributions = await runConcurrentRoundJobs(employees, async (employee) => {
+  const contributions = await settleConcurrentRoundJobs(employees, async (employee) => {
     const provider = getEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
-    const content = await adapter.generate({
+    const content = await withProviderRoundDeadline(adapter.generate({
       system: `${employeeInstructions[employee]} You are participating in the ${round} round of an owner-approved software planning meeting. Do not claim that files, tests, or tools have run. Be concise, concrete, and cite risks.`,
       user: `Owner task:\n${task}\n\nEarlier team material:\n${previousSummary}\n\nProvide your ${round} contribution.`,
-    });
+    }), employee, round);
     return { employee, provider, content };
   });
-  for (const contribution of contributions) {
+  const failedEmployees: EmployeeId[] = [];
+  for (let index = 0; index < contributions.length; index += 1) {
+    const result = contributions[index]!;
+    const employee = employees[index]!;
+    if (result.status === "rejected") {
+      failedEmployees.push(employee);
+      setEmployeeStatus(employee, "ERROR");
+      addActivity({ kind: "system", message: `${employee} could not complete the ${round} round. The meeting continues with available provider contributions.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} unavailable` } });
+      continue;
+    }
+    const contribution = result.value;
     addDiscussionMessage(meetingId, { employee: contribution.employee, provider: contribution.provider, round, content: contribution.content });
     addActivity({ kind: "provider", message: `${contribution.employee} completed ${round}.`, employee: contribution.employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} complete` } });
     setEmployeeStatus(contribution.employee, "WAITING");
   }
+  if (failedEmployees.length === employees.length) throw new Error(`No provider completed the ${round} round.`);
+  return { failedEmployees };
 }
 
 export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
   return Promise.all(employees.map((employee) => work(employee)));
 }
 
+export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
+  return Promise.allSettled(employees.map((employee) => work(employee)));
+}
+
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {
-  const synthesisEmployee = selectSynthesisEmployee(messages);
-  if (!synthesisEmployee) throw new Error("No active employee is available to synthesize the TEAM PROPOSAL.");
-  setEmployeeStatus(synthesisEmployee, "THINKING");
   const source = messages.map((message) => `${message.employee}: ${message.content}`).join("\n\n").slice(0, 16000);
-  const provider = getEmployeeProvider(synthesisEmployee);
-  const adapter = getProviderAdapter(provider);
-  const content = await adapter.generate({
-    system: "You are the active AI company meeting synthesizer. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
-    user: `Owner task:\n${task}\n\nTeam discussion:\n${source}`,
-  });
-  const proposal = parseProposal(content, task);
-  addDiscussionMessage(meetingId, { employee: synthesisEmployee, provider, round: "synthesis", content: JSON.stringify(proposal) });
-  return proposal;
+  const candidates = selectLatencyPrioritySynthesisEmployees(messages);
+  if (!candidates.length) throw new Error("No active employee is available to synthesize the TEAM PROPOSAL.");
+  for (const synthesisEmployee of candidates) {
+    try {
+      setEmployeeStatus(synthesisEmployee, "THINKING");
+      const provider = getEmployeeProvider(synthesisEmployee);
+      const content = await withProviderRoundDeadline(getProviderAdapter(provider).generate({
+        system: "You are the active AI company meeting synthesizer. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
+        user: `Owner task:\n${task}\n\nTeam discussion:\n${source}`,
+      }), synthesisEmployee, "synthesis");
+      const proposal = parseProposal(content, task);
+      addDiscussionMessage(meetingId, { employee: synthesisEmployee, provider, round: "synthesis", content: JSON.stringify(proposal) });
+      return proposal;
+    } catch {
+      setEmployeeStatus(synthesisEmployee, "ERROR");
+      addActivity({ kind: "system", message: `${synthesisEmployee} could not synthesize the TEAM PROPOSAL. A latency-priority fallback provider is being used.`, employee: synthesisEmployee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: "Synthesis fallback" } });
+    }
+  }
+  throw new Error("No available provider could synthesize a valid TEAM PROPOSAL.");
 }
 
 export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }>) {
   if (isEmployeeActive("Manus")) return "Manus";
   return messages.find((message) => isEmployeeActive(message.employee))?.employee;
+}
+
+export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
+  const contributors = new Set(messages.map((message) => message.employee));
+  const latencyPriority: EmployeeId[] = ["SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Arcee", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
+  return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
 }
 
 export function parseProposal(content: string, fallbackObjective: string): TeamProposal {

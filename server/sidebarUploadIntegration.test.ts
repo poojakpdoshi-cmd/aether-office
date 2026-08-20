@@ -10,6 +10,9 @@ describe("sidebar and upload integration", () => {
     expect(dashboardLayout).not.toContain("sidebar-width");
     expect(dashboardLayout).not.toContain("cursor-col-resize");
     expect(dashboardLayout).not.toContain("toggleSidebar");
+    expect(dashboardLayout).not.toContain('label: "Page 1"');
+    expect(dashboardLayout).not.toContain('label: "Page 2"');
+    expect(dashboardLayout).toContain("AetherOffice itself mounts Home directly");
   });
 
   it("keeps the office map sidebar-free while uploads use the controlled import route with visible safe errors", () => {

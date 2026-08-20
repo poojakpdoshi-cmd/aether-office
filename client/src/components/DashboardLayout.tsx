@@ -25,9 +25,13 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 
+/**
+ * Optional authenticated scaffold for unrelated future dashboard pages.
+ * AetherOffice itself mounts Home directly and keeps its Office view sidebar-free.
+ */
 const menuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
+  { icon: LayoutDashboard, label: "Office", path: "/" },
+  { icon: Users, label: "Employees", path: "/?view=employees" },
 ];
 
 export default function DashboardLayout({

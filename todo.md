@@ -178,3 +178,11 @@
 - [x] Add focused regression coverage for sidebar behavior, parallel DeepDiscuss execution, and upload integration; run full validation and save a checkpoint.
 
 - [x] Verify and push the owner-approved deterministic-sidebar and parallel-DeepDiscuss bug-fix checkpoint to the existing public GitHub repository without including local secrets or runtime evidence.
+
+- [x] Make concurrent DeepDiscuss rounds fault-tolerant so successful provider contributions survive individual provider failures, with safe visible failure activity.
+- [x] Reduce DeepDiscuss avoidable latency and add a safe synthesis fallback when the preferred synthesizer is unavailable or fails.
+- [x] Fix AIChatBox layout recalculation after container, viewport, and sidebar-related size changes; avoid smooth-scroll overhead on programmatic message sends.
+- [x] Replace keyword-only provider selection with deterministic capability-based task routing while retaining transparent fallback behavior.
+- [x] Verify active AetherOffice workspace navigation remains sidebar-free and remove or quarantine generic scaffold navigation that can confuse the actual workspace.
+- [x] Tighten provider compatibility state so retired models remain explicitly gated and are not presented as ordinary production-ready options.
+- [x] Add regression coverage for all audited fixes, run full validation, and save a checkpoint.
