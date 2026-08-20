@@ -232,3 +232,7 @@
 - [x] Derive current-work text only from active meetings, executions, tool events, and provider-call state.
 - [x] Show an explicit idle state when no active real work exists and keep recorded activity secondary.
 - [x] Add regression coverage for live current-work, idle fallback, and no-fabrication behavior.
+
+- [ ] Commit the latest verified AetherOffice checkpoint changes with a descriptive message.
+- [ ] Push the commit to the configured GitHub repository and verify the remote commit.
+- [ ] Provide exact Git clone, ZIP download, npm install, and local launch commands.
