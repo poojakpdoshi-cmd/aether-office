@@ -11,16 +11,19 @@ describe("physical office navigation", () => {
     expect(office).toContain("office-exit-door-hotspot");
     expect(office).toContain("manager-file-pile");
     expect(office).toContain("onExitDoor");
+    expect(office).toContain("managementPanel");
     expect(styles).toContain(".text-free-office .office-exit-door-hotspot");
     expect(styles).toContain(".text-free-office .real-office-stage { position: relative;");
     expect(styles).toContain("overflow: hidden;");
-    expect(styles).toContain(".office-exit-panel { position: absolute;");
+    expect(styles).toContain(".office-bottom-panel");
   });
 
   it("keeps management UI conditional instead of visible at office launch", () => {
     const home = readFileSync(join(root, "client/src/pages/Home.tsx"), "utf8");
-    expect(home).toContain("exitPanelOpen ? <aside className=\"office-exit-panel\"");
+    expect(home).toContain("managementPanel={<aside className=\"office-bottom-panel\"");
     expect(home).toContain("Settings &amp; Connections");
     expect(home).toContain("Manager files &amp; photos");
+    expect(home).toContain("Current work now");
+    expect(home).toContain("snapshot?.currentWork");
   });
 });

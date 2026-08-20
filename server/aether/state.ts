@@ -87,6 +87,13 @@ export function setApprovalMode(mode: ApprovalMode) {
   return approvalMode;
 }
 
+export function getEmployeeCurrentWork(employee: EmployeeId) {
+  const profile = employeeProfiles.get(employee);
+  if (!profile || !isEmployeeActive(employee)) return "Inactive — no current work.";
+  const descriptions: Record<EmployeeStatus, string> = { IDLE: "Idle — no active task.", THINKING: "Currently planning the approved task.", IN_MEETING: "Currently participating in the DeepDiscuss meeting.", CODING: "Currently implementing the approved task.", REVIEWING: "Currently reviewing the approved change.", TESTING: "Currently running the approved tests.", WAITING: "Currently waiting for the next approved work step.", ERROR: "Currently blocked by a provider or workspace error.", COMPLETED: "Currently complete — no active task." };
+  return descriptions[profile.status];
+}
+
 export function setEmployeeStatus(employee: EmployeeId, status: EmployeeStatus, at = Date.now()) {
   const profile = employeeProfiles.get(employee);
   if (!profile) throw new Error(`Unknown employee: ${employee}`);
@@ -226,6 +233,9 @@ export function provisionEmployees(provider: ProviderId, count: number) {
 
 export function resetStateForTests() {
   meetings.clear();
+  for (const employeeId of Array.from(employeeProfiles.keys())) {
+    if (!employeeSeed.some((employee) => employee.id === employeeId)) employeeProfiles.delete(employeeId);
+  }
   activities.length = 0;
   approvalMode = "Safe Mode";
   employeeProfiles.forEach((employee) => {

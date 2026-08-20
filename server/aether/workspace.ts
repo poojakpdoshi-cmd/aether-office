@@ -7,7 +7,7 @@ import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import { chromium } from "playwright-core";
 import type { ControlledTool, EmployeeId } from "../../shared/aether";
-import { addActivity } from "./state";
+import { addActivity, getEmployeeCurrentWork } from "./state";
 
 const execFileAsync = promisify(execFile);
 const MAX_FILE_BYTES = 1_000_000;
@@ -60,6 +60,7 @@ export type EmployeeInspectionSnapshot = {
   employee: EmployeeId;
   state: "IDLE" | "RUNNING_COMMAND" | "TESTING";
   safeTaskSummary: string;
+  currentWork: string;
   startedAt: string | null;
   activeExecutions: WorkspaceExecution[];
   recentExecutions: WorkspaceExecution[];
@@ -778,10 +779,11 @@ export async function getEmployeeInspection(employee: EmployeeId): Promise<Emplo
   const completed = Array.from(completedExecutions.values()).filter((entry) => entry.who === employee).map((entry) => entry.execution).sort((left, right) => right.startedAt.localeCompare(left.startedAt)).slice(0, 10);
   const latest = active[0] ?? completed[0] ?? null;
   const state = active.some((execution) => execution.command === "pnpm" && execution.args.includes("test")) ? "TESTING" : active.length ? "RUNNING_COMMAND" : "IDLE";
-  const safeTaskSummary = active.length ? `Running controlled command: ${active[0].command} ${active[0].args.join(" ")}`.trim() : audit[0] ? `Latest controlled action: ${audit[0].WHAT}` : "No recorded controlled workspace activity yet.";
+  const currentWork = active.length ? `Currently running ${active[0].command} ${active[0].args.join(" ")}`.trim() : getEmployeeCurrentWork(employee);
+  const safeTaskSummary = currentWork;
   const activity = audit.slice(0, 30).map((record) => ({ tool: record.WHAT, path: record["WHICH FILE"], when: record.WHEN, result: record.result }));
   const recentFiles = audit.filter((record) => record.WHAT !== "run_command" && record.WHAT !== "run_tests").slice(0, 20).map((record) => ({ path: record["WHICH FILE"], tool: record.WHAT, when: record.WHEN, result: record.result }));
-  return { employee, state, safeTaskSummary, startedAt: latest?.startedAt ?? null, activeExecutions: active, recentExecutions: completed, recentFiles, activity };
+  return { employee, state, safeTaskSummary, currentWork, startedAt: latest?.startedAt ?? null, activeExecutions: active, recentExecutions: completed, recentFiles, activity };
 }
 
 export async function cancelWorkspaceExecution(id: string, who: AuditRecord["WHO"], why: string) {

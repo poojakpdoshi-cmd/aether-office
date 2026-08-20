@@ -220,3 +220,15 @@
 - [x] Constrain the exit-door panel to the office viewport container so it cannot leak into the surrounding preview/management UI.
 - [x] Prevent page-level overflow and preview-level scroll artifacts when the management panel opens.
 - [x] Verify the corrected office viewport at desktop and mobile sizes with a regression test.
+
+- [x] Replace the failed floating exit-door panel with a permanent bottom office control panel.
+- [x] Put Settings & Connections and the remaining management options inside the permanent bottom panel.
+- [x] Make clicked employee computers show the exact employee name in the inspection header, such as “John’s Computer”.
+- [x] Show real recorded status, task, file/tool activity, timing, and safe live updates for the selected employee without fabricated activity.
+- [x] Support owner-defined employee display names while preserving provider identity and local persistence.
+- [x] Verify permanent panel, named computer inspection, responsive layout, and real-event safeguards with regression coverage.
+
+- [x] Make the selected employee computer panel show current real runtime work as the primary state, not historical activity.
+- [x] Derive current-work text only from active meetings, executions, tool events, and provider-call state.
+- [x] Show an explicit idle state when no active real work exists and keep recorded activity secondary.
+- [x] Add regression coverage for live current-work, idle fallback, and no-fabrication behavior.

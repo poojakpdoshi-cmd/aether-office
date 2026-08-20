@@ -95,7 +95,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
           <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name] ?? illustratedEmployees.Mistral} alt="" />{employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />}
         </button>; })}
       </div>
-      {managementPanel}
     </div>
+    {managementPanel}
   </section>;
 }
