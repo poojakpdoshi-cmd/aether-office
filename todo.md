@@ -196,4 +196,4 @@
 - [x] Add the lowercase `aetheroffice` npm bin while preserving existing `AetherOffice` and `aether` compatibility aliases.
 - [x] Update official quick-start documentation to use `npm install --global @aetheroffice/cli` followed by `aetheroffice` alone.
 - [x] Add production CLI regression coverage for sequential prompts, skips, provider readiness, encrypted-vault persistence, existing-config bypass, automatic launch, lowercase bin, and existing optional commands.
-- [ ] Run package-level validation, save a checkpoint, and push the owner-approved production CLI implementation.
+- [x] Run package-level validation, save a checkpoint, and push the owner-approved production CLI implementation.
