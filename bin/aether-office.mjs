@@ -80,14 +80,15 @@ async function promptSecret(question) {
       else resolveSecret(value.trim());
     };
     const onData = (buffer) => {
-      const text = buffer.toString("utf8");
-      if (text === "\u0003") return finish(new Error("Setup cancelled."));
-      if (text === "\r" || text === "\n") return finish();
-      if (text === "\u007f" || text === "\b") {
-        value = value.slice(0, -1);
-        return;
+      for (const character of buffer.toString("utf8")) {
+        if (character === "\u0003") return finish(new Error("Setup cancelled."));
+        if (character === "\r" || character === "\n") return finish();
+        if (character === "\u007f" || character === "\b") {
+          value = value.slice(0, -1);
+          continue;
+        }
+        if (character !== "\u001b") value += character;
       }
-      if (!text.includes("\u001b")) value += text;
     };
     process.stdin.on("data", onData);
   });

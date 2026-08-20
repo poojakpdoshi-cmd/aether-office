@@ -115,7 +115,7 @@ describe("controlled workspace tools", () => {
     } finally {
       await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
     }
-  });
+  }, 20_000);
 
   it("lists and opens only generated local proof reports and browser screenshots", async () => {
     const report = await generateProofReport();

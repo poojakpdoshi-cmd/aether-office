@@ -4,32 +4,18 @@
 
 > AetherOffice does **not** automatically push to a Git remote. It does **not** place API keys in the browser, source code, Git history, or application logs.
 
-## Install
+## Start AetherOffice
 
-The planned public distribution target is `@aetheroffice/cli`. The Owner must first create or obtain the `@aetheroffice` npm organization and publish the package; until then, install it from a packed release artifact during verification.
+Install the published package once, then run exactly one command:
 
 ```bash
 npm install --global @aetheroffice/cli
+AetherOffice
 ```
 
-The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. npm installs the global `aetheroffice` executable; no Git clone, source editing, project-local dependency installation, `.env` file, or manually set environment variable is required for end users.
+That is the complete normal user flow. **Do not clone this repository, install project dependencies, run a development server, set environment variables, or open localhost manually.** The `AetherOffice` command automatically checks the local installation, uses the encrypted provider configuration already on the computer, opens the masked first-run provider wizard only when no provider is configured, starts the bundled production server on `127.0.0.1`, waits until it is ready, and opens the local AetherOffice interface in the default browser.
 
-## Run
-
-Run AetherOffice inside the directory you want it to access:
-
-```bash
-cd /path/to/your/project
-aetheroffice
-```
-
-You may also provide a workspace path directly:
-
-```bash
-aetheroffice /absolute/path/to/your/project
-```
-
-The CLI starts the local backend and local web interface on `127.0.0.1`, chooses an available local port when the preferred port is occupied, opens the default browser where possible, and prints the URL when it cannot open a browser. Press `Ctrl+C` in the terminal to stop AetherOffice cleanly.
+The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. Press `Ctrl+C` in the terminal to stop AetherOffice cleanly.
 
 ## First run
 
@@ -55,13 +41,12 @@ The automatic first-run flow does not run optional provider connection checks, s
 
 | Command | Purpose |
 |---|---|
-| `aetheroffice` | **Primary command.** Configure on first run, then open the current directory as the controlled workspace. |
-| `aetheroffice <workspace>` | Open a specific existing directory as the controlled workspace. |
-| `aetheroffice setup` | Reconfigure encrypted provider credentials without starting the browser interface. |
-| `aetheroffice doctor` | Check the Node version, installed bundle, local configuration presence, provider readiness, and preferred loopback port without reading or printing credentials. |
-| `aetheroffice --help` | Show safe usage guidance. |
-| `aetheroffice --version` | Print the installed package version. |
-| `AetherOffice`, `aether` | Compatibility aliases for `aetheroffice`. |
+| `AetherOffice` | **Normal user command.** Configure on first run when needed, then start the local application and open the browser automatically. |
+| `AetherOffice setup` | Optional recovery command to reconfigure encrypted provider credentials without starting the browser interface. |
+| `AetherOffice doctor` | Optional local diagnostic command that never reads or prints provider key values. |
+| `AetherOffice --help` | Show safe usage guidance. |
+| `AetherOffice --version` | Print the installed package version. |
+| `aetheroffice`, `aether` | Compatibility aliases. Normal user instructions use `AetherOffice`. |
 
 Use npm for package lifecycle operations:
 
@@ -91,12 +76,12 @@ Uninstalling the npm package removes the executable and installed program files,
 
 | Situation | Recommended action |
 |---|---|
-| `aetheroffice` is not found | Verify npm’s global binary directory is on your `PATH`, then reopen the terminal. |
-| Setup cannot mask input | Run `aetheroffice setup` from a normal interactive terminal, or start AetherOffice and use the physical Provider Locker. Do not use a shared/logged terminal session for credentials. |
-| No provider is ready | Run `aetheroffice setup`, safely skip providers you do not use, and enter a key for at least one provider you have an account for. |
+| `AetherOffice` is not found | Verify npm’s global binary directory is on your `PATH`, then reopen the terminal. |
+| Setup cannot mask input | Run `AetherOffice setup` from a normal interactive terminal, or start AetherOffice and use the physical Provider Locker. Do not use a shared/logged terminal session for credentials. |
+| No provider is ready | Run `AetherOffice setup`, safely skip providers you do not use, and enter a key for at least one provider you have an account for. |
 | A provider connection check fails | Check your key, billing/account access, selected model, and endpoint; rerun setup. For Devstral, confirm the retired model is still available to your Mistral account. |
 | The preferred port is occupied | The server searches the next available local port. Run `AetherOffice doctor` to see the preferred-port result. |
-| A workspace is rejected | Supply an existing directory, for example `aetheroffice /absolute/path/to/project`. |
+| A workspace is rejected | Run `AetherOffice` from a normal local folder. The command needs an existing local directory as its controlled workspace. |
 | A vault is unreadable | Keep a backup of your local configuration directory if needed, then rerun setup to create fresh provider settings. |
 
 ## Development

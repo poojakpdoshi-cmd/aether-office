@@ -25,6 +25,16 @@ describe("AetherOffice CLI command parsing", () => {
     expect(cliSource).not.toContain("Run an optional live connection check now?");
   });
 
+  it("keeps the capitalized global command fully automatic: first-run setup, production server readiness, and browser launch", () => {
+    expect(cliSource).toContain('if (!first) return { type: "start", workspace: "." }');
+    expect(cliSource).toContain('await runSetup({ launchAfterSetup: true });');
+    expect(cliSource).toContain('NODE_ENV: "production"');
+    expect(cliSource).toContain('AETHER_LOCAL_ONLY: "true"');
+    expect(cliSource).toContain('Server running on (http:\\/\\/localhost:\\d+\\/?)');
+    expect(cliSource).toContain('openBrowser(match[1])');
+    expect(cliSource).toContain('for (const character of buffer.toString("utf8"))');
+  });
+
   it("walks providers sequentially with explicit skips, masked secret input, and no provider-selection screen", async () => {
     const { runSequentialProviderWizard } = await import("../../bin/aether-office.mjs");
     const writes: string[] = [];

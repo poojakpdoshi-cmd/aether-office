@@ -233,9 +233,14 @@
 - [x] Show an explicit idle state when no active real work exists and keep recorded activity secondary.
 - [x] Add regression coverage for live current-work, idle fallback, and no-fabrication behavior.
 
-- [ ] Commit the latest verified AetherOffice checkpoint changes with a descriptive message.
+- [x] Commit the latest verified AetherOffice checkpoint changes with a descriptive message.
 - [ ] Push the commit to the configured GitHub repository and verify the remote commit.
-- [ ] Provide exact Git clone, ZIP download, npm install, and local launch commands.
+- [x] Provide exact Git clone, ZIP download, npm install, and local launch commands.
 - [x] Replace Unix-only development and start scripts with Windows-compatible Node launchers.
 - [x] Document the supported Windows Corepack and pnpm installation flow without suggesting incompatible npm installation.
 - [x] Validate the cross-platform scripts and add a regression test for Windows-safe package metadata.
+- [x] Make the normal end-user documentation show only global npm installation followed by `AetherOffice`.
+- [x] Remove source cloning, local dependency installation, development server, and localhost-opening steps from normal user guidance.
+- [x] Verify `AetherOffice` alone invokes masked first-run setup when required, starts the bundled production server, waits for readiness, and opens the local browser URL.
+- [x] Test a clean isolated global package installation and launch using no command after `AetherOffice`.
+- [ ] Publish `@aetheroffice/cli` from an npm account or organization that owns the `@aetheroffice` scope, then verify the registry installation command.
