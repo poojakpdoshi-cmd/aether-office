@@ -12,6 +12,7 @@ describe("npm CLI distribution manifest", () => {
       files: string[];
       engines: { node: string };
       publishConfig: { access: string };
+      scripts: Record<string, string>;
     };
 
     expect(manifest.name).toBe("@aetheroffice/cli");
@@ -20,6 +21,16 @@ describe("npm CLI distribution manifest", () => {
     expect(manifest.files.join(" ")).not.toMatch(/\.env|server|client|scripts|test/i);
     expect(manifest.engines.node).toBe(">=22");
     expect(manifest.publishConfig.access).toBe("public");
+    expect(manifest.scripts.dev).toBe("node scripts/dev.mjs");
+    expect(manifest.scripts.start).toBe("node dist/index.js");
+    expect(`${manifest.scripts.dev} ${manifest.scripts.start}`).not.toContain("NODE_ENV=");
+  });
+
+  it("keeps the development launcher cross-platform and owns development mode in Node", async () => {
+    const launcher = await readFile(resolve(projectRoot, "scripts/dev.mjs"), "utf8");
+    expect(launcher).toContain('process.platform === "win32" ? "tsx.cmd" : "tsx"');
+    expect(launcher).toContain('NODE_ENV: "development"');
+    expect(launcher).toContain('shell: false');
   });
 
   it("documents an interactive encrypted setup path and never places an example credential in the published README", async () => {

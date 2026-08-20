@@ -236,3 +236,6 @@
 - [ ] Commit the latest verified AetherOffice checkpoint changes with a descriptive message.
 - [ ] Push the commit to the configured GitHub repository and verify the remote commit.
 - [ ] Provide exact Git clone, ZIP download, npm install, and local launch commands.
+- [x] Replace Unix-only development and start scripts with Windows-compatible Node launchers.
+- [x] Document the supported Windows Corepack and pnpm installation flow without suggesting incompatible npm installation.
+- [x] Validate the cross-platform scripts and add a regression test for Windows-safe package metadata.

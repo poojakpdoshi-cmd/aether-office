@@ -113,6 +113,19 @@ pnpm build
 pnpm dev
 ```
 
+### Windows PowerShell
+
+This source repository is pinned to **pnpm** because it uses a pnpm lockfile and a patched dependency. Do **not** run `npm install` in a cloned checkout. With Node.js 22 installed, use Corepack to obtain the pinned pnpm version without globally installing pnpm through npm:
+
+```powershell
+cd "$HOME\aether-office"
+corepack enable
+corepack pnpm install --frozen-lockfile
+corepack pnpm dev
+```
+
+The `dev` command is cross-platform and sets development mode internally, so PowerShell does not need `NODE_ENV=...` syntax. When the server starts, open the printed `http://localhost:<port>` URL in your browser. If `corepack` is not found, install the current Node.js 22 LTS release, reopen PowerShell, and repeat the commands above.
+
 To test the production CLI from a local checkout after a build, run:
 
 ```bash
