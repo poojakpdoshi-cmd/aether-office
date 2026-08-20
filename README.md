@@ -33,7 +33,7 @@ The CLI starts the local backend and local web interface on `127.0.0.1`, chooses
 
 ## First run
 
-When no usable external provider is configured, `AetherOffice` begins an interactive terminal setup wizard before it starts the workspace. The wizard asks you to choose only the provider or providers you intend to use; it does **not** require every provider key.
+When no usable external provider is configured, `AetherOffice` begins an interactive terminal setup wizard before it starts the workspace. The wizard asks you to choose only the provider or providers you intend to use; it does **not** require every provider key. It then requests each selected credential one by one with masked terminal input, stores each one in the encrypted local vault, validates that at least one usable provider is configured, and automatically starts the selected local workspace immediately after the final provider entry.
 
 | Provider route | Credential requested by setup | Important behavior |
 |---|---|---|
@@ -49,7 +49,7 @@ When no usable external provider is configured, `AetherOffice` begins an interac
 
 Enter credentials only in the interactive wizard or through the physical **Provider Locker** inside the locally running Manager Cabin. Never paste an API key into a GitHub issue, source file, commit, browser console, or chat message.
 
-The wizard may offer an optional connection check. It is always opt-in because it contacts the selected provider and may use quota. A failed check never prints your key; it offers a safe reconfiguration path instead.
+The automatic first-run flow does not run optional provider connection checks, so completing setup does not make an extra provider request. You can use the Provider Locker later if you want to adjust a configured provider; provider keys are never printed by the CLI.
 
 ## CLI reference
 

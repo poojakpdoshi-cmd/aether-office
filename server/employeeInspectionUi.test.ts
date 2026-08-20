@@ -18,8 +18,15 @@ describe("employee inspection workspace UI", () => {
 
   it("renders controlled browser-test evidence and keeps the proof-report truth boundary explicit", () => {
     expect(source).toContain("Run browser test");
-    expect(source).toContain("Console and errors");
+    expect(source).toContain("Checks, console, and errors");
     expect(source).toContain("Network evidence");
     expect(source).toContain("This does not invent screenshots or browser-test results.");
+  });
+
+  it("shows persisted local evidence and only predefined browser scenarios in the Test Lab", () => {
+    expect(source).toContain("Evidence gallery");
+    expect(source).toContain("Persisted local screenshots and reports");
+    expect(source).toContain("Responsive mobile capture");
+    expect(source).toContain("Safe form inspection — no typing or submit");
   });
 });

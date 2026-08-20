@@ -93,6 +93,7 @@ export type ProofReport = {
 
 export type ProjectBrowserEvidence = {
   id: string;
+  scenario: BrowserTestScenarioId;
   createdAt: string;
   targetUrl: string;
   finalUrl: string | null;
@@ -102,7 +103,22 @@ export type ProjectBrowserEvidence = {
   console: Array<{ level: string; text: string }>;
   network: Array<{ method: string; status: number; url: string }>;
   errors: string[];
+  checks: Array<{ name: string; passed: boolean; detail: string }>;
   localScreenshotPath: string | null;
+};
+
+export const BROWSER_TEST_SCENARIOS = ["page-load", "responsive-capture", "safe-form-inspection"] as const;
+export type BrowserTestScenarioId = typeof BROWSER_TEST_SCENARIOS[number];
+
+const browserScenarioDetails: Record<BrowserTestScenarioId, { label: string; viewport: { width: number; height: number } }> = {
+  "page-load": { label: "Page load and console/network evidence", viewport: { width: 1440, height: 900 } },
+  "responsive-capture": { label: "Responsive mobile viewport capture", viewport: { width: 390, height: 844 } },
+  "safe-form-inspection": { label: "Safe form inspection without typing or submission", viewport: { width: 1440, height: 900 } },
+};
+
+export type EvidenceGallerySnapshot = {
+  reports: Array<{ id: string; createdAt: string; bytes: number }>;
+  screenshots: Array<{ id: string; createdAt: string; bytes: number }>;
 };
 
 const activeExecutions = new Map<string, ActiveExecution>();
@@ -162,6 +178,15 @@ function extractPreviewUrl(output: string) {
 function reportDirectoryFor(root: string) {
   const key = createHash("sha256").update(root).digest("hex").slice(0, 16);
   return join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "reports", key);
+}
+
+function resolveEvidenceFile(root: string, folder: string, fileName: string, expectedExtension: ".md" | ".png") {
+  if (!/^[a-z0-9][a-z0-9-]{4,120}$/i.test(fileName)) throw new Error("Invalid local evidence identifier.");
+  const directory = join(reportDirectoryFor(root), folder);
+  const candidate = resolve(directory, `${fileName}${expectedExtension}`);
+  const nested = relative(directory, candidate);
+  if (nested.startsWith("..") || isAbsolute(nested)) throw new Error("Evidence access is restricted to the selected workspace root.");
+  return candidate;
 }
 
 function compactOutput(value: string) {
@@ -566,26 +591,67 @@ export function getLatestBrowserEvidence() {
   return latestBrowserEvidence;
 }
 
-export async function runProjectBrowserTest(): Promise<ProjectBrowserEvidence> {
+export async function getEvidenceGallery(): Promise<EvidenceGallerySnapshot> {
+  const root = requireWorkspace();
+  const reportDirectory = reportDirectoryFor(root);
+  const [reportEntries, screenshotEntries] = await Promise.all([
+    readdir(reportDirectory, { withFileTypes: true }).catch(() => []),
+    readdir(join(reportDirectory, "browser-evidence"), { withFileTypes: true }).catch(() => []),
+  ]);
+  const reports = (await Promise.all(reportEntries.filter((entry) => entry.isFile() && /^proof-[a-z0-9-]+\.md$/i.test(entry.name)).map(async (entry) => {
+    const details = await stat(join(reportDirectory, entry.name));
+    return { id: entry.name.replace(/\.md$/i, ""), createdAt: details.mtime.toISOString(), bytes: details.size };
+  }))).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  const screenshotDirectory = join(reportDirectory, "browser-evidence");
+  const screenshots = (await Promise.all(screenshotEntries.filter((entry) => entry.isFile() && /^browser-[a-z0-9-]+\.png$/i.test(entry.name)).map(async (entry) => {
+    const details = await stat(join(screenshotDirectory, entry.name));
+    return { id: entry.name.replace(/\.png$/i, ""), createdAt: details.mtime.toISOString(), bytes: details.size };
+  }))).sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+  return { reports, screenshots };
+}
+
+export async function readEvidenceReport(id: string) {
+  const root = requireWorkspace();
+  if (!id.startsWith("proof-")) throw new Error("Only generated local proof reports can be opened.");
+  const path = resolveEvidenceFile(root, ".", id, ".md");
+  const details = await stat(path);
+  if (details.size > 1_000_000) throw new Error("The selected proof report exceeds the local gallery size limit.");
+  return { id, markdown: redactSensitiveOutput(await readFile(path, "utf8")) };
+}
+
+export async function readEvidenceScreenshot(id: string) {
+  const root = requireWorkspace();
+  if (!id.startsWith("browser-")) throw new Error("Only generated local browser screenshots can be opened.");
+  const path = resolveEvidenceFile(root, "browser-evidence", id, ".png");
+  const details = await stat(path);
+  if (details.size > 8_000_000) throw new Error("The selected screenshot exceeds the local gallery size limit.");
+  const image = await readFile(path);
+  return { id, dataUrl: `data:image/png;base64,${image.toString("base64")}` };
+}
+
+export async function runProjectBrowserTest(scenario: BrowserTestScenarioId = "page-load"): Promise<ProjectBrowserEvidence> {
   const root = requireWorkspace();
   const preview = getProjectPreview();
   if (!preview.url) throw new Error("Configure a loopback project preview before running a browser test.");
+  if (!BROWSER_TEST_SCENARIOS.includes(scenario)) throw new Error("The requested browser scenario is not approved.");
+  const scenarioDetail = browserScenarioDetails[scenario];
   const executablePath = findChromiumExecutable();
   if (!executablePath) throw new Error("A local Chromium-compatible browser was not found. Set AETHER_CHROMIUM_PATH to enable controlled browser tests.");
   const createdAt = new Date().toISOString();
-  const id = `browser-${createdAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
+  const id = `browser-${scenario}-${createdAt.replace(/[:.]/g, "-")}-${randomUUID().slice(0, 8)}`;
   const evidenceDirectory = join(reportDirectoryFor(root), "browser-evidence");
   const screenshotPath = join(evidenceDirectory, `${id}.png`);
   const console: ProjectBrowserEvidence["console"] = [];
   const network: ProjectBrowserEvidence["network"] = [];
   const errors: string[] = [];
+  const checks: ProjectBrowserEvidence["checks"] = [];
   let finalUrl: string | null = null;
   let title: string | null = null;
   let httpStatus: number | null = null;
   let screenshotSaved = false;
   const browser = await chromium.launch({ executablePath, headless: true, args: ["--disable-dev-shm-usage"] });
   try {
-    const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+    const page = await browser.newPage({ viewport: scenarioDetail.viewport });
     page.on("console", (message) => {
       if (console.length < 100) console.push({ level: message.type(), text: compactOutput(message.text()).slice(0, 2_000) });
     });
@@ -601,6 +667,12 @@ export async function runProjectBrowserTest(): Promise<ProjectBrowserEvidence> {
     finalUrl = safeBrowserEvidenceUrl(page.url());
     title = compactOutput(await page.title()).slice(0, 300);
     httpStatus = response?.status() ?? null;
+    checks.push({ name: "loopback page load", passed: Boolean(httpStatus && httpStatus >= 200 && httpStatus < 400), detail: `HTTP ${httpStatus ?? "unavailable"}` });
+    if (scenario === "responsive-capture") checks.push({ name: "mobile viewport", passed: true, detail: `${scenarioDetail.viewport.width}×${scenarioDetail.viewport.height} capture` });
+    if (scenario === "safe-form-inspection") {
+      const formCount = await page.locator("form").count();
+      checks.push({ name: "form observation", passed: true, detail: `${formCount} form(s) observed; no fields were typed and no submission control was activated.` });
+    }
     await mkdir(evidenceDirectory, { recursive: true, mode: 0o700 });
     await page.screenshot({ path: screenshotPath, fullPage: true, type: "png" });
     screenshotSaved = true;
@@ -611,19 +683,21 @@ export async function runProjectBrowserTest(): Promise<ProjectBrowserEvidence> {
   }
   const evidence: ProjectBrowserEvidence = {
     id,
+    scenario,
     createdAt,
     targetUrl: preview.url,
     finalUrl,
     title,
     httpStatus,
-    passed: Boolean(httpStatus && httpStatus >= 200 && httpStatus < 400 && errors.length === 0 && screenshotSaved),
+    passed: Boolean(httpStatus && httpStatus >= 200 && httpStatus < 400 && errors.length === 0 && screenshotSaved && checks.every((check) => check.passed)),
     console,
     network,
     errors,
+    checks,
     localScreenshotPath: screenshotSaved ? screenshotPath : null,
   };
   latestBrowserEvidence = evidence;
-  await appendAudit({ WHO: "Owner", WHAT: "run_tests", "WHICH FILE": `local browser test: ${safeBrowserEvidenceUrl(preview.url)}`, WHEN: createdAt, WHY: "Owner ran an approved local browser evidence test.", result: evidence.passed ? "success" : "error" });
+  await appendAudit({ WHO: "Owner", WHAT: "run_tests", "WHICH FILE": `local browser ${scenario} test: ${safeBrowserEvidenceUrl(preview.url)}`, WHEN: createdAt, WHY: "Owner ran an approved local browser evidence test.", result: evidence.passed ? "success" : "error" });
   return evidence;
 }
 

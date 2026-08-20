@@ -6,7 +6,7 @@ import { createServer } from "node:http";
 import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
+import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
 import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
@@ -81,7 +81,7 @@ describe("controlled workspace tools", () => {
     const fixture = createServer((request, response) => {
       if (request.url === "/data") { response.writeHead(200, { "content-type": "application/json" }); response.end('{"ok":true}'); return; }
       response.writeHead(200, { "content-type": "text/html" });
-      response.end("<title>Local Browser Fixture</title><script>console.warn('browser fixture signal'); fetch('/data')</script>");
+      response.end("<title>Local Browser Fixture</title><form><input name='email' value='unchanged'><button type='submit'>Submit</button></form><script>console.warn('browser fixture signal'); fetch('/data')</script>");
     });
     await new Promise<void>((resolve) => fixture.listen(0, "127.0.0.1", resolve));
     const address = fixture.address();
@@ -95,12 +95,28 @@ describe("controlled workspace tools", () => {
       expect(browser.network.some((entry) => entry.url.includes("127.0.0.1"))).toBe(true);
       expect(browser.localScreenshotPath).toBeTruthy();
       expect(existsSync(browser.localScreenshotPath ?? "")).toBe(true);
+      const responsive = await runProjectBrowserTest("responsive-capture");
+      expect(responsive.passed).toBe(true);
+      expect(responsive.scenario).toBe("responsive-capture");
+      expect(responsive.checks).toContainEqual(expect.objectContaining({ name: "mobile viewport", passed: true }));
+      const formInspection = await runProjectBrowserTest("safe-form-inspection");
+      expect(formInspection.passed).toBe(true);
+      expect(formInspection.checks).toContainEqual(expect.objectContaining({ name: "form observation", detail: expect.stringContaining("no fields were typed") }));
       const report = await generateProofReport();
-      expect(report.evidence.screenshots).toEqual([browser.localScreenshotPath]);
+      expect(report.evidence.screenshots).toEqual([formInspection.localScreenshotPath]);
       expect(report.markdown).toContain("## Browser Evidence");
     } finally {
       await new Promise<void>((resolve, reject) => fixture.close((error) => error ? reject(error) : resolve()));
     }
+  });
+
+  it("lists and opens only generated local proof reports and browser screenshots", async () => {
+    const report = await generateProofReport();
+    const gallery = await getEvidenceGallery();
+    expect(gallery.reports.some((entry) => entry.id === report.id)).toBe(true);
+    expect((await readEvidenceReport(report.id)).markdown).toContain("AetherOffice Proof Report");
+    await expect(readEvidenceReport("proof-../../outside")).rejects.toThrow();
+    await expect(readEvidenceScreenshot("browser-../../outside")).rejects.toThrow();
   });
 
   it("returns a bounded navigable tree while excluding Git and dependency directories", async () => {

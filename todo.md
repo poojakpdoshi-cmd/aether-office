@@ -162,3 +162,10 @@
 - [x] Add controlled browser-test and proof-report workflows that capture real commands, screenshots, console/network findings, changed files, and test/build results.
 - [x] Design competition-team isolation for workspace, process, browser, evidence, and access boundaries before enabling parallel team execution. (Design documented; parallel execution remains deliberately disabled pending isolated-runner implementation and tests.)
 - [x] Verify that employee inspection and browser/proof details never fabricate activity, terminal output, browser results, or hidden chain-of-thought.
+
+- [x] Add an isolated competition-team runtime foundation with team-scoped workspace, process, browser, evidence, and access identifiers; keep parallel execution disabled until cross-team tests pass.
+- [x] Add a local evidence gallery that lists persisted screenshots and proof reports and opens only files from the selected workspace evidence root.
+- [x] Add reusable owner-approved browser test scenarios for page load, console/network checks, responsive viewport capture, and safe form interactions without automatic submission or secret entry.
+- [x] Add regression coverage for competition isolation, evidence-gallery path safety, browser scenario approval, and no-fabrication guarantees.
+- [ ] Run full validation and save a checkpoint for the three extension features.
+- [x] Verify and refine the first-run `AetherOffice` terminal flow so encrypted provider setup completes key-by-key and automatically starts localhost after the final confirmation.

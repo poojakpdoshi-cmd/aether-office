@@ -8,7 +8,8 @@ import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
 import { evaluateImplementation } from "./aether/evaluation";
 import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
 import { applyProposalAction, assertExecutionAllowed, getDashboardState, setApprovalMode } from "./aether/state";
-import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, generateProofReport, getEmployeeInspection, getGitDiff, getGitHistory, getGitStatus, getLatestBrowserEvidence, getLatestProofReport, getProjectPreview, getWorkspaceExecution, getWorkspaceSummary, getWorkspaceTree, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, startWorkspaceCommand, startWorkspaceTests, writeWorkspaceFile } from "./aether/workspace";
+import { competitionIsolationStatus } from "./aether/teamIsolation";
+import { BROWSER_TEST_SCENARIOS, cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getGitDiff, getGitHistory, getGitStatus, getLatestBrowserEvidence, getLatestProofReport, getProjectPreview, getWorkspaceExecution, getWorkspaceSummary, getWorkspaceTree, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, startWorkspaceCommand, startWorkspaceTests, writeWorkspaceFile } from "./aether/workspace";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -26,6 +27,7 @@ export const appRouter = router({
 
   aether: router({
     dashboard: publicProcedure.query(() => getDashboardState()),
+    competitionIsolation: publicProcedure.query(() => competitionIsolationStatus()),
     providers: publicProcedure.query(() => listProviderStatuses()),
     configureProvider: publicProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
@@ -69,7 +71,10 @@ export const appRouter = router({
     projectPreview: publicProcedure.query(() => getProjectPreview()),
     configureProjectPreview: publicProcedure.input(z.object({ url: z.string().trim().min(16).max(2_000) })).mutation(({ input }) => configureProjectPreview(input.url)),
     latestBrowserEvidence: publicProcedure.query(() => getLatestBrowserEvidence()),
-    runProjectBrowserTest: publicProcedure.input(z.object({ meetingId: z.string().uuid().optional(), ownerConfirmed: z.literal(true) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runProjectBrowserTest(); }),
+    runProjectBrowserTest: publicProcedure.input(z.object({ meetingId: z.string().uuid().optional(), ownerConfirmed: z.literal(true), scenario: z.enum(BROWSER_TEST_SCENARIOS).default("page-load") })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runProjectBrowserTest(input.scenario); }),
+    evidenceGallery: publicProcedure.query(() => getEvidenceGallery()),
+    readEvidenceReport: publicProcedure.input(z.object({ id: z.string().regex(/^proof-[a-z0-9-]{4,120}$/i) })).query(({ input }) => readEvidenceReport(input.id)),
+    readEvidenceScreenshot: publicProcedure.input(z.object({ id: z.string().regex(/^browser-[a-z0-9-]{4,120}$/i) })).query(({ input }) => readEvidenceScreenshot(input.id)),
     latestProofReport: publicProcedure.query(() => getLatestProofReport()),
     generateProofReport: publicProcedure.mutation(() => generateProofReport()),
     cancelExecution: publicProcedure.input(z.object({ id: z.string().uuid(), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000) })).mutation(({ input }) => cancelWorkspaceExecution(input.id, input.who as "Owner", input.why)),

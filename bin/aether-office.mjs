@@ -99,7 +99,7 @@ function parseSelections(value, options) {
   return selection.map((index) => options[index - 1]);
 }
 
-async function runSetup() {
+async function runSetup({ launchAfterSetup = false } = {}) {
   const cli = await loadCliConfig();
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     throw new Error("AetherOffice setup requires an interactive terminal so credentials can be entered safely.");
@@ -134,17 +134,12 @@ async function runSetup() {
     });
     process.stdout.write(`✓ ${option.label} is encrypted in your local AetherOffice vault.\n`);
 
-    const testNow = await promptVisible("Run an optional live connection check now? This may use provider quota. [y/N]: ");
-    if (/^y(es)?$/i.test(testNow)) {
-      const result = await cli.testCliProviderConfiguration(option.id);
-      process.stdout.write(result.ok ? "✓ Provider connection confirmed.\n" : `! ${result.message}\n`);
-    }
   }
 
   if (!(await cli.hasConfiguredExternalProvider())) {
     throw new Error("Setup completed without a usable external provider. Run AetherOffice setup again and configure at least one provider.");
   }
-  process.stdout.write("\n✓ Local configuration validated. Run AetherOffice to open your workspace.\n");
+  process.stdout.write(launchAfterSetup ? "\n✓ Local configuration validated. Starting your local office now…\n" : "\n✓ Local configuration validated. Run AetherOffice to open your workspace.\n");
 }
 
 async function runDoctor() {
@@ -187,7 +182,7 @@ async function startWorkspace(rawWorkspace) {
   const cli = await loadCliConfig();
   if (!(await cli.hasConfiguredExternalProvider())) {
     process.stdout.write("First-time configuration is required before AetherOffice starts.\n");
-    await runSetup();
+    await runSetup({ launchAfterSetup: true });
   }
 
   process.stdout.write("\nAetherOffice is starting locally...\n✓ Configuration loaded\n");
