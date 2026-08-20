@@ -177,4 +177,4 @@
 - [x] Verify the existing workspace upload UI reaches the controlled importUpload route and reports safe success and error states.
 - [x] Add focused regression coverage for sidebar behavior, parallel DeepDiscuss execution, and upload integration; run full validation and save a checkpoint.
 
-- [ ] Verify and push the owner-approved deterministic-sidebar and parallel-DeepDiscuss bug-fix checkpoint to the existing public GitHub repository without including local secrets or runtime evidence.
+- [x] Verify and push the owner-approved deterministic-sidebar and parallel-DeepDiscuss bug-fix checkpoint to the existing public GitHub repository without including local secrets or runtime evidence.
