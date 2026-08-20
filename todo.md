@@ -186,3 +186,5 @@
 - [x] Verify active AetherOffice workspace navigation remains sidebar-free and remove or quarantine generic scaffold navigation that can confuse the actual workspace.
 - [x] Tighten provider compatibility state so retired models remain explicitly gated and are not presented as ordinary production-ready options.
 - [x] Add regression coverage for all audited fixes, run full validation, and save a checkpoint.
+
+- [ ] Verify and push the owner-approved audited-fix checkpoint to the existing public GitHub repository without including local secrets, vault files, runtime state, or generated evidence.
