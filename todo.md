@@ -167,5 +167,5 @@
 - [x] Add a local evidence gallery that lists persisted screenshots and proof reports and opens only files from the selected workspace evidence root.
 - [x] Add reusable owner-approved browser test scenarios for page load, console/network checks, responsive viewport capture, and safe form interactions without automatic submission or secret entry.
 - [x] Add regression coverage for competition isolation, evidence-gallery path safety, browser scenario approval, and no-fabrication guarantees.
-- [ ] Run full validation and save a checkpoint for the three extension features.
+- [x] Run full validation and save a checkpoint for the three extension features.
 - [x] Verify and refine the first-run `AetherOffice` terminal flow so encrypted provider setup completes key-by-key and automatically starts localhost after the final confirmation.
