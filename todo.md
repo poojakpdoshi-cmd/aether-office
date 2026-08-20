@@ -169,3 +169,5 @@
 - [x] Add regression coverage for competition isolation, evidence-gallery path safety, browser scenario approval, and no-fabrication guarantees.
 - [x] Run full validation and save a checkpoint for the three extension features.
 - [x] Verify and refine the first-run `AetherOffice` terminal flow so encrypted provider setup completes key-by-key and automatically starts localhost after the final confirmation.
+
+- [ ] Verify the current checkpoint changes and push the owner-approved reviewed AetherOffice update to the existing public GitHub repository without including local secrets, vault files, runtime state, or generated evidence.
