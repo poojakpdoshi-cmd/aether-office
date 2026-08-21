@@ -20,14 +20,16 @@ describe("real office motion behavior", () => {
     expect(resolveOfficeLocation(employee("COMPLETED"), slot)).toMatchObject({ x: "50%", y: "94%", state: "complete" });
   });
 
-  it("keeps transform-only movement at desktop and preserves the mobile scale in both animation frames", () => {
+  it("keeps transform-only direct corridor movement at desktop and preserves mobile scale throughout the route", () => {
     expect(createAgentMotionFrames(120, -40, false)).toEqual([
-      { transform: "translate3d(calc(-50% + 120px), calc(-50% + -40px), 0)" },
-      { transform: "translate3d(-50%, -50%, 0)" },
+      { transform: "translate3d(calc(-50% + 120px), calc(-50% + -40px), 0)", offset: 0 },
+      { transform: "translate3d(0, calc(-50% + -40px), 0)", offset: .58 },
+      { transform: "translate3d(-50%, -50%, 0)", offset: 1 },
     ]);
     expect(createAgentMotionFrames(120, -40, true)).toEqual([
-      { transform: "translate3d(calc(-50% + 120px), calc(-50% + -40px), 0) scale(.82)" },
-      { transform: "translate3d(-50%, -50%, 0) scale(.82)" },
+      { transform: "translate3d(calc(-50% + 120px), calc(-50% + -40px), 0) scale(.82)", offset: 0 },
+      { transform: "translate3d(0, calc(-50% + -40px), 0) scale(.82)", offset: .58 },
+      { transform: "translate3d(-50%, -50%, 0) scale(.82)", offset: 1 },
     ]);
   });
 });

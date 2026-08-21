@@ -268,3 +268,7 @@
 - [x] Route side-chatbox management actions through existing owner-authorized APIs without exposing API keys or weakening sandbox controls.
 - [x] Add responsive and regression coverage for the 16:9 office control-surface redesign and multi-manager roster.
 - [x] Verify the authenticated npm identity, ownership or availability of the `@aetheroffice` scope, and scoped package release configuration without publishing.
+- [x] Analyze the owner-supplied reference video for post-animation UI design language and status-driven employee movement patterns.
+- [x] Restyle the post-animation side control experience to reflect the approved video-inspired visual language while retaining its existing secure controls.
+- [x] Refine real employee meeting-to-cabin and work-state movement to reflect the approved video-inspired motion characteristics without fabricating activity.
+- [x] Verify desktop/mobile visuals, motion, reduced-motion behavior, and no-fabrication regressions for the video-informed refinement.

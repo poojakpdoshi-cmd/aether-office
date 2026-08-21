@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { allocateCompactCabinSlots, type CompactCabinSlot } from "./cabinSlots";
 import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 
@@ -36,9 +36,14 @@ export function resolveOfficeLocation(employee: OfficeEmployee, slot: CompactCab
 
 export function createAgentMotionFrames(deltaX: number, deltaY: number, mobileMotion: boolean) {
   const restingTransform = mobileMotion ? "translate3d(-50%, -50%, 0) scale(.82)" : "translate3d(-50%, -50%, 0)";
+  const horizontalFirst = Math.abs(deltaX) >= Math.abs(deltaY);
+  const corridorTransform = horizontalFirst
+    ? `translate3d(0, calc(-50% + ${deltaY}px), 0)${mobileMotion ? " scale(.82)" : ""}`
+    : `translate3d(calc(-50% + ${deltaX}px), 0, 0)${mobileMotion ? " scale(.82)" : ""}`;
   return [
-    { transform: `translate3d(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px), 0)${mobileMotion ? " scale(.82)" : ""}` },
-    { transform: restingTransform },
+    { transform: `translate3d(calc(-50% + ${deltaX}px), calc(-50% + ${deltaY}px), 0)${mobileMotion ? " scale(.82)" : ""}`, offset: 0 },
+    { transform: corridorTransform, offset: .58 },
+    { transform: restingTransform, offset: 1 },
   ];
 }
 
@@ -62,6 +67,14 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
   const previousAgentRects = useRef(new Map<string, DOMRect>());
+  const [postAnimationReady, setPostAnimationReady] = useState(!sideControl);
+
+  useEffect(() => {
+    if (!sideControl) { setPostAnimationReady(true); return; }
+    setPostAnimationReady(false);
+    const timer = window.setTimeout(() => setPostAnimationReady(true), 620);
+    return () => window.clearTimeout(timer);
+  }, [Boolean(sideControl)]);
 
   useEffect(() => {
     const nextAgentRects = new Map<string, DOMRect>();
@@ -79,8 +92,8 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
       if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
 
       const motion = node.animate(createAgentMotionFrames(deltaX, deltaY, mobileMotion), {
-        duration: 950,
-        easing: "cubic-bezier(0.23, 1, 0.32, 1)",
+        duration: Math.min(1450, 620 + Math.hypot(deltaX, deltaY) * 2.1),
+        easing: "linear",
         fill: "both",
       });
       motion.onfinish = () => motion.cancel();
@@ -110,6 +123,6 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         </button>; })}
       </div>
     </div>
-    {sideControl ?? managementPanel}
+    {sideControl && postAnimationReady ? <div className="office-post-animation-control">{sideControl}</div> : managementPanel}
   </section>;
 }
