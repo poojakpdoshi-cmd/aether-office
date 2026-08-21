@@ -284,3 +284,8 @@
 - [x] Add a meeting-first owner workflow: manager conversation, all configured employees’ research round, consolidated owner-reviewable plan, and explicit approval before any real work begins.
 - [x] Support multiple configurable OpenRouter-backed employee profiles from one encrypted owner OpenRouter key, with honest free-model availability and rate-limit status.
 - [x] Add regression coverage for no-gap game layout, Guardian safeguards, approval-gated planning, and OpenRouter profile configuration without secret exposure.
+- [x] Replace the current employee-room detail panel with an immersive personal-room view that shows the selected employee visibly working at their own computer.
+- [x] Open a real-computer-style terminal and work monitor only when the owner taps that room’s computer, while retaining the actual authorized sandbox process and output source.
+- [x] Preserve no-fabrication rules by displaying explicit idle, unavailable-runtime, and no-active-process states instead of synthetic terminal work.
+- [x] Clearly display the current seven-day Manus temporary-orchestrator lifecycle and preserve Atlas, Nova, and Sentinel continuity after expiry.
+- [x] Add responsive and regression coverage for room-first navigation, computer monitor data, no-fabrication behavior, and Manus expiry continuity.
