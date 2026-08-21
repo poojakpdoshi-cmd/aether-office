@@ -13,6 +13,7 @@ type Props = {
   onOpenEmployeeRoom: (employee: string) => void;
   onInspectEmployeeComputer: (employee: string) => void;
   onInspect: (target: string) => void;
+  onOpenEmptyFloor?: () => void;
   showManagerCabin?: boolean;
   sideControl?: ReactNode;
   managementPanel?: ReactNode;
@@ -62,7 +63,7 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   };
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, showManagerCabin = true, sideControl, managementPanel }: Props) {
+export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, onOpenEmptyFloor, showManagerCabin = true, sideControl, managementPanel }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
@@ -115,6 +116,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         <button onClick={() => onInspect("DeepDiscuss Room")} className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room" />
         <button onClick={() => onInspect("Test Lab")} className="office-hotspot office-test" aria-label="Open Test Lab" /><button onClick={() => onInspect("Lounge")} className="office-hotspot map-lounge" aria-label="Open Lounge" />
         <button onClick={() => onInspect("Central Corridor")} className="office-corridor-zone" aria-label="Inspect Central Corridor" />
+        {onOpenEmptyFloor ? <button onClick={onOpenEmptyFloor} className="office-empty-floor-zone" aria-label="Open the lower office management page" /> : null}
         {assignments.filter((slot) => slot.employee !== "Manus").map((slot) => <button key={`${slot.id}-room`} onClick={() => onOpenEmployeeRoom(slot.employee)} className="office-room-zone" style={slot.room} aria-label={`Enter ${slot.employee}'s room`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-desk`} onClick={() => onInspect(`${slot.employee} Desk`)} className="office-work-zone" style={{ left: slot.desk.x, top: slot.desk.y }} aria-label={`Inspect ${slot.employee} desk`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspectEmployeeComputer(slot.employee)} className="office-laptop-zone" style={slot.laptop} aria-label={`Open ${slot.employee}'s computer live work`} />)}

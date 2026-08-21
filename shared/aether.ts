@@ -17,6 +17,7 @@ export const DEEP_DISCUSS_ROUNDS = ["analysis", "critique", "debate", "synthesis
 export const AUDIT_FIELDS = ["WHO", "WHAT", "WHICH FILE", "WHEN", "WHY"] as const;
 export const SANDBOX_STATUSES = ["stopped", "building", "running", "runtime-unavailable", "error"] as const;
 export const ORCHESTRATOR_MANAGER_IDS = ["Manus", "Atlas", "Nova"] as const;
+export const PRIMARY_ORCHESTRATOR_ID = "Manus" as const;
 
 export type EmployeeStatus = (typeof EMPLOYEE_STATUSES)[number];
 export type ApprovalMode = (typeof APPROVAL_MODES)[number];

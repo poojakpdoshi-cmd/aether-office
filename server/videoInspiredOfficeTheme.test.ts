@@ -13,11 +13,11 @@ describe("video-informed post-animation office treatment", () => {
     expect(styles).toContain("@keyframes office-control-settle");
   });
 
-  it("uses a light office-console rail with compact manager roster cards without removing secure actions", () => {
+  it("uses a light office-console rail with compact manager roster cards and keeps secure controls in the lower page", () => {
     expect(control).toContain('className="office-manager-avatar"');
-    expect(control).toContain("onConfigureProvider");
-    expect(control).toContain("onProvision");
-    expect(control).toContain("onStartTask");
+    expect(control).toContain("onStartProposedTask");
+    expect(control).toContain("onSendMessage");
+    expect(control).toContain("Tap an empty part of the office floor");
     expect(styles).toContain("background: #ece5d2");
     expect(styles).toContain("background: #fff8e9");
     expect(styles).toContain(".office-manager-roster");

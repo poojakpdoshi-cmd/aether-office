@@ -272,3 +272,10 @@
 - [x] Restyle the post-animation side control experience to reflect the approved video-inspired visual language while retaining its existing secure controls.
 - [x] Refine real employee meeting-to-cabin and work-state movement to reflect the approved video-inspired motion characteristics without fabricating activity.
 - [x] Verify desktop/mobile visuals, motion, reduced-motion behavior, and no-fabrication regressions for the video-informed refinement.
+- [x] Rework the office into a game-like scrollable world where the owner explores employee rooms one at a time while retaining the side manager chat.
+- [x] Hide the lower management/control page until the owner taps a designated empty floor-space target instead of displaying direct build controls in the primary experience.
+- [x] Replace the direct build interaction with a manager conversation flow that replies to greetings and routes real approved tasks through the primary manager.
+- [x] Add browser voice playback for manager chat replies, including the required greeting response, without exposing secrets or fabricating task execution.
+- [x] Make the first manager the latency-priority primary orchestrator and keep other managers as real supporting roles.
+- [x] Inspect and correct the employee animation/pants defect shown in the owner-supplied recording while preserving the approved office world.
+- [x] Add regression coverage for scroll exploration, empty-space controls, manager chat/voice behavior, primary orchestration, and the animation correction.

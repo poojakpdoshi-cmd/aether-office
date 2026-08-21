@@ -5,6 +5,7 @@ import { ownerProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether";
 import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
+import { respondToManagerChat } from "./aether/managerChat";
 import { evaluateImplementation } from "./aether/evaluation";
 import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
 import { applyProposalAction, assertExecutionAllowed, getDashboardState, getEmployeeRoom, getEmployeeSandbox, getSandboxProcess, listEmployeeRooms, listSandboxProcesses, provisionEmployees, setApprovalMode } from "./aether/state";
@@ -46,6 +47,9 @@ export const appRouter = router({
     startDeepDiscuss: ownerProcedure
       .input(z.object({ task: z.string().trim().min(3).max(12_000) }))
       .mutation(async ({ input }) => runDeepDiscuss(input.task)),
+    managerChat: ownerProcedure
+      .input(z.object({ message: z.string().trim().min(1).max(2_000) }))
+      .mutation(async ({ input }) => respondToManagerChat(input.message)),
     proposalAction: ownerProcedure
       .input(z.object({ meetingId: z.string().uuid(), action: z.enum(PROPOSAL_ACTIONS), note: z.string().trim().max(2_000).optional() }))
       .mutation(({ input }) => applyProposalAction(input.meetingId, input.action, input.note)),

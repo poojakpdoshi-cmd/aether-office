@@ -26,10 +26,13 @@ describe("Owner-selected compact office floor", () => {
     expect(compactFloorStyles).toContain('.office-corridor-zone');
   });
 
-  it("moves task, upload, employee, and provider controls into the secured side chatbox", () => {
+  it("moves conversation and upload into the secured side chatbox while gating employee and provider controls behind the empty-floor lower page", () => {
     expect(homePage).toContain("OfficeControlChatbox");
+    expect(homePage).toContain("OfficeWorldControls");
     expect(homePage).toContain("showManagerCabin={false}");
-    expect(homePage).toContain("onStartTask={startTaskFromControl}");
+    expect(homePage).toContain("onSendMessage={sendManagerMessage}");
+    expect(homePage).toContain("onStartProposedTask={() => managerTaskCandidate && startTaskFromControl(managerTaskCandidate)}");
+    expect(homePage).toContain("showWorldControls ? <OfficeWorldControls");
     expect(homePage).toContain("onConfigureProvider={setSetupProvider}");
     expect(homePage).toContain("onProvision={(provider, count) => provisionEmployeesMutation.mutate");
     expect(homePage).toContain("onUpload={uploadFile}");
@@ -75,7 +78,7 @@ describe("Owner-selected compact office floor", () => {
     expect(cabinSlots).toContain('employee: "Nemotron 3 Ultra"');
   });
 
-  it("routes side-chatbox provider controls to local-only secret-safe provider configuration", () => {
+  it("routes empty-floor lower-page provider controls to local-only secret-safe provider configuration", () => {
     expect(homePage).toContain('onConfigureProvider={setSetupProvider}');
     expect(homePage).toContain('Key values are never read back into the browser, rendered in UI, printed to logs, or added to Git.');
     expect(homePage).toContain('encrypted at rest, and never sent back to this browser.');

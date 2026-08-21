@@ -22,7 +22,7 @@ import {
 } from "../../shared/aether";
 
 const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averageScore" | "recentPerformance">> = [
-  { id: "Manus", role: "Temporary CEO · Orchestrator", provider: "manus", temporaryUntil: Date.now() + 7 * 24 * 60 * 60 * 1000 },
+  { id: "Manus", role: "Temporary CEO · Primary Fast Orchestrator", provider: "manus", temporaryUntil: Date.now() + 7 * 24 * 60 * 60 * 1000 },
   { id: "Atlas", role: "Delivery Orchestrator", provider: "manus" },
   { id: "Nova", role: "Quality Orchestrator", provider: "manus" },
   { id: "Gemini", role: "Lead Developer", provider: "gemini" },
@@ -356,6 +356,10 @@ export function resetStateForTests() {
   approvalMode = "Safe Mode";
   employeeProfiles.forEach((employee) => {
     const seeded = employeeSeed.find((candidate) => candidate.id === employee.id);
+    if (seeded) {
+      employee.role = seeded.role;
+      employee.provider = seeded.provider;
+    }
     employee.status = "IDLE";
     employee.taskCount = 0;
     employee.averageScore = null;

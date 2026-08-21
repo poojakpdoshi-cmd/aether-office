@@ -195,15 +195,15 @@ async function synthesizePlan(meetingId: string, task: string, messages: Array<{
 
 export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
+  if (contributors.has("Manus") && isEmployeeActive("Manus")) return "Manus";
   if (contributors.has("Atlas") && isEmployeeActive("Atlas")) return "Atlas";
   if (contributors.has("Nova") && isEmployeeActive("Nova")) return "Nova";
-  if (contributors.has("Manus") && isEmployeeActive("Manus")) return "Manus";
   return messages.find((message) => isEmployeeActive(message.employee))?.employee;
 }
 
 export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
-  const latencyPriority: EmployeeId[] = ["Atlas", "Nova", "SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
+  const latencyPriority: EmployeeId[] = ["Manus", "Atlas", "Nova", "SambaNova", "Gemini", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
   return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
 }
 
