@@ -30,8 +30,9 @@ describe("AetherOffice CLI command parsing", () => {
     expect(cliSource).toContain('await runSetup({ launchAfterSetup: true });');
     expect(cliSource).toContain('NODE_ENV: "production"');
     expect(cliSource).toContain('AETHER_LOCAL_ONLY: "true"');
+    expect(cliSource).toContain('AETHER_LOCAL_OWNER_TOKEN: localOwnerToken');
     expect(cliSource).toContain('Server running on (http:\\/\\/localhost:\\d+\\/?)');
-    expect(cliSource).toContain('openBrowser(match[1])');
+    expect(cliSource).toContain('openBrowser(`${match[1]}?localOwner=${encodeURIComponent(localOwnerToken)}`)');
     expect(cliSource).toContain('for (const character of buffer.toString("utf8"))');
   });
 

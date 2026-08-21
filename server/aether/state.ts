@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import {
@@ -7,7 +8,12 @@ import {
   type ApprovalMode,
   type DiscussionMessage,
   type EmployeeId,
+  type EmployeeRoom,
   type EmployeeProfile,
+  type EmployeeSandbox,
+  type SandboxProcess,
+  type SandboxProcessStatus,
+  type SandboxStatus,
   type EmployeeStatus,
   type Meeting,
   type ProposalAction,
@@ -20,7 +26,6 @@ const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averag
   { id: "Gemini", role: "Lead Developer", provider: "gemini" },
   { id: "Mistral", role: "Software Engineer", provider: "mistral" },
   { id: "DeepSeek", role: "Senior Engineer", provider: "deepseek" },
-  { id: "Arcee", role: "Quality Reviewer", provider: "arcee" },
   { id: "Grok", role: "Researcher", provider: "grok" },
   { id: "SambaNova", role: "Fast Analysis Worker", provider: "sambanova" },
   { id: "North Mini Code", role: "Agentic Coding Specialist", provider: "northmini" },
@@ -37,7 +42,48 @@ const employeeProfiles = new Map<EmployeeId, EmployeeProfile>(
 
 const meetings = new Map<string, Meeting>();
 const activities: ActivityEvent[] = [];
+const employeeRooms = new Map<EmployeeId, EmployeeRoom>();
+const employeeSandboxes = new Map<EmployeeId, EmployeeSandbox>();
+const sandboxProcesses = new Map<string, SandboxProcess>();
 let approvalMode: ApprovalMode = "Safe Mode";
+
+function employeeResourceSlug(employee: EmployeeId) {
+  return createHash("sha256").update(employee).digest("hex").slice(0, 16);
+}
+
+function ensureEmployeeResources(employee: EmployeeProfile) {
+  const slug = employeeResourceSlug(employee.id);
+  const room = employeeRooms.get(employee.id) ?? {
+    id: `room-${slug}`,
+    employeeId: employee.id,
+    workspaceLabel: `${employee.id} workspace`,
+    createdAt: Date.now(),
+  };
+  employeeRooms.set(employee.id, room);
+  const sandbox = employeeSandboxes.get(employee.id) ?? {
+    id: `sandbox-${slug}`,
+    employeeId: employee.id,
+    roomId: room.id,
+    containerName: `aether-sandbox-${slug}`,
+    volumeName: `aether-workspace-${slug}`,
+    workspacePath: "/workspace" as const,
+    status: "stopped" as const,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+  };
+  employeeSandboxes.set(employee.id, sandbox);
+  employee.roomId = room.id;
+  employee.sandboxId = sandbox.id;
+  return { room, sandbox };
+}
+
+function ensureAllEmployeeResources() {
+  employeeProfiles.forEach((employee) => ensureEmployeeResources(employee));
+}
+
+function isRetiredProviderEmployee(employee: { id: string; provider?: string }) {
+  return employee.provider === "arcee" || employee.id === "Arcee" || employee.id.startsWith("Arcee Worker ");
+}
 
 function stateFilePath() {
   return join(process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office"), "runtime-state.json");
@@ -46,16 +92,19 @@ function stateFilePath() {
 function persistState() {
   const filePath = stateFilePath();
   mkdirSync(join(filePath, ".."), { recursive: true, mode: 0o700 });
-  writeFileSync(filePath, JSON.stringify({ approvalMode, employees: Array.from(employeeProfiles.values()), meetings: Array.from(meetings.values()), activities }), { mode: 0o600 });
+  writeFileSync(filePath, JSON.stringify({ approvalMode, employees: Array.from(employeeProfiles.values()), rooms: Array.from(employeeRooms.values()), sandboxes: Array.from(employeeSandboxes.values()), sandboxProcesses: Array.from(sandboxProcesses.values()).slice(-200), meetings: Array.from(meetings.values()), activities }), { mode: 0o600 });
 }
 
 function hydrateState() {
   const filePath = stateFilePath();
   if (!existsSync(filePath)) return;
   try {
-    const stored = JSON.parse(readFileSync(filePath, "utf8")) as { approvalMode?: ApprovalMode; employees?: EmployeeProfile[]; meetings?: Meeting[]; activities?: ActivityEvent[] };
+    const stored = JSON.parse(readFileSync(filePath, "utf8")) as { approvalMode?: ApprovalMode; employees?: EmployeeProfile[]; rooms?: EmployeeRoom[]; sandboxes?: EmployeeSandbox[]; sandboxProcesses?: SandboxProcess[]; meetings?: Meeting[]; activities?: ActivityEvent[] };
     if (stored.approvalMode) approvalMode = stored.approvalMode;
-    stored.employees?.forEach((employee) => employeeProfiles.set(employee.id, employee));
+    stored.employees?.filter((employee) => !isRetiredProviderEmployee(employee)).forEach((employee) => employeeProfiles.set(employee.id, employee));
+    stored.rooms?.filter((room) => !isRetiredProviderEmployee({ id: room.employeeId })).forEach((room) => employeeRooms.set(room.employeeId, room));
+    stored.sandboxes?.filter((sandbox) => !isRetiredProviderEmployee({ id: sandbox.employeeId })).forEach((sandbox) => employeeSandboxes.set(sandbox.employeeId, sandbox));
+    stored.sandboxProcesses?.filter((process) => !isRetiredProviderEmployee({ id: process.employeeId })).forEach((process) => sandboxProcesses.set(process.id, process));
     const manus = employeeProfiles.get("Manus");
     if (manus && manus.temporaryUntil === undefined) manus.temporaryUntil = Date.now() + 7 * 24 * 60 * 60 * 1000;
     stored.meetings?.forEach((meeting) => meetings.set(meeting.id, meeting));
@@ -63,6 +112,67 @@ function hydrateState() {
   } catch {
     // A corrupt non-secret local runtime state is ignored instead of blocking startup.
   }
+}
+
+export function listEmployeeRooms() {
+  ensureAllEmployeeResources();
+  return Array.from(employeeProfiles.values())
+    .filter((employee) => isEmployeeActive(employee.id))
+    .map((employee) => ({ employee, room: employeeRooms.get(employee.id)!, sandbox: employeeSandboxes.get(employee.id)! }));
+}
+
+export function getEmployeeRoom(employeeId: EmployeeId) {
+  const employee = employeeProfiles.get(employeeId);
+  if (!employee || !isEmployeeActive(employeeId)) throw new Error("Employee room not found.");
+  return ensureEmployeeResources(employee).room;
+}
+
+export function getEmployeeSandbox(employeeId: EmployeeId) {
+  const employee = employeeProfiles.get(employeeId);
+  if (!employee || !isEmployeeActive(employeeId)) throw new Error("Employee sandbox not found.");
+  return ensureEmployeeResources(employee).sandbox;
+}
+
+export function setEmployeeSandboxStatus(employeeId: EmployeeId, status: SandboxStatus, detail?: string) {
+  const sandbox = getEmployeeSandbox(employeeId);
+  sandbox.status = status;
+  sandbox.detail = detail;
+  sandbox.updatedAt = Date.now();
+  persistState();
+  return sandbox;
+}
+
+export function startSandboxProcess(input: Omit<SandboxProcess, "id" | "status" | "startedAt" | "completedAt" | "exitCode" | "stdout" | "stderr">) {
+  const process: SandboxProcess = { id: randomUUID(), status: "running", startedAt: Date.now(), completedAt: null, exitCode: null, stdout: "", stderr: "", ...input };
+  sandboxProcesses.set(process.id, process);
+  persistState();
+  return process;
+}
+
+export function appendSandboxProcessOutput(processId: string, stream: "stdout" | "stderr", chunk: string) {
+  const process = sandboxProcesses.get(processId);
+  if (!process || process.status !== "running") return null;
+  process[stream] = `${process[stream]}${chunk}`.slice(0, 64_000);
+  persistState();
+  return process;
+}
+
+export function finishSandboxProcess(processId: string, input: { status: Exclude<SandboxProcessStatus, "running">; exitCode: number | null }) {
+  const process = sandboxProcesses.get(processId);
+  if (!process) return null;
+  process.status = input.status;
+  process.exitCode = input.exitCode;
+  process.completedAt = Date.now();
+  persistState();
+  return process;
+}
+
+export function getSandboxProcess(processId: string) {
+  return sandboxProcesses.get(processId) ?? null;
+}
+
+export function listSandboxProcesses(employeeId: EmployeeId) {
+  return Array.from(sandboxProcesses.values()).filter((process) => process.employeeId === employeeId).sort((left, right) => right.startedAt - left.startedAt).slice(0, 30);
 }
 
 export function getDashboardState(now = Date.now()) {
@@ -211,7 +321,7 @@ function requireMeeting(meetingId: string) {
 }
 
 const providerEmployeeLabels: Record<ProviderId, { label: string; role: string }> = {
-  manus: { label: "Manus", role: "Temporary CEO · Orchestrator" }, gemini: { label: "Gemini", role: "Lead Developer" }, mistral: { label: "Mistral", role: "Software Engineer" }, deepseek: { label: "DeepSeek", role: "Senior Engineer" }, arcee: { label: "Arcee", role: "Quality Reviewer" }, grok: { label: "Grok", role: "Researcher" }, sambanova: { label: "SambaNova", role: "Fast Analysis Worker" }, openrouter: { label: "OpenRouter", role: "Configured Provider Worker" }, northmini: { label: "North Mini Code", role: "Agentic Coding Specialist" }, devstral: { label: "Devstral Small 2", role: "Software Engineering Specialist" }, nemotron: { label: "Nemotron 3 Ultra", role: "Reasoning & Systems Specialist" },
+  manus: { label: "Manus", role: "Temporary CEO · Orchestrator" }, gemini: { label: "Gemini", role: "Lead Developer" }, mistral: { label: "Mistral", role: "Software Engineer" }, deepseek: { label: "DeepSeek", role: "Senior Engineer" }, grok: { label: "Grok", role: "Researcher" }, sambanova: { label: "SambaNova", role: "Fast Analysis Worker" }, openrouter: { label: "OpenRouter", role: "Configured Provider Worker" }, northmini: { label: "North Mini Code", role: "Agentic Coding Specialist" }, devstral: { label: "Devstral Small 2", role: "Software Engineering Specialist" }, nemotron: { label: "Nemotron 3 Ultra", role: "Reasoning & Systems Specialist" },
 };
 
 export function provisionEmployees(provider: ProviderId, count: number) {
@@ -224,6 +334,7 @@ export function provisionEmployees(provider: ProviderId, count: number) {
     if (employeeProfiles.has(id)) continue;
     const profile: EmployeeProfile = { id, role: descriptor.role, provider, status: "IDLE", taskCount: 0, averageScore: null, recentPerformance: [] };
     employeeProfiles.set(id, profile);
+    ensureEmployeeResources(profile);
     created.push(profile);
   }
   addActivity({ kind: "system", message: `Owner provisioned ${created.length} ${descriptor.label} employee${created.length === 1 ? "" : "s"}.` });
@@ -233,6 +344,9 @@ export function provisionEmployees(provider: ProviderId, count: number) {
 
 export function resetStateForTests() {
   meetings.clear();
+  employeeRooms.clear();
+  employeeSandboxes.clear();
+  sandboxProcesses.clear();
   for (const employeeId of Array.from(employeeProfiles.keys())) {
     if (!employeeSeed.some((employee) => employee.id === employeeId)) employeeProfiles.delete(employeeId);
   }
@@ -246,6 +360,7 @@ export function resetStateForTests() {
     employee.recentPerformance = [];
     employee.temporaryUntil = seeded?.id === "Manus" ? Date.now() + 7 * 24 * 60 * 60 * 1000 : undefined;
   });
+  ensureAllEmployeeResources();
   persistState();
 }
 
@@ -256,3 +371,4 @@ export function setTemporaryUntilForTests(employee: EmployeeId, temporaryUntil: 
 }
 
 hydrateState();
+ensureAllEmployeeResources();

@@ -1,5 +1,5 @@
 import { describe, expect, it, beforeEach } from "vitest";
-import { applyProposalAction, createMeeting, getDashboardState, isEmployeeActive, provisionEmployees, resetStateForTests, setApprovalMode, setEmployeeStatus, setProposal, setTemporaryUntilForTests } from "./state";
+import { applyProposalAction, createMeeting, getDashboardState, getEmployeeRoom, getEmployeeSandbox, isEmployeeActive, provisionEmployees, resetStateForTests, setApprovalMode, setEmployeeSandboxStatus, setEmployeeStatus, setProposal, setTemporaryUntilForTests } from "./state";
 
 describe("AetherOffice owner approvals", () => {
   beforeEach(() => resetStateForTests());
@@ -44,6 +44,18 @@ describe("AetherOffice owner approvals", () => {
     const second = provisionEmployees("gemini", 1);
     expect(second.created[0]?.id).toBe("Gemini Worker 3");
     expect(getDashboardState().employees.filter((employee) => employee.provider === "gemini")).toHaveLength(4);
+  });
+
+  it("assigns every employee a stable distinct room and sandbox ownership record", () => {
+    const geminiRoom = getEmployeeRoom("Gemini");
+    const mistralRoom = getEmployeeRoom("Mistral");
+    const geminiSandbox = getEmployeeSandbox("Gemini");
+    const mistralSandbox = getEmployeeSandbox("Mistral");
+    expect(geminiRoom.id).not.toBe(mistralRoom.id);
+    expect(geminiSandbox.volumeName).not.toBe(mistralSandbox.volumeName);
+    expect(geminiSandbox.containerName).not.toBe(mistralSandbox.containerName);
+    expect(geminiSandbox.workspacePath).toBe("/workspace");
+    expect(setEmployeeSandboxStatus("Gemini", "runtime-unavailable", "Docker Desktop or Podman is required.")).toMatchObject({ status: "runtime-unavailable" });
   });
 
   it("treats the exact temporaryUntil boundary as expired across dashboard and state updates", () => {

@@ -6,9 +6,9 @@ import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 export type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
 type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFiles: () => void; onProviderLocker: () => void; onExitDoor: () => void; onInspect: (target: string) => void; managementPanel?: ReactNode };
 
-const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, Arcee: { x: "50%", y: "57%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
+const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
 const illustratedEmployees: Record<string, string> = {
-  Manus: "/manus-storage/illustrated-manus_46107b3d.png", Gemini: "/manus-storage/illustrated-gemini_908df82a.png", DeepSeek: "/manus-storage/illustrated-deepseek_8bbe4ac7.png", Mistral: "/manus-storage/illustrated-mistral_e37410fe.png", Arcee: "/manus-storage/illustrated-arcee_e66515d0.png", Grok: "/manus-storage/illustrated-grok_1ba33ae9.png",
+  Manus: "/manus-storage/illustrated-manus_46107b3d.png", Gemini: "/manus-storage/illustrated-gemini_908df82a.png", DeepSeek: "/manus-storage/illustrated-deepseek_8bbe4ac7.png", Mistral: "/manus-storage/illustrated-mistral_e37410fe.png", Grok: "/manus-storage/illustrated-grok_1ba33ae9.png",
 };
 export function resolveOfficeLocation(employee: OfficeEmployee, slot: CompactCabinSlot) {
   if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" };

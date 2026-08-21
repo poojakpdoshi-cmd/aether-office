@@ -16,7 +16,6 @@ const cliProviderOptions: CliProviderOption[] = [
   { id: "gemini", label: "Google Gemini", secretName: "GEMINI_API_KEY", credentialLabel: "Gemini API key", purpose: "Gemini provides general AI reasoning and assistance.", storageProvider: "gemini" },
   { id: "mistral", label: "Mistral", secretName: "MISTRAL_API_KEY", credentialLabel: "Mistral API key", purpose: "Mistral supports software planning and implementation.", storageProvider: "mistral" },
   { id: "deepseek", label: "DeepSeek", secretName: "DEEPSEEK_API_KEY", credentialLabel: "DeepSeek API key", purpose: "DeepSeek supports backend, systems, and debugging work.", storageProvider: "deepseek" },
-  { id: "arcee", label: "Arcee AI", secretName: "ARCEE_API_KEY", credentialLabel: "Arcee API key", purpose: "Arcee provides configurable specialist analysis through your endpoint and model.", storageProvider: "arcee", requiresEndpointAndModel: true },
   { id: "grok", label: "Grok", secretName: "GROK_API_KEY", credentialLabel: "Grok API key", purpose: "Grok supports research and comparative analysis.", storageProvider: "grok" },
   { id: "sambanova", label: "SambaNova", secretName: "SAMBANOVA_API_KEY", credentialLabel: "SambaNova API key", purpose: "SambaNova is prioritized for fast analysis and synthesis.", storageProvider: "sambanova" },
   { id: "openrouter", label: "OpenRouter / North Mini Code", secretName: "OPENROUTER_API_KEY", credentialLabel: "OpenRouter API key", purpose: "OpenRouter enables North Mini Code and compatible gateway models.", storageProvider: "openrouter" },

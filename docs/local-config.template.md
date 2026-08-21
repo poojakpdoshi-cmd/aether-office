@@ -9,7 +9,6 @@ The published `AetherOffice` npm CLI uses its first-run terminal setup wizard an
 | `GEMINI_API_KEY` | Gemini | Direct route with the built-in Gemini default endpoint/model. |
 | `MISTRAL_API_KEY` | Mistral | Direct Mistral route; Devstral may inherit this key only when encrypted Devstral-specific configuration is absent and its acknowledgement requirement is satisfied. |
 | `DEEPSEEK_API_KEY` | DeepSeek | Direct route. |
-| `ARCEE_API_KEY` | Arcee | Requires an endpoint and model override because no default endpoint/model is set. |
 | `GROK_API_KEY` | Grok | Direct xAI route. |
 | `SAMBANOVA_API_KEY` | SambaNova | Direct route. |
 | `OPENROUTER_API_KEY` | OpenRouter / North Mini Code | North Mini Code uses OpenRouter’s fixed route and can inherit this key. |

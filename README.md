@@ -17,6 +17,8 @@ That is the complete normal user flow. **Do not clone this repository, install p
 
 The package requires **Node.js 22 or newer** and npm. It supports Windows, macOS, and Linux desktop environments. Press `Ctrl+C` in the terminal to stop AetherOffice cleanly.
 
+For **real employee sandbox terminals**, AetherOffice also needs Docker Desktop or Podman installed and running on the computer. The office still launches when that runtime is absent, but employee terminal controls remain unavailable and show a clear local setup message; AetherOffice never replaces that boundary with host command execution. Once the local runtime is installed, the normal launch remains only `AetherOffice`.
+
 ## First run
 
 When no usable external provider is configured, `aetheroffice` begins an interactive terminal setup wizard before it starts the workspace. It walks through each supported configurable provider **one at a time** in a fixed order—without a provider-selection screen. Every credential is masked, never printed, and written only to the existing encrypted local vault. You can explicitly skip any provider. After the sequence, at least one usable provider is required; if none were configured, the wizard retries. Once one or more providers are ready, AetherOffice automatically starts the selected local workspace and opens localhost.
@@ -26,7 +28,6 @@ When no usable external provider is configured, `aetheroffice` begins an interac
 | Google Gemini | Gemini API key | General AI reasoning and assistance. |
 | Mistral | Mistral API key | Software planning and implementation. |
 | DeepSeek | DeepSeek API key | Backend, systems, and debugging work. |
-| Arcee AI | Arcee API key | Also asks for an endpoint and model because they are necessary for this configurable route. |
 | Grok | Grok API key | Research and comparative analysis. |
 | SambaNova | SambaNova API key | Fast analysis and synthesis. |
 | OpenRouter / North Mini Code | OpenRouter API key | Gateway access for North Mini Code and compatible models. |
@@ -82,6 +83,7 @@ Uninstalling the npm package removes the executable and installed program files,
 | A provider connection check fails | Check your key, billing/account access, selected model, and endpoint; rerun setup. For Devstral, confirm the retired model is still available to your Mistral account. |
 | The preferred port is occupied | The server searches the next available local port. Run `AetherOffice doctor` to see the preferred-port result. |
 | A workspace is rejected | Run `AetherOffice` from a normal local folder. The command needs an existing local directory as its controlled workspace. |
+| Employee sandbox is unavailable | Install and start Docker Desktop or Podman once, then run `AetherOffice` again. The CLI never falls back to host command execution. |
 | A vault is unreadable | Keep a backup of your local configuration directory if needed, then rerun setup to create fresh provider settings. |
 
 ## Development

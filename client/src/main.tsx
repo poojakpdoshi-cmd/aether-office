@@ -73,10 +73,24 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>
-);
+async function bootstrapLocalOwnerSession() {
+  const url = new URL(window.location.href);
+  const token = url.searchParams.get("localOwner");
+  if (!token) return;
+  const response = await fetch(`/api/local-owner-session?token=${encodeURIComponent(token)}`, { credentials: "include" });
+  if (!response.ok) throw new Error("The local AetherOffice owner session could not be established.");
+  url.searchParams.delete("localOwner");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+void bootstrapLocalOwnerSession()
+  .catch((error) => console.error("[Local owner session]", error))
+  .finally(() => {
+    createRoot(document.getElementById("root")!).render(
+      <trpc.Provider client={trpcClient} queryClient={queryClient}>
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </trpc.Provider>
+    );
+  });

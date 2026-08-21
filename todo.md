@@ -244,3 +244,15 @@
 - [x] Verify `AetherOffice` alone invokes masked first-run setup when required, starts the bundled production server, waits for readiness, and opens the local browser URL.
 - [x] Test a clean isolated global package installation and launch using no command after `AetherOffice`.
 - [ ] Publish `@aetheroffice/cli` from an npm account or organization that owns the `@aetheroffice` scope, then verify the registry installation command.
+- [ ] Confirm the owner has enabled npm two-factor authentication before the authorized direct public release.
+- [x] Audit the current shared workspace execution and employee state to document the gap to real per-employee isolation.
+- [x] Select an owner-approved secure runtime for real per-employee terminal processes, filesystems, resource limits, and network restrictions.
+- [x] Add server-enforced employee-room, sandbox, workspace, process, and activity ownership contracts.
+- [x] Build a real per-employee terminal and lifecycle manager without executing arbitrary commands on the host.
+- [x] Add office-continuation employee rooms, lazy detail loading, authorized monitoring, and responsive layouts without replacing the office map.
+- [x] Remove active Arcee provider routing, credentials, user interface references, tests, and documentation while preserving other approved providers.
+- [x] Add isolation, authorization, process-boundary, real-event, and full regression tests for the employee-room system.
+- [x] Require Docker Desktop or Podman on first local sandbox use and fail clearly without ever falling back to host command execution.
+- [x] Enforce one non-root, network-disabled, resource-limited container plus one persistent volume per employee sandbox.
+- [ ] Run the real Docker Desktop or Podman lifecycle, persistence, network-isolation, and cross-employee access acceptance test on a local runtime-enabled computer.
+- [x] Verify the authenticated npm identity, ownership or availability of the `@aetheroffice` scope, and scoped package release configuration without publishing.

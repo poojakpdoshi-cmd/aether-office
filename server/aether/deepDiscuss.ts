@@ -16,8 +16,7 @@ const employeeInstructions: Record<EmployeeId, string> = {
   Manus: "You are Manus, the project manager. Establish scope, constraints, success criteria, and a safe owner-approved implementation path.",
   Gemini: "You are Gemini, lead developer. Focus on frontend, developer experience, implementation boundaries, and practical code changes.",
   Mistral: "You are Mistral, software engineer. Focus on implementation sequencing, maintainability, testability, and possible defects.",
-  DeepSeek: "You are DeepSeek, senior engineer. Focus on backend architecture, algorithms, difficult edge cases, and reliability risks.",
-  Arcee: "You are Arcee, code and security reviewer. Focus on threat modeling, unsafe assumptions, review criteria, and safeguard gaps.",
+  DeepSeek: "You are DeepSeek, senior engineer. Focus on backend architecture, algorithms, difficult edge cases, reliability risks, and security review criteria.",
   Grok: "You are Grok, technical researcher. Focus on alternatives, dependency risks, integration constraints, and validation research.",
   SambaNova: "You are SambaNova, rapid analysis worker. Focus on concise implementation observations, missing requirements, and rapid risk scans.",
   "North Mini Code": "You are North Mini Code, an agentic coding specialist. Focus on repository-level implementation plans, concise patches, and practical developer workflows.",
@@ -52,7 +51,7 @@ export type TaskCapability = "frontend" | "backend" | "security" | "research" | 
 const capabilitySignals: Array<{ capability: Exclude<TaskCapability, "general">; signal: RegExp; employees: EmployeeId[] }> = [
   { capability: "frontend", signal: /ui|frontend|react|css|design|component|landing page|page|screen|layout|responsive|form/i, employees: ["Gemini"] },
   { capability: "backend", signal: /algorithm|performance|database|backend|api|architecture|concurrency|server|latency|faster|speed/i, employees: ["DeepSeek"] },
-  { capability: "security", signal: /security|auth|permission|review|vulnerab|login|credential|secret/i, employees: ["Arcee"] },
+  { capability: "security", signal: /security|auth|permission|review|vulnerab|login|credential|secret/i, employees: ["DeepSeek"] },
   { capability: "research", signal: /research|compare|alternative|competitor|library|technology|evaluate/i, employees: ["Grok"] },
   { capability: "coding", signal: /test|bug|refactor|implement|code|build|patch|fix/i, employees: ["Mistral"] },
   { capability: "debugging", signal: /debug|error|broken|regression|failure|crash|issue/i, employees: ["DeepSeek", "Mistral"] },
@@ -199,7 +198,7 @@ export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }
 
 export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
-  const latencyPriority: EmployeeId[] = ["SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Arcee", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
+  const latencyPriority: EmployeeId[] = ["SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
   return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
 }
 

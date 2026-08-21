@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { readProviderConfig, removeProviderConfig, saveProviderConfig } from "./vault";
+import { readProviderConfig, removeProviderConfig, removeRetiredProviderConfig, saveProviderConfig } from "./vault";
 
 const originalConfigHome = process.env.AETHER_CONFIG_HOME;
 let testDirectory = "";
@@ -24,5 +24,15 @@ describe("encrypted local provider vault", () => {
     expect(raw).not.toContain("sensitive-key-never-plain");
     await removeProviderConfig("deepseek");
     expect(await readProviderConfig("deepseek")).toBeUndefined();
+  });
+
+  it("removes a retired provider entry through the encrypted migration path", async () => {
+    testDirectory = await mkdtemp(join(tmpdir(), "aether-vault-"));
+    process.env.AETHER_CONFIG_HOME = testDirectory;
+    await (saveProviderConfig as (provider: string, config: { apiKey: string }) => Promise<void>)("arcee", { apiKey: "obsolete-secret" });
+    expect(await removeRetiredProviderConfig()).toBe(true);
+    const raw = await readFile(join(testDirectory, "providers.enc.json"), "utf8");
+    expect(raw).not.toContain("obsolete-secret");
+    expect(await removeRetiredProviderConfig()).toBe(false);
   });
 });

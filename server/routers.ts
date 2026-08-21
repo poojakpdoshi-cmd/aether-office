@@ -1,13 +1,14 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { ownerProcedure, publicProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether";
 import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
 import { evaluateImplementation } from "./aether/evaluation";
 import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
-import { applyProposalAction, assertExecutionAllowed, getDashboardState, provisionEmployees, setApprovalMode } from "./aether/state";
+import { applyProposalAction, assertExecutionAllowed, getDashboardState, getEmployeeRoom, getEmployeeSandbox, getSandboxProcess, listEmployeeRooms, listSandboxProcesses, provisionEmployees, setApprovalMode } from "./aether/state";
+import { destroyEmployeeSandbox, restartEmployeeSandbox, runEmployeeSandboxCommand, startEmployeeSandbox, stopEmployeeSandbox, stopEmployeeSandboxProcess } from "./aether/sandboxManager";
 import { competitionIsolationStatus } from "./aether/teamIsolation";
 import { BROWSER_TEST_SCENARIOS, cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceDirectory, createWorkspaceFile, deleteWorkspaceFile, editWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getGitDiff, getGitHistory, getGitStatus, getLatestBrowserEvidence, getLatestProofReport, getProjectPreview, getWorkspaceExecution, getWorkspaceSummary, getWorkspaceTree, importWorkspaceUpload, listDirectory, moveWorkspaceFile, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, readWorkspaceImage, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, runWorkspaceTests, searchWorkspaceFiles, selectWorkspace, startWorkspaceCommand, startWorkspaceTests, writeWorkspaceFile } from "./aether/workspace";
 
@@ -29,46 +30,55 @@ export const appRouter = router({
     dashboard: publicProcedure.query(() => getDashboardState()),
     competitionIsolation: publicProcedure.query(() => competitionIsolationStatus()),
     providers: publicProcedure.query(() => listProviderStatuses()),
-    provisionEmployees: publicProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured) throw new Error(`${status?.label ?? input.provider} must be configured before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),
-    configureProvider: publicProcedure
+    provisionEmployees: ownerProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured) throw new Error(`${status?.label ?? input.provider} must be configured before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),
+    configureProvider: ownerProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
       .mutation(({ input }) => configureProvider(input)),
-    recognizeEmployee: publicProcedure
+    recognizeEmployee: ownerProcedure
       .input(z.object({ apiKey: z.string().trim().min(8).max(1000) }))
       .mutation(({ input }) => recognizeAndConfigureProvider(input.apiKey)),
-    removeProvider: publicProcedure
+    removeProvider: ownerProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]) }))
       .mutation(({ input }) => removeConfiguredProvider(input.provider)),
-    setApprovalMode: publicProcedure
+    setApprovalMode: ownerProcedure
       .input(z.object({ mode: z.enum(APPROVAL_MODES) }))
       .mutation(({ input }) => ({ approvalMode: setApprovalMode(input.mode) })),
-    startDeepDiscuss: publicProcedure
+    startDeepDiscuss: ownerProcedure
       .input(z.object({ task: z.string().trim().min(3).max(12_000) }))
       .mutation(async ({ input }) => runDeepDiscuss(input.task)),
-    proposalAction: publicProcedure
+    proposalAction: ownerProcedure
       .input(z.object({ meetingId: z.string().uuid(), action: z.enum(PROPOSAL_ACTIONS), note: z.string().trim().max(2_000).optional() }))
       .mutation(({ input }) => applyProposalAction(input.meetingId, input.action, input.note)),
-    workspace: publicProcedure.query(() => getWorkspaceSummary()),
-    selectWorkspace: publicProcedure.input(z.object({ path: z.string().trim().min(1).max(10_000) })).mutation(({ input }) => selectWorkspace(input.path)),
-    listDirectory: publicProcedure.input(z.object({ path: z.string().max(10_000).default(".") })).query(({ input }) => listDirectory(input.path)),
-    workspaceTree: publicProcedure.query(() => getWorkspaceTree()),
-    readFile: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000) })).query(({ input }) => readWorkspaceFile(input.path)),
-    searchFiles: publicProcedure.input(z.object({ query: z.string().min(2).max(300) })).query(({ input }) => searchWorkspaceFiles(input.query)),
-    gitStatus: publicProcedure.query(() => getGitStatus()),
-    gitDiff: publicProcedure.query(() => getGitDiff()),
-    gitHistory: publicProcedure.query(() => getGitHistory()),
-    writeFile: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), content: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return writeWorkspaceFile(input.path, input.content, input.who as "Manus", input.why); }),
-    createFile: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), content: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return createWorkspaceFile(input.path, input.content, input.who as "Manus", input.why); }),
-    createDirectory: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return createWorkspaceDirectory(input.path, input.who as "Manus", input.why); }),
-    editFile: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), find: z.string().min(1).max(1_000_000), replace: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return editWorkspaceFile(input.path, input.find, input.replace, input.who as "Manus", input.why); }),
-    deleteFile: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return deleteWorkspaceFile(input.path, input.who as "Manus", input.why); }),
-    moveFile: publicProcedure.input(z.object({ from: z.string().min(1).max(10_000), to: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return moveWorkspaceFile(input.from, input.to, input.who as "Manus", input.why); }),
-    runCommand: publicProcedure.input(z.object({ command: z.string().min(1).max(100), args: z.array(z.string().max(1_000)).max(30), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runWorkspaceCommand(input.command, input.args, input.who as "Manus", input.why); }),
-    runTests: publicProcedure.input(z.object({ who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runWorkspaceTests(input.who as "Manus", input.why); }),
-    startCommand: publicProcedure.input(z.object({ command: z.string().min(1).max(100), args: z.array(z.string().max(1_000)).max(30), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return startWorkspaceCommand(input.command, input.args, input.who as "Manus", input.why); }),
-    startTests: publicProcedure.input(z.object({ who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return startWorkspaceTests(input.who as "Manus", input.why); }),
-    executionStatus: publicProcedure.input(z.object({ id: z.string().uuid() })).query(({ input }) => getWorkspaceExecution(input.id)),
-    employeeInspection: publicProcedure.input(z.object({ employee: z.enum(["Manus", "Gemini", "Mistral", "DeepSeek", "Arcee", "Grok", "SambaNova", "North Mini Code", "Devstral Small 2", "Nemotron 3 Ultra"]) })).query(({ input }) => getEmployeeInspection(input.employee)),
+    workspace: ownerProcedure.query(() => getWorkspaceSummary()),
+    selectWorkspace: ownerProcedure.input(z.object({ path: z.string().trim().min(1).max(10_000) })).mutation(({ input }) => selectWorkspace(input.path)),
+    listDirectory: ownerProcedure.input(z.object({ path: z.string().max(10_000).default(".") })).query(({ input }) => listDirectory(input.path)),
+    workspaceTree: ownerProcedure.query(() => getWorkspaceTree()),
+    readFile: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000) })).query(({ input }) => readWorkspaceFile(input.path)),
+    searchFiles: ownerProcedure.input(z.object({ query: z.string().min(2).max(300) })).query(({ input }) => searchWorkspaceFiles(input.query)),
+    gitStatus: ownerProcedure.query(() => getGitStatus()),
+    gitDiff: ownerProcedure.query(() => getGitDiff()),
+    gitHistory: ownerProcedure.query(() => getGitHistory()),
+    writeFile: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000), content: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return writeWorkspaceFile(input.path, input.content, input.who as "Manus", input.why); }),
+    createFile: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000), content: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return createWorkspaceFile(input.path, input.content, input.who as "Manus", input.why); }),
+    createDirectory: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return createWorkspaceDirectory(input.path, input.who as "Manus", input.why); }),
+    editFile: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000), find: z.string().min(1).max(1_000_000), replace: z.string().max(1_000_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return editWorkspaceFile(input.path, input.find, input.replace, input.who as "Manus", input.why); }),
+    deleteFile: ownerProcedure.input(z.object({ path: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return deleteWorkspaceFile(input.path, input.who as "Manus", input.why); }),
+    moveFile: ownerProcedure.input(z.object({ from: z.string().min(1).max(10_000), to: z.string().min(1).max(10_000), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return moveWorkspaceFile(input.from, input.to, input.who as "Manus", input.why); }),
+    runCommand: ownerProcedure.input(z.object({ command: z.string().min(1).max(100), args: z.array(z.string().max(1_000)).max(30), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runWorkspaceCommand(input.command, input.args, input.who as "Manus", input.why); }),
+    runTests: ownerProcedure.input(z.object({ who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return runWorkspaceTests(input.who as "Manus", input.why); }),
+    startCommand: ownerProcedure.input(z.object({ command: z.string().min(1).max(100), args: z.array(z.string().max(1_000)).max(30), who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return startWorkspaceCommand(input.command, input.args, input.who as "Manus", input.why); }),
+    startTests: ownerProcedure.input(z.object({ who: z.string().default("Manus"), why: z.string().trim().min(3).max(2_000), meetingId: z.string().uuid().optional(), ownerConfirmed: z.boolean().default(false) })).mutation(({ input }) => { assertExecutionAllowed(input.meetingId, input.ownerConfirmed); return startWorkspaceTests(input.who as "Manus", input.why); }),
+    executionStatus: ownerProcedure.input(z.object({ id: z.string().uuid() })).query(({ input }) => getWorkspaceExecution(input.id)),
+    employeeInspection: ownerProcedure.input(z.object({ employee: z.enum(["Manus", "Gemini", "Mistral", "DeepSeek", "Grok", "SambaNova", "North Mini Code", "Devstral Small 2", "Nemotron 3 Ultra"]) })).query(({ input }) => getEmployeeInspection(input.employee)),
+    employeeRooms: ownerProcedure.query(() => listEmployeeRooms()),
+    employeeRoom: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160) })).query(({ input }) => ({ room: getEmployeeRoom(input.employee), sandbox: getEmployeeSandbox(input.employee), processes: listSandboxProcesses(input.employee) })),
+    startEmployeeSandbox: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160) })).mutation(({ input }) => startEmployeeSandbox(input.employee)),
+    stopEmployeeSandbox: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), ownerConfirmed: z.literal(true) })).mutation(({ input }) => stopEmployeeSandbox(input.employee)),
+    restartEmployeeSandbox: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), ownerConfirmed: z.literal(true) })).mutation(({ input }) => restartEmployeeSandbox(input.employee)),
+    destroyEmployeeSandbox: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), ownerConfirmed: z.literal(true) })).mutation(({ input }) => destroyEmployeeSandbox(input.employee, input.ownerConfirmed)),
+    runEmployeeSandboxCommand: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), command: z.string().trim().min(1).max(160), args: z.array(z.string().max(1_000)).max(30), ownerConfirmed: z.literal(true) })).mutation(({ input }) => runEmployeeSandboxCommand(input)),
+    employeeSandboxProcess: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), processId: z.string().uuid() })).query(({ input }) => { const process = getSandboxProcess(input.processId); if (!process || process.employeeId !== input.employee) throw new Error("Sandbox process not found for this employee."); return process; }),
+    stopEmployeeSandboxProcess: ownerProcedure.input(z.object({ employee: z.string().trim().min(1).max(160), processId: z.string().uuid(), ownerConfirmed: z.literal(true) })).mutation(({ input }) => stopEmployeeSandboxProcess(input.employee, input.processId, input.ownerConfirmed)),
     projectPreview: publicProcedure.query(() => getProjectPreview()),
     configureProjectPreview: publicProcedure.input(z.object({ url: z.string().trim().min(16).max(2_000) })).mutation(({ input }) => configureProjectPreview(input.url)),
     latestBrowserEvidence: publicProcedure.query(() => getLatestBrowserEvidence()),
@@ -83,7 +93,7 @@ export const appRouter = router({
     revertCommit: publicProcedure.input(z.object({ commit: z.string().trim().min(4).max(100), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000), ownerConfirmed: z.boolean() })).mutation(({ input }) => revertGitCommit(input.commit, input.who as "Owner", input.why, input.ownerConfirmed)),
     importUpload: publicProcedure.input(z.object({ fileName: z.string().min(1).max(300), mimeType: z.string().max(300), base64: z.string().min(1).max(30_000_000), who: z.string().default("Owner"), why: z.string().trim().min(3).max(2_000), ownerConfirmed: z.literal(true) })).mutation(({ input }) => importWorkspaceUpload({ ...input, who: input.who as "Owner" })),
     inspectImage: publicProcedure.input(z.object({ path: z.string().min(1).max(10_000), prompt: z.string().trim().min(3).max(2_000) })).mutation(async ({ input }) => { const image = await readWorkspaceImage(input.path, "Manus", "Inspect owner-provided visual reference."); return { analysis: await inspectVisualReference(image.dataUrl, input.prompt), mimeType: image.mimeType }; }),
-    evaluate: publicProcedure.input(z.object({ employee: z.enum(["Manus", "Gemini", "Mistral", "DeepSeek", "Arcee", "Grok", "SambaNova"]), correctness: z.number().min(0).max(100), requirements: z.number().min(0).max(100), codeQuality: z.number().min(0).max(100), security: z.number().min(0).max(100), performance: z.number().min(0).max(100), maintainability: z.number().min(0).max(100), reasoning: z.string().trim().min(3).max(4_000), recommendations: z.string().trim().min(3).max(4_000) })).mutation(({ input }) => evaluateImplementation(input.employee, input)),
+    evaluate: ownerProcedure.input(z.object({ employee: z.enum(["Manus", "Gemini", "Mistral", "DeepSeek", "Grok", "SambaNova"]), correctness: z.number().min(0).max(100), requirements: z.number().min(0).max(100), codeQuality: z.number().min(0).max(100), security: z.number().min(0).max(100), performance: z.number().min(0).max(100), maintainability: z.number().min(0).max(100), reasoning: z.string().trim().min(3).max(4_000), recommendations: z.string().trim().min(3).max(4_000) })).mutation(({ input }) => evaluateImplementation(input.employee, input)),
   }),
 
   // TODO: add feature routers here, e.g.

@@ -11,7 +11,7 @@ type StoredProviderConfig = {
   compatibilityAcknowledged?: boolean;
 };
 
-type VaultPayload = Partial<Record<ProviderId, StoredProviderConfig>>;
+type VaultPayload = Partial<Record<ProviderId | "arcee", StoredProviderConfig>>;
 
 type EncryptedPayload = {
   version: 1;
@@ -103,4 +103,12 @@ export async function removeProviderConfig(provider: Exclude<ProviderId, "manus"
   const payload = await readVault();
   delete payload[provider];
   await writeVault(payload);
+}
+
+export async function removeRetiredProviderConfig() {
+  const payload = await readVault();
+  if (!payload.arcee) return false;
+  delete payload.arcee;
+  await writeVault(payload);
+  return true;
 }

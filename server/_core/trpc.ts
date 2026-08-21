@@ -27,6 +27,21 @@ const requireUser = t.middleware(async opts => {
 
 export const protectedProcedure = t.procedure.use(requireUser);
 
+const requireOwner = t.middleware(async opts => {
+  const { ctx, next } = opts;
+  if (!ctx.localOwner && ctx.user?.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "A local owner or administrator session is required for this operation." });
+  }
+  return next({
+    ctx: {
+      ...ctx,
+      user: ctx.user,
+    },
+  });
+});
+
+export const ownerProcedure = t.procedure.use(requireOwner);
+
 export const adminProcedure = t.procedure.use(
   t.middleware(async opts => {
     const { ctx, next } = opts;

@@ -5,7 +5,7 @@ import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 describe("DeepDiscuss selection and proposal parsing", () => {
   it("selects only relevant staff for a frontend security task", () => {
     const selected = selectEmployeesForTask("Build a React login screen and review authentication security.");
-    expect(selected).toEqual(expect.arrayContaining(["Manus", "Gemini", "Arcee", "Mistral"]));
+    expect(selected).toEqual(expect.arrayContaining(["Manus", "Gemini", "DeepSeek", "Mistral"]));
     expect(selected).not.toContain("Grok");
   });
 
@@ -58,7 +58,7 @@ describe("DeepDiscuss selection and proposal parsing", () => {
 
   it("classifies task domains before selecting role-aligned employees", () => {
     expect(classifyTaskCapabilities("Make the login page secure and faster")).toEqual(expect.arrayContaining(["frontend", "security", "backend"]));
-    expect(selectEmployeesForTask("Make the login page secure and faster")).toEqual(expect.arrayContaining(["Manus", "Gemini", "Arcee", "DeepSeek"]));
+    expect(selectEmployeesForTask("Make the login page secure and faster")).toEqual(expect.arrayContaining(["Manus", "Gemini", "DeepSeek"]));
   });
 
   it("prefers latency-priority active contributors for synthesis with ordered fallback", () => {

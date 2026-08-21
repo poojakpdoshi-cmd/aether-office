@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { spawn } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { createInterface } from "node:readline/promises";
 import { existsSync, realpathSync, statSync } from "node:fs";
 import { createServer } from "node:net";
@@ -12,6 +13,7 @@ const packageRoot = resolve(ownDirectory, "..");
 const packageManifest = join(packageRoot, "package.json");
 const serverEntry = join(packageRoot, "dist", "index.js");
 const cliConfigEntry = join(packageRoot, "dist", "cli-config.js");
+const sandboxRuntimeEntry = join(packageRoot, "dist", "sandbox-runtime.js");
 
 const usage = `AetherOffice — local-first AI software company
 
@@ -38,7 +40,7 @@ export function parseCommand(argumentsList) {
 }
 
 function requireInstalledBundle() {
-  if (!existsSync(serverEntry) || !existsSync(cliConfigEntry)) {
+  if (!existsSync(serverEntry) || !existsSync(cliConfigEntry) || !existsSync(sandboxRuntimeEntry)) {
     throw new Error("The AetherOffice installation is incomplete. Reinstall the package with npm install --global <package-name>.");
   }
 }
@@ -46,6 +48,11 @@ function requireInstalledBundle() {
 async function loadCliConfig() {
   requireInstalledBundle();
   return import(pathToFileURL(cliConfigEntry).href);
+}
+
+async function loadSandboxRuntime() {
+  requireInstalledBundle();
+  return import(pathToFileURL(sandboxRuntimeEntry).href);
 }
 
 async function readPackageVersion() {
@@ -142,7 +149,7 @@ export async function runSequentialProviderWizard(cli, prompts = { visible: prom
         baseUrl = await prompts.visible("API endpoint: ");
         model = await prompts.visible("Model: ");
         if (!baseUrl || !model) {
-          prompts.write("Arcee requires both an API endpoint and model.\n");
+          prompts.write("This provider requires both an API endpoint and model.\n");
           continue;
         }
       }
@@ -183,6 +190,8 @@ export async function runSetup({ launchAfterSetup = false } = {}) {
 
 async function runDoctor() {
   const cli = await loadCliConfig();
+  const sandboxRuntime = await loadSandboxRuntime();
+  const containerRuntime = await sandboxRuntime.detectContainerRuntime();
   const nodeMajor = Number.parseInt(process.versions.node.split(".")[0] || "0", 10);
   const configHome = process.env.AETHER_CONFIG_HOME || join(homedir(), ".aether-office");
   const preferredPort = Number.parseInt(process.env.PORT || "4173", 10);
@@ -197,6 +206,7 @@ async function runDoctor() {
     ["Compiled setup bridge", existsSync(cliConfigEntry), cliConfigEntry],
     ["Local configuration directory", existsSync(configHome), configHome],
     ["At least one external provider", await cli.hasConfiguredExternalProvider(), "run AetherOffice setup if needed"],
+    ["Employee sandbox runtime", containerRuntime.available, containerRuntime.available ? `${containerRuntime.kind} ${containerRuntime.serverVersion}` : containerRuntime.detail],
     ["Preferred loopback port", canBindPreferredPort, canBindPreferredPort ? `127.0.0.1:${preferredPort}` : `127.0.0.1:${preferredPort} is in use; startup will seek the next available port`],
   ];
   process.stdout.write("AetherOffice doctor\n\n");
@@ -224,13 +234,21 @@ async function startWorkspace(rawWorkspace) {
     await runSetup({ launchAfterSetup: true });
   }
 
+  const sandboxRuntime = await loadSandboxRuntime();
+  const containerRuntime = await sandboxRuntime.detectContainerRuntime();
+  if (containerRuntime.available) process.stdout.write(`✓ Local employee sandbox runtime ready: ${containerRuntime.kind} ${containerRuntime.serverVersion}\n`);
+  else process.stdout.write(`! Employee sandboxes are unavailable: ${sandboxRuntime.containerRuntimeSetupMessage()}\n`);
+
   process.stdout.write("\nAetherOffice is starting locally...\n✓ Configuration loaded\n");
+  const localOwnerToken = randomBytes(32).toString("base64url");
   const child = spawn(process.execPath, [serverEntry], {
     cwd: packageRoot,
     env: {
       ...process.env,
       NODE_ENV: "production",
       AETHER_LOCAL_ONLY: "true",
+      AETHER_LOCAL_OWNER_TOKEN: localOwnerToken,
+      AETHER_SANDBOX_RUNTIME: containerRuntime.available ? containerRuntime.kind : "unavailable",
       AETHER_WORKSPACE: workspace,
       PORT: process.env.PORT || "4173",
     },
@@ -244,7 +262,7 @@ async function startWorkspace(rawWorkspace) {
     if (match && !opened) {
       opened = true;
       process.stdout.write(`✓ Backend and local web interface started at ${match[1]}\n`);
-      openBrowser(match[1]);
+      openBrowser(`${match[1]}?localOwner=${encodeURIComponent(localOwnerToken)}`);
     }
   });
   child.stderr.on("data", (chunk) => process.stderr.write(chunk));

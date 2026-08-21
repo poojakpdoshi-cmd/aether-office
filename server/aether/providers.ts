@@ -1,6 +1,6 @@
 import type { EmployeeId, ProviderId } from "../../shared/aether";
 import { invokeLLM } from "../_core/llm";
-import { readProviderConfig, removeProviderConfig, saveProviderConfig } from "./vault";
+import { readProviderConfig, removeProviderConfig, removeRetiredProviderConfig, saveProviderConfig } from "./vault";
 import { isEmployeeActive } from "./state";
 
 export type ProviderStatus = {
@@ -26,7 +26,6 @@ const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
   gemini: { id: "gemini", label: "Gemini", route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY", availability: "ready" },
   mistral: { id: "mistral", label: "Mistral", route: "direct", secretEnvironmentVariable: "MISTRAL_API_KEY", availability: "ready" },
   deepseek: { id: "deepseek", label: "DeepSeek", route: "direct", secretEnvironmentVariable: "DEEPSEEK_API_KEY", availability: "ready" },
-  arcee: { id: "arcee", label: "Arcee", route: "direct", secretEnvironmentVariable: "ARCEE_API_KEY", availability: "ready" },
   grok: { id: "grok", label: "Grok", route: "direct", secretEnvironmentVariable: "GROK_API_KEY", availability: "ready" },
   sambanova: { id: "sambanova", label: "SambaNova", route: "direct", secretEnvironmentVariable: "SAMBANOVA_API_KEY", availability: "ready" },
   openrouter: { id: "openrouter", label: "OpenRouter", route: "gateway", secretEnvironmentVariable: "OPENROUTER_API_KEY", availability: "ready" },
@@ -40,7 +39,6 @@ const employeeProvider: Record<EmployeeId, ProviderId> = {
   Gemini: "gemini",
   Mistral: "mistral",
   DeepSeek: "deepseek",
-  Arcee: "arcee",
   Grok: "grok",
   SambaNova: "sambanova",
   "North Mini Code": "northmini",
@@ -111,7 +109,6 @@ const adapters: Record<ProviderId, ProviderAdapter> = {
   gemini: directAdapter("gemini"),
   mistral: directAdapter("mistral"),
   deepseek: directAdapter("deepseek"),
-  arcee: directAdapter("arcee"),
   grok: directAdapter("grok"),
   sambanova: directAdapter("sambanova"),
   openrouter: directAdapter("openrouter"),
@@ -120,7 +117,15 @@ const adapters: Record<ProviderId, ProviderAdapter> = {
   nemotron: directAdapter("nemotron"),
 };
 
+let retiredProviderCleanup: Promise<void> | undefined;
+
+async function ensureRetiredProviderCleanup() {
+  if (!retiredProviderCleanup) retiredProviderCleanup = removeRetiredProviderConfig().then(() => undefined).catch(() => undefined);
+  await retiredProviderCleanup;
+}
+
 export async function listProviderStatuses(): Promise<ProviderStatus[]> {
+  await ensureRetiredProviderCleanup();
   return Promise.all(Object.values(providerMeta).map(async (metadata) => {
     const effective = metadata.id === "manus" ? undefined : await getEffectiveProviderConfig(metadata.id);
     return {
@@ -136,7 +141,6 @@ export function getEmployeeProvider(employee: EmployeeId): ProviderId {
   if (employee.startsWith("Gemini Worker ")) return "gemini";
   if (employee.startsWith("Mistral Worker ")) return "mistral";
   if (employee.startsWith("DeepSeek Worker ")) return "deepseek";
-  if (employee.startsWith("Arcee Worker ")) return "arcee";
   if (employee.startsWith("Grok Worker ")) return "grok";
   if (employee.startsWith("SambaNova Worker ")) return "sambanova";
   if (employee.startsWith("OpenRouter Worker ")) return "openrouter";
