@@ -14,6 +14,8 @@ import { invokeLLM } from "../_core/llm";
 
 const employeeInstructions: Record<EmployeeId, string> = {
   Manus: "You are Manus, the project manager. Establish scope, constraints, success criteria, and a safe owner-approved implementation path.",
+  Atlas: "You are Atlas, the delivery orchestrator. Break the owner-approved plan into practical milestones, clarify dependencies, and sequence implementation without claiming work has run.",
+  Nova: "You are Nova, the quality orchestrator. Define acceptance criteria, security and reliability checks, testing priorities, and owner-review gates without claiming work has run.",
   Gemini: "You are Gemini, lead developer. Focus on frontend, developer experience, implementation boundaries, and practical code changes.",
   Mistral: "You are Mistral, software engineer. Focus on implementation sequencing, maintainability, testability, and possible defects.",
   DeepSeek: "You are DeepSeek, senior engineer. Focus on backend architecture, algorithms, difficult edge cases, reliability risks, and security review criteria.",
@@ -65,7 +67,7 @@ export function classifyTaskCapabilities(task: string): TaskCapability[] {
 
 export function selectEmployeesForTask(task: string): EmployeeId[] {
   const capabilities = new Set(classifyTaskCapabilities(task));
-  const selected = new Set<EmployeeId>(["Manus"]);
+  const selected = new Set<EmployeeId>(["Manus", "Atlas", "Nova"]);
   for (const rule of capabilitySignals) {
     if (capabilities.has(rule.capability)) rule.employees.forEach((employee) => selected.add(employee));
   }
@@ -192,13 +194,16 @@ async function synthesizePlan(meetingId: string, task: string, messages: Array<{
 }
 
 export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }>) {
-  if (isEmployeeActive("Manus")) return "Manus";
+  const contributors = new Set(messages.map((message) => message.employee));
+  if (contributors.has("Atlas") && isEmployeeActive("Atlas")) return "Atlas";
+  if (contributors.has("Nova") && isEmployeeActive("Nova")) return "Nova";
+  if (contributors.has("Manus") && isEmployeeActive("Manus")) return "Manus";
   return messages.find((message) => isEmployeeActive(message.employee))?.employee;
 }
 
 export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
-  const latencyPriority: EmployeeId[] = ["SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
+  const latencyPriority: EmployeeId[] = ["Atlas", "Nova", "SambaNova", "Gemini", "Manus", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
   return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
 }
 

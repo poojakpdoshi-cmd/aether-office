@@ -23,6 +23,8 @@ import {
 
 const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averageScore" | "recentPerformance">> = [
   { id: "Manus", role: "Temporary CEO · Orchestrator", provider: "manus", temporaryUntil: Date.now() + 7 * 24 * 60 * 60 * 1000 },
+  { id: "Atlas", role: "Delivery Orchestrator", provider: "manus" },
+  { id: "Nova", role: "Quality Orchestrator", provider: "manus" },
   { id: "Gemini", role: "Lead Developer", provider: "gemini" },
   { id: "Mistral", role: "Software Engineer", provider: "mistral" },
   { id: "DeepSeek", role: "Senior Engineer", provider: "deepseek" },
@@ -261,7 +263,7 @@ export function setProposal(meetingId: string, proposal: TeamProposal) {
   meeting.proposal = proposal;
   meeting.state = "PENDING_APPROVAL";
   meeting.updatedAt = Date.now();
-  addActivity({ kind: "meeting", message: "Manus produced a TEAM PROPOSAL for owner review.", employee: "Manus" });
+  addActivity({ kind: "meeting", message: "The orchestration team produced a TEAM PROPOSAL for owner review.", employee: "Atlas" });
   persistState();
   return meeting;
 }
@@ -271,7 +273,7 @@ export function failMeeting(meetingId: string, errorMessage: string) {
   meeting.state = "ERROR";
   meeting.errorMessage = errorMessage;
   meeting.updatedAt = Date.now();
-  addActivity({ kind: "system", message: "Team meeting stopped because a provider call failed.", employee: "Manus" });
+  addActivity({ kind: "system", message: "Team meeting stopped because a provider call failed.", employee: "Atlas" });
   persistState();
   return meeting;
 }
@@ -289,7 +291,7 @@ export function applyProposalAction(meetingId: string, action: ProposalAction, n
   addActivity({
     kind: "approval",
     message: `Owner selected ${action}${note ? ": " + note : "."}`,
-    employee: "Manus",
+    employee: "Atlas",
   });
   persistState();
   return meeting;

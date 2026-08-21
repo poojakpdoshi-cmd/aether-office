@@ -12,13 +12,10 @@ const cabinSlots = readFileSync(fileURLToPath(new URL("../../client/src/componen
 describe("Owner-selected compact office floor", () => {
   it("uses the selected asset and provides direct room, desk, object, and corridor targets", () => {
     expect(officeComponent).toContain('src={ACTIVE_OFFICE_BACKGROUND}');
-    expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-supplied-only"');
+    expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-authorized-manager-cabin-removal"');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_GENERATION_ENABLED = false');
-    expect(officeArtworkPolicy).toContain('aether-office-horizontal-16x9-manager-pants-removed_d849380a.png');
-    expect(officeComponent).toContain('aria-label="Open Manager Cabin"');
+    expect(officeArtworkPolicy).toContain('aetheroffice-office-no-manager-cabin_a8a18332.png');
     expect(officeComponent).toContain('aria-label="Open DeepDiscuss Room"');
-    expect(officeComponent).toContain('aria-label="Provide files or photos to the Manager"');
-    expect(officeComponent).toContain('aria-label="Open the secure Provider Locker"');
     expect(officeComponent).toContain('aria-label="Inspect Central Corridor"');
   });
 
@@ -29,15 +26,17 @@ describe("Owner-selected compact office floor", () => {
     expect(compactFloorStyles).toContain('.office-corridor-zone');
   });
 
-  it("opens the dedicated upload panel only from the physical Manager desk files/photos control", () => {
-    expect(officeComponent).toContain('onClick={onDeskFiles} className="manager-file-pile"');
-    expect(homePage).toContain('onDeskFiles={() => setOfficeFocus("Manager Desk Files")}');
-    expect(homePage).toContain('officeFocus === "Manager Desk Files"');
-    expect(homePage).toContain('Manager requested files or photos');
+  it("moves task, upload, employee, and provider controls into the secured side chatbox", () => {
+    expect(homePage).toContain("OfficeControlChatbox");
+    expect(homePage).toContain("showManagerCabin={false}");
+    expect(homePage).toContain("onStartTask={startTaskFromControl}");
+    expect(homePage).toContain("onConfigureProvider={setSetupProvider}");
+    expect(homePage).toContain("onProvision={(provider, count) => provisionEmployeesMutation.mutate");
+    expect(homePage).toContain("onUpload={uploadFile}");
   });
 
   it("launches the Office view as a text-free animated map with accessible invisible targets", () => {
-    expect(officeComponent).toContain('className="text-free-office"');
+    expect(officeComponent).toContain('"text-free-office office-with-control"');
     expect(officeComponent).not.toContain('AEtherOffice · illustrated local workplace');
     expect(officeComponent).not.toContain('MANAGER CABIN');
     expect(officeComponent).not.toContain('DEEPDISCUSS ROOM');
@@ -48,7 +47,6 @@ describe("Owner-selected compact office floor", () => {
   });
 
   it("keeps cabins, rooms, desks, and employees as direct invisible interaction targets", () => {
-    expect(officeComponent).toContain('className="office-hotspot office-manager" aria-label="Open Manager Cabin"');
     expect(officeComponent).toContain('className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room"');
     expect(officeComponent).toContain('className="office-work-zone"');
     expect(officeComponent).toContain('className="office-laptop-zone"');
@@ -77,10 +75,8 @@ describe("Owner-selected compact office floor", () => {
     expect(cabinSlots).toContain('employee: "Nemotron 3 Ultra"');
   });
 
-  it("routes the physical Provider Locker to local-only secret-safe provider configuration", () => {
-    expect(officeComponent).toContain('onClick={onProviderLocker} className="manager-provider-locker"');
-    expect(officeComponent).toContain('aria-label="Open the secure Provider Locker"');
-    expect(homePage).toContain('onProviderLocker={() => setActiveView("Settings")}');
+  it("routes side-chatbox provider controls to local-only secret-safe provider configuration", () => {
+    expect(homePage).toContain('onConfigureProvider={setSetupProvider}');
     expect(homePage).toContain('Key values are never read back into the browser, rendered in UI, printed to logs, or added to Git.');
     expect(homePage).toContain('encrypted at rest, and never sent back to this browser.');
   });

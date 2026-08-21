@@ -262,4 +262,9 @@
 - [x] Preserve text-free office launch while showing only real current work and authorized sandbox status after entering a personal room.
 - [x] Make each physical employee computer/laptop open a live work view with only current authorized sandbox, process, terminal-output, and controlled file-activity evidence.
 - [x] Add regression coverage for cabin-to-room navigation and back-to-office behavior.
+- [x] Remove the physical Manager Cabin from the active 16:9 office map while preserving the employee cabins, discussion room, direct room entry, and laptop monitoring.
+- [x] Add a compact side control chatbox for owner task entry, employee provisioning and naming, encrypted provider API-key setup, and office settings.
+- [x] Define and add two additional named orchestrator-manager roles with bounded orchestration responsibilities and no fabricated activity.
+- [x] Route side-chatbox management actions through existing owner-authorized APIs without exposing API keys or weakening sandbox controls.
+- [x] Add responsive and regression coverage for the 16:9 office control-surface redesign and multi-manager roster.
 - [x] Verify the authenticated npm identity, ownership or availability of the `@aetheroffice` scope, and scoped package release configuration without publishing.

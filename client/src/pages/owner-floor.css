@@ -65,6 +65,19 @@
 
 .text-free-office .office-exit-door-hotspot { position: absolute; z-index: 9; right: 1.5%; bottom: 3%; width: 8%; height: 18%; border: 0; background: transparent; padding: 0; color: transparent; cursor: pointer; }
 .text-free-office .office-exit-door-hotspot:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
+.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(320px, 370px); align-items: center; gap: clamp(14px, 2vw, 28px); padding: 18px clamp(14px, 2vw, 28px); place-items: initial; }
+.office-with-control .real-office-stage { width: min(100%, calc(100dvh * 1.72)); margin-inline: auto; }
+.office-control-chatbox { width: 100%; max-height: calc(100dvh - 36px); overflow: auto; border: 1px solid rgba(125,211,252,.16); border-radius: 18px; background: linear-gradient(180deg, rgba(17,27,44,.98), rgba(5,10,20,.98)); box-shadow: 0 20px 50px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.05); padding: 16px; }
+.office-control-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; border-bottom: 1px solid rgba(255,255,255,.08); padding-bottom: 13px; }
+.office-control-section { margin-top: 13px; border: 1px solid rgba(255,255,255,.08); border-radius: 13px; background: rgba(255,255,255,.025); padding: 12px; }
+.office-control-label { font-size: 10px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase; color: #bae6fd; }
+.office-manager-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-radius: 9px; background: rgba(2,6,23,.35); padding: 8px; }
+.office-task-input, .office-control-select { width: 100%; border: 1px solid rgba(255,255,255,.1); border-radius: 9px; background: rgba(2,6,23,.6); color: #e2e8f0; font-size: 12px; outline: none; padding: 9px; }
+.office-task-input:focus, .office-control-select:focus { border-color: rgba(125,211,252,.5); box-shadow: 0 0 0 2px rgba(125,211,252,.08); }
+.office-upload-trigger { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: #bae6fd; font-size: 11px; }
+.office-provider-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; border: 1px solid rgba(255,255,255,.07); border-radius: 8px; background: rgba(2,6,23,.25); color: #cbd5e1; padding: 7px 8px; font-size: 11px; text-align: left; }
+.office-provider-row:hover { border-color: rgba(125,211,252,.3); background: rgba(125,211,252,.05); }
+@media (max-width: 1050px) { .office-with-control { grid-template-columns: 1fr; padding: 0; gap: 0; } .office-with-control .real-office-stage { width: min(100vw, 177.778dvh); } .office-control-chatbox { max-height: none; border-radius: 0; border-inline: 0; } }
 .office-bottom-panel { width: min(100%, 980px); margin: 0 auto; border-top: 1px solid rgba(148, 163, 184, .22); background: linear-gradient(180deg, rgba(18, 26, 40, .98), rgba(7, 12, 23, .99)); padding: 14px clamp(14px, 2vw, 24px) 18px; box-shadow: 0 -12px 35px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.06); }
 .office-exit-panel { display: none; }
 .office-bottom-panel .office-exit-panel-head { max-width: 980px; margin-inline: auto; }

@@ -13,6 +13,8 @@ type Props = {
   onOpenEmployeeRoom: (employee: string) => void;
   onInspectEmployeeComputer: (employee: string) => void;
   onInspect: (target: string) => void;
+  showManagerCabin?: boolean;
+  sideControl?: ReactNode;
   managementPanel?: ReactNode;
 };
 
@@ -55,7 +57,7 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   };
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, managementPanel }: Props) {
+export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, showManagerCabin = true, sideControl, managementPanel }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
@@ -87,16 +89,16 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
     previousAgentRects.current = nextAgentRects;
   }, [employees]);
 
-  return <section className="text-free-office" aria-label="Interactive animated AI office map">
+  return <section className={sideControl ? "text-free-office office-with-control" : "text-free-office"} aria-label="Interactive animated AI office map">
     <div className="real-office-stage illustrated-office-stage" aria-label="Large interactive illustrated AI office map">
       <div className="office-ambient-backdrop" style={{ backgroundImage: `url(${ACTIVE_OFFICE_BACKGROUND})` }} aria-hidden="true" />
       <img className="real-office-backdrop" src={ACTIVE_OFFICE_BACKGROUND} alt="Owner-selected compact interactive office floor" />
       <div className="office-map-overlay">
         <div className="illustrated-readability" />
         <div className="deep-discuss-room-frame" aria-hidden="true"><i /><i /></div>
-        <button onClick={onOpenManager} className="office-hotspot office-manager" aria-label="Open Manager Cabin" />
-        <button onClick={onDeskFiles} className="manager-file-pile" aria-label="Provide files or photos to the Manager" />
-        <button onClick={onProviderLocker} className="manager-provider-locker" aria-label="Open the secure Provider Locker" /><button onClick={onExitDoor} className="office-exit-door-hotspot" aria-label="Open the office management panel" />
+        {showManagerCabin ? <><button onClick={onOpenManager} className="office-hotspot office-manager" aria-label="Open Manager Cabin" />
+          <button onClick={onDeskFiles} className="manager-file-pile" aria-label="Provide files or photos to the Manager" />
+          <button onClick={onProviderLocker} className="manager-provider-locker" aria-label="Open the secure Provider Locker" /><button onClick={onExitDoor} className="office-exit-door-hotspot" aria-label="Open the office management panel" /></> : null}
         <button onClick={() => onInspect("DeepDiscuss Room")} className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room" />
         <button onClick={() => onInspect("Test Lab")} className="office-hotspot office-test" aria-label="Open Test Lab" /><button onClick={() => onInspect("Lounge")} className="office-hotspot map-lounge" aria-label="Open Lounge" />
         <button onClick={() => onInspect("Central Corridor")} className="office-corridor-zone" aria-label="Inspect Central Corridor" />
@@ -108,6 +110,6 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         </button>; })}
       </div>
     </div>
-    {managementPanel}
+    {sideControl ?? managementPanel}
   </section>;
 }

@@ -36,6 +36,8 @@ const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
 
 const employeeProvider: Record<EmployeeId, ProviderId> = {
   Manus: "manus",
+  Atlas: "manus",
+  Nova: "manus",
   Gemini: "gemini",
   Mistral: "mistral",
   DeepSeek: "deepseek",
