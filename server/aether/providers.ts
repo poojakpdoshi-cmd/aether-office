@@ -1,7 +1,7 @@
 import type { EmployeeId, ProviderId } from "../../shared/aether";
 import { invokeLLM } from "../_core/llm";
 import { readProviderConfig, removeProviderConfig, removeRetiredProviderConfig, saveProviderConfig } from "./vault";
-import { isEmployeeActive } from "./state";
+import { getDashboardState, isEmployeeActive } from "./state";
 
 export type ProviderStatus = {
   id: ProviderId;
@@ -38,6 +38,7 @@ const employeeProvider: Record<EmployeeId, ProviderId> = {
   Manus: "manus",
   Atlas: "manus",
   Nova: "manus",
+  Sentinel: "manus",
   Gemini: "gemini",
   Mistral: "mistral",
   DeepSeek: "deepseek",
@@ -145,7 +146,7 @@ export function getEmployeeProvider(employee: EmployeeId): ProviderId {
   if (employee.startsWith("DeepSeek Worker ")) return "deepseek";
   if (employee.startsWith("Grok Worker ")) return "grok";
   if (employee.startsWith("SambaNova Worker ")) return "sambanova";
-  if (employee.startsWith("OpenRouter Worker ")) return "openrouter";
+  if (employee.startsWith("OpenRouter ")) return "openrouter";
   if (employee.startsWith("North Mini Code Worker ")) return "northmini";
   if (employee.startsWith("Devstral Small 2 Worker ")) return "devstral";
   if (employee.startsWith("Nemotron 3 Ultra Worker ")) return "nemotron";
@@ -154,6 +155,24 @@ export function getEmployeeProvider(employee: EmployeeId): ProviderId {
 
 export function getProviderAdapter(provider: ProviderId) {
   return adapters[provider];
+}
+
+export async function generateForEmployee(employee: EmployeeId, input: { system: string; user: string }): Promise<string> {
+  const provider = getEmployeeProvider(employee);
+  const profile = getDashboardState().employees.find((candidate) => candidate.id === employee);
+  if (provider !== "openrouter" || !profile?.model) return getProviderAdapter(provider).generate(input);
+  const config = await getEffectiveProviderConfig("openrouter");
+  if (!config?.baseUrl) throw new Error("OpenRouter is not configured.");
+  const response = await fetch(config.baseUrl, {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${config.apiKey}` },
+    body: JSON.stringify({ model: profile.model, messages: [{ role: "system", content: input.system }, { role: "user", content: input.user }], temperature: 0.35 }),
+  });
+  if (!response.ok) throw new Error(`OpenRouter model ${profile.model} is currently unavailable (${response.status}).`);
+  const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
+  const content = payload.choices?.[0]?.message?.content;
+  if (!content?.trim()) throw new Error(`OpenRouter model ${profile.model} returned an empty response.`);
+  return content;
 }
 
 export async function isEmployeeAvailable(employee: EmployeeId) {

@@ -5,11 +5,12 @@ import { describe, expect, it } from "vitest";
 const homePage = readFileSync(fileURLToPath(new URL("../../client/src/pages/Home.tsx", import.meta.url)), "utf8");
 
 describe("button-free office flow", () => {
-  it("starts a discussion from the Manager command route and returns attention to the Discussion Room", () => {
-    expect(homePage).toContain('startedManagerTaskRef');
-    expect(homePage).toContain('setActiveView("Office")');
+  it("keeps manager conversation separate from research and requires an explicit owner action before the team meeting", () => {
+    expect(homePage).toContain('setManagerTaskCandidate');
     expect(homePage).toContain('setOfficeFocus("DeepDiscuss Room")');
-    expect(homePage).toContain('startDeepDiscussMutation.mutate({ task: submittedTask })');
+    expect(homePage).toContain('startDeepDiscussMutation.mutate({ task: nextTask })');
+    expect(homePage).toContain('onStartProposedTask={() => managerTaskCandidate && startTaskFromControl(managerTaskCandidate)}');
+    expect(homePage).not.toContain('startDeepDiscussMutation.mutate({ task: submittedTask })');
     expect(homePage).not.toContain('Start DeepDiscuss');
   });
 

@@ -25,6 +25,7 @@ const employeeSeed: Array<Omit<EmployeeProfile, "status" | "taskCount" | "averag
   { id: "Manus", role: "Temporary CEO · Primary Fast Orchestrator", provider: "manus", temporaryUntil: Date.now() + 7 * 24 * 60 * 60 * 1000 },
   { id: "Atlas", role: "Delivery Orchestrator", provider: "manus" },
   { id: "Nova", role: "Quality Orchestrator", provider: "manus" },
+  { id: "Sentinel", role: "Guardian Orchestrator · Real-error oversight", provider: "manus" },
   { id: "Gemini", role: "Lead Developer", provider: "gemini" },
   { id: "Mistral", role: "Software Engineer", provider: "mistral" },
   { id: "DeepSeek", role: "Senior Engineer", provider: "deepseek" },
@@ -268,6 +269,15 @@ export function setProposal(meetingId: string, proposal: TeamProposal) {
   return meeting;
 }
 
+export function setGuardianFindings(meetingId: string, findings: string[]) {
+  const meeting = requireMeeting(meetingId);
+  meeting.guardianFindings = findings.slice(0, 8).map((finding) => finding.slice(0, 500));
+  meeting.updatedAt = Date.now();
+  addActivity({ kind: "system", message: `Sentinel completed a review of ${meeting.guardianFindings.length} verified planning or runtime finding${meeting.guardianFindings.length === 1 ? "" : "s"}. Any correction remains owner-approved.`, employee: "Sentinel", camera: { fileScope: "No file disclosed", activeTool: "Guardian review", taskStage: "Owner review" } });
+  persistState();
+  return meeting;
+}
+
 export function failMeeting(meetingId: string, errorMessage: string) {
   const meeting = requireMeeting(meetingId);
   meeting.state = "ERROR";
@@ -342,6 +352,24 @@ export function provisionEmployees(provider: ProviderId, count: number) {
   addActivity({ kind: "system", message: `Owner provisioned ${created.length} ${descriptor.label} employee${created.length === 1 ? "" : "s"}.` });
   persistState();
   return { created, totalForProvider: Array.from(employeeProfiles.values()).filter((employee) => employee.provider === provider).length };
+}
+
+export function provisionOpenRouterProfiles(model: string, count: number) {
+  const normalizedModel = model.trim().replace(/\s+/g, " ");
+  if (!/^[-/:.a-z0-9_]+$/i.test(normalizedModel) || normalizedModel.length > 160) throw new Error("Use a valid OpenRouter model identifier, such as openrouter/free or a listed :free model.");
+  if (!Number.isInteger(count) || count < 1 || count > 5) throw new Error("Provision between 1 and 5 OpenRouter employees at a time.");
+  const created: EmployeeProfile[] = [];
+  for (let index = 1; created.length < count; index += 1) {
+    const id = `OpenRouter ${normalizedModel} Worker ${index}`;
+    if (employeeProfiles.has(id)) continue;
+    const profile: EmployeeProfile = { id, role: `OpenRouter profile · ${normalizedModel}`, provider: "openrouter", model: normalizedModel, status: "IDLE", taskCount: 0, averageScore: null, recentPerformance: [] };
+    employeeProfiles.set(id, profile);
+    ensureEmployeeResources(profile);
+    created.push(profile);
+  }
+  addActivity({ kind: "system", message: `Owner provisioned ${created.length} OpenRouter profile${created.length === 1 ? "" : "s"} using the shared encrypted OpenRouter gateway key. Model availability is checked when a request is made.`, employee: "Sentinel" });
+  persistState();
+  return { created, totalForProvider: Array.from(employeeProfiles.values()).filter((employee) => employee.provider === "openrouter").length };
 }
 
 export function resetStateForTests() {

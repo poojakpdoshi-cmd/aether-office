@@ -11,7 +11,8 @@ describe("playable office-world manager flow", () => {
   it("keeps manager conversation separate from a real team invitation", () => {
     expect(home).toContain("trpc.aether.managerChat.useMutation");
     expect(home).toContain("onStartProposedTask={() => managerTaskCandidate && startTaskFromControl(managerTaskCandidate)}");
-    expect(chat).toContain("Invite team to discuss");
+    expect(chat).toContain("Start manager meeting & research");
+    expect(chat).toContain("Approve plan & allow work");
     expect(chat).not.toContain("Start discussion");
   });
 
@@ -27,11 +28,13 @@ describe("playable office-world manager flow", () => {
     expect(home).toContain("showWorldControls ? <OfficeWorldControls");
     expect(office).toContain('className="office-empty-floor-zone"');
     expect(styles).toContain(".office-room-trail");
+    expect(styles).toContain(".text-free-office.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); align-items: start; min-height: 0;");
     expect(controls).toContain('id="office-world-controls"');
   });
 
   it("gives the first manager fast primary status and suppresses only the recorded moving pants artifact", () => {
     expect(chat).toContain('index === 0 ? " · Fast lead" : ""');
+    expect(home).toContain("speakManagerText(result.reply)");
     expect(styles).toContain(".text-free-office .illustrated-walking .illustrated-agent-portrait { clip-path: inset(0 0 43% 0)");
     expect(styles).toContain("without altering the approved office world");
   });

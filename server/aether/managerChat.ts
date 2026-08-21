@@ -19,7 +19,7 @@ export async function respondToManagerChat(message: string): Promise<ManagerChat
     return {
       kind: "task-proposed",
       taskCandidate: clean,
-      reply: "I understand the task. I can invite the team into DeepDiscuss and prepare an owner-reviewable plan. Review the task card below and choose Start team discussion when you are ready.",
+      reply: "I understand the task. First, we will hold a manager meeting and send the agreed conclusion to the configured team for research. I will bring back one owner-reviewable plan. No work starts until you approve it.",
     };
   }
   try {

@@ -279,3 +279,8 @@
 - [x] Make the first manager the latency-priority primary orchestrator and keep other managers as real supporting roles.
 - [x] Inspect and correct the employee animation/pants defect shown in the owner-supplied recording while preserving the approved office world.
 - [x] Add regression coverage for scroll exploration, empty-space controls, manager chat/voice behavior, primary orchestration, and the animation correction.
+- [x] Remove the reported blank gap below the office map so the scrollable employee-room world follows the game screen without dead vertical space.
+- [x] Add a bounded Guardian Orchestrator that monitors only real employee errors, failed tests, sandbox/process issues, and review findings, then proposes corrective work within approval policy.
+- [x] Add a meeting-first owner workflow: manager conversation, all configured employees’ research round, consolidated owner-reviewable plan, and explicit approval before any real work begins.
+- [x] Support multiple configurable OpenRouter-backed employee profiles from one encrypted owner OpenRouter key, with honest free-model availability and rate-limit status.
+- [x] Add regression coverage for no-gap game layout, Guardian safeguards, approval-gated planning, and OpenRouter profile configuration without secret exposure.

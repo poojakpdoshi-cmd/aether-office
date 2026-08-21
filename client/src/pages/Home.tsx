@@ -83,6 +83,15 @@ type ExecutionRequest =
   | { kind: "tests" }
   | { kind: "command"; command: string; args: string[] };
 
+function speakManagerText(message: string) {
+  if (!("speechSynthesis" in window)) return;
+  window.speechSynthesis.cancel();
+  const utterance = new SpeechSynthesisUtterance(message);
+  utterance.rate = 1;
+  utterance.pitch = 1;
+  window.speechSynthesis.speak(utterance);
+}
+
 const employees: Employee[] = [
   {
     name: "Manus",
@@ -404,6 +413,7 @@ export default function Home() {
   const latestProofReportQuery = trpc.aether.latestProofReport.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected) });
   const approvalModeMutation = trpc.aether.setApprovalMode.useMutation();
   const provisionEmployeesMutation = trpc.aether.provisionEmployees.useMutation({ onSuccess: () => { setProvisionConfirmed(false); dashboardQuery.refetch(); } });
+  const provisionOpenRouterProfilesMutation = trpc.aether.provisionOpenRouterProfiles.useMutation({ onSuccess: () => dashboardQuery.refetch() });
   const configureProviderMutation = trpc.aether.configureProvider.useMutation({
     onSuccess: () => {
       setApiKey("");
@@ -418,21 +428,21 @@ export default function Home() {
   const configuredCount = providerStatuses.filter((provider) => provider.configured).length;
   const dashboard = dashboardQuery.data;
   const latestMeeting = dashboard?.meetings[0];
-  const configuredEmployeeNames = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id === "sambanova" ? "SambaNova" : provider.label));
-  const activeEmployeeNames = new Set<string>(dashboard?.employees.map((profile) => profile.id) ?? []);
-  const liveEmployees = employees.filter((employee) => activeEmployeeNames.has(employee.name) && configuredEmployeeNames.has(employee.name)).map((employee) => ({
-    ...employee,
-    status: (dashboard?.employees.find((profile) => profile.id === employee.name)?.status ?? employee.status) as EmployeeStatus,
-  }));
+  const configuredProviderIds = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id));
+  const liveEmployees = (dashboard?.employees ?? []).filter((profile) => profile.provider === "manus" || configuredProviderIds.has(profile.provider)).map((profile) => {
+    const known = employees.find((employee) => employee.name === profile.id);
+    return { name: profile.id, shortName: known?.shortName ?? profile.id.split(/\s+/).map((part) => part[0]).join("").slice(0, 2), role: profile.role, focus: known?.focus ?? `Configured ${profile.provider} profile`, status: profile.status as EmployeeStatus, accent: known?.accent ?? "from-emerald-300 to-teal-600" };
+  });
   const inspectedEmployeeName = useMemo(() => {
     const employeeTarget = officeFocus?.replace(/ (Desk|Laptop|Computer|Room)$/, "");
     const target = officeFocus === "Manager" ? "Manus" : employeeTarget;
     return liveEmployees.find((employee) => employee.name === target)?.name;
   }, [liveEmployees, officeFocus]);
-  const startDeepDiscussMutation = trpc.aether.startDeepDiscuss.useMutation({ onSuccess: () => dashboardQuery.refetch() });
+  const startDeepDiscussMutation = trpc.aether.startDeepDiscuss.useMutation({ onSuccess: () => { dashboardQuery.refetch(); setManagerMessages((messages) => [...messages, { role: "manager", content: "The manager meeting is complete. Every configured available employee has contributed research, Sentinel has completed its verified review, and the consolidated plan is ready for your approval." }]); } });
   const managerChatMutation = trpc.aether.managerChat.useMutation({
     onSuccess: (result) => {
       setManagerMessages((messages) => [...messages, { role: "manager", content: result.reply }]);
+      speakManagerText(result.reply);
       if (result.kind === "task-proposed" && result.taskCandidate) setManagerTaskCandidate(result.taskCandidate);
     },
   });
@@ -556,14 +566,6 @@ export default function Home() {
     });
   };
 
-  useEffect(() => {
-    if (activeView !== "Chat" || !submittedTask || startedManagerTaskRef.current === submittedTask) return;
-    startedManagerTaskRef.current = submittedTask;
-    setActiveView("Office");
-    setOfficeFocus("DeepDiscuss Room");
-    if (configuredCount) startDeepDiscussMutation.mutate({ task: submittedTask });
-  }, [activeView, configuredCount, startDeepDiscussMutation, submittedTask]);
-
   const chooseWorkspace = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (workspaceInput.trim()) selectWorkspaceMutation.mutate({ path: workspaceInput.trim() });
@@ -680,7 +682,7 @@ export default function Home() {
     const isEmployeeRoom = Boolean(relatedEmployee && officeFocus === `${relatedEmployee.name} Room`);
     const isEmployeeComputer = Boolean(relatedEmployee && officeFocus === `${relatedEmployee.name} Computer`);
     const providerStatus = relatedEmployee ? providerStatuses.find((provider) => provider.label === relatedEmployee.name) : undefined;
-    const managers = (dashboard?.employees ?? []).filter((employee) => ["Manus", "Atlas", "Nova"].includes(employee.id));
+    const managers = (dashboard?.employees ?? []).filter((employee) => ["Manus", "Atlas", "Nova", "Sentinel"].includes(employee.id));
     const startTaskFromControl = (nextTask: string) => {
       setSubmittedTask(nextTask);
       setOfficeFocus("DeepDiscuss Room");
@@ -692,12 +694,7 @@ export default function Home() {
       managerChatMutation.mutate({ message });
     };
     const speakManagerReply = (message: string) => {
-      if (!("speechSynthesis" in window)) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(message);
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      window.speechSynthesis.speak(utterance);
+      speakManagerText(message);
     };
     return <div className="office-game-world"><LiveOffice
       employees={liveEmployees}
@@ -716,15 +713,18 @@ export default function Home() {
         taskCandidate={managerTaskCandidate}
         chatPending={managerChatMutation.isPending}
         taskPending={startDeepDiscussMutation.isPending}
+        meeting={latestMeeting}
+        approvalPending={proposalActionMutation.isPending}
         error={managerChatMutation.error?.message ?? startDeepDiscussMutation.error?.message}
         onSendMessage={sendManagerMessage}
         onStartProposedTask={() => managerTaskCandidate && startTaskFromControl(managerTaskCandidate)}
+        onApprovePlan={() => latestMeeting && proposalActionMutation.mutate({ meetingId: latestMeeting.id, action: "Approve" })}
         onSpeak={speakManagerReply}
         onUpload={uploadFile}
       />}
     />
     <section className="office-room-trail" aria-label="Employee rooms along the office route"><div><p>SCROLL THE OFFICE WORLD</p><h2>Explore each employee room</h2><span>Every room opens only the selected employee’s real current work and authorized sandbox state.</span></div><div className="office-room-trail-grid">{liveEmployees.map((employee) => <button type="button" key={employee.name} onClick={() => setOfficeFocus(`${employee.name} Room`)}><span>{employee.shortName}</span><div><strong>{employee.name}&apos;s room</strong><small>{employee.status} · {employee.role}</small></div><i>Enter</i></button>)}</div></section>
-    {showWorldControls ? <OfficeWorldControls providers={providerStatuses} approvalMode={mode as "Safe Mode" | "Team Mode" | "Autonomous Mode"} provisionPending={provisionEmployeesMutation.isPending} onConfigureProvider={setSetupProvider} onProvision={(provider, count) => provisionEmployeesMutation.mutate({ provider, count, ownerConfirmed: true })} onSetApprovalMode={(nextMode) => { setMode(nextMode); approvalModeMutation.mutate({ mode: nextMode }); }} onOpenSettings={() => setActiveView("Settings")} onOpenRoster={() => setActiveView("Employees")} onClose={() => setShowWorldControls(false)} /> : null}
+    {showWorldControls ? <OfficeWorldControls providers={providerStatuses} approvalMode={mode as "Safe Mode" | "Team Mode" | "Autonomous Mode"} provisionPending={provisionEmployeesMutation.isPending} openRouterPending={provisionOpenRouterProfilesMutation.isPending} onConfigureProvider={setSetupProvider} onProvision={(provider, count) => provisionEmployeesMutation.mutate({ provider, count, ownerConfirmed: true })} onProvisionOpenRouter={(model, count) => provisionOpenRouterProfilesMutation.mutate({ model, count, ownerConfirmed: true })} onSetApprovalMode={(nextMode) => { setMode(nextMode); approvalModeMutation.mutate({ mode: nextMode }); }} onOpenSettings={() => setActiveView("Settings")} onOpenRoster={() => setActiveView("Employees")} onClose={() => setShowWorldControls(false)} /> : null}
     {officeFocus ? <section className="mx-auto w-full max-w-[1120px] rounded-2xl border border-white/10 bg-[#0d1527]/90 p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-200">{officeFocus}</p>{isEmployeeRoom ? <><h2 className="mt-2 text-lg font-semibold text-white">{relatedEmployee!.name}&apos;s Room</h2><p className="mt-2 text-sm text-slate-300">{relatedEmployee!.role} · {relatedEmployee!.status}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">This room shows the employee’s real current work and authorized isolated sandbox. Tap the computer on the office map for a focused live-work view.</p></> : isEmployeeComputer ? <><h2 className="mt-2 text-lg font-semibold text-white">{relatedEmployee!.name}&apos;s Computer</h2><p className="mt-2 text-sm text-slate-300">Live current work only · {relatedEmployee!.status}</p><p className="mt-3 max-w-2xl text-xs leading-5 text-slate-400">This view refreshes from current authorized sandbox state, controlled terminal processes, bounded output, and controlled file activity. No activity is fabricated.</p></> : <><h2 className="mt-2 text-lg font-semibold text-white">{officeFocus}</h2><p className="mt-2 text-sm text-slate-300">{officeFocus === "DeepDiscuss Room" ? "Current meeting activity appears only after a real provider-backed discussion starts." : "Select a worker cabin or computer to inspect the real employee runtime."}</p></>}</div><Button type="button" size="sm" variant="outline" onClick={() => setOfficeFocus(null)} className="border-white/10 bg-white/[0.03] text-slate-200">Back to office</Button></div>{relatedEmployee ? <>{(isEmployeeRoom || isEmployeeComputer) ? <EmployeeInspectionPanel employee={relatedEmployee} providerLabel={providerStatus?.label ?? "Unconfigured"} providerModel={providerStatus?.model} snapshot={employeeInspectionQuery.data} gitDiff={gitDiffQuery.data} /> : null}{isEmployeeRoom ? <EmployeeSandboxRoom employee={relatedEmployee.name} /> : null}</> : null}{officeFocus === "DeepDiscuss Room" && latestMeeting ? <MeetingCollaborationPulse meeting={latestMeeting} /> : null}<VerifiedActivityTimeline activities={dashboard?.activities ?? []} /></section> : null}</div>;
   };
 

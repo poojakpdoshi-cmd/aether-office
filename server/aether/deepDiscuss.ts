@@ -4,18 +4,21 @@ import {
   addDiscussionMessage,
   createMeeting,
   failMeeting,
+  getDashboardState,
   isEmployeeActive,
   resetEmployeeStatuses,
   setEmployeeStatus,
+  setGuardianFindings,
   setProposal,
 } from "./state";
-import { getConfiguredVisionProvider, getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
+import { generateForEmployee, getConfiguredVisionProvider, getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
 import { invokeLLM } from "../_core/llm";
 
 const employeeInstructions: Record<EmployeeId, string> = {
   Manus: "You are Manus, the project manager. Establish scope, constraints, success criteria, and a safe owner-approved implementation path.",
   Atlas: "You are Atlas, the delivery orchestrator. Break the owner-approved plan into practical milestones, clarify dependencies, and sequence implementation without claiming work has run.",
   Nova: "You are Nova, the quality orchestrator. Define acceptance criteria, security and reliability checks, testing priorities, and owner-review gates without claiming work has run.",
+  Sentinel: "You are Sentinel, the Guardian Orchestrator. Monitor only verified employee errors, failed tests, sandbox or process issues, and review findings. Propose safe corrective work but never claim or perform an unapproved fix.",
   Gemini: "You are Gemini, lead developer. Focus on frontend, developer experience, implementation boundaries, and practical code changes.",
   Mistral: "You are Mistral, software engineer. Focus on implementation sequencing, maintainability, testability, and possible defects.",
   DeepSeek: "You are DeepSeek, senior engineer. Focus on backend architecture, algorithms, difficult edge cases, reliability risks, and security review criteria.",
@@ -67,7 +70,7 @@ export function classifyTaskCapabilities(task: string): TaskCapability[] {
 
 export function selectEmployeesForTask(task: string): EmployeeId[] {
   const capabilities = new Set(classifyTaskCapabilities(task));
-  const selected = new Set<EmployeeId>(["Manus", "Atlas", "Nova"]);
+  const selected = new Set<EmployeeId>(["Manus", "Atlas", "Nova", "Sentinel"]);
   for (const rule of capabilitySignals) {
     if (capabilities.has(rule.capability)) rule.employees.forEach((employee) => selected.add(employee));
   }
@@ -76,7 +79,7 @@ export function selectEmployeesForTask(task: string): EmployeeId[] {
 }
 
 export async function runDeepDiscuss(task: string) {
-  const requestedEmployees = selectEmployeesForTask(task);
+  const requestedEmployees = Array.from(new Set([...selectEmployeesForTask(task), ...getDashboardState().employees.map((employee) => employee.id)]));
   const selectedEmployees = (await Promise.all(requestedEmployees.map(async (employee) => ({ employee, available: await isEmployeeAvailable(employee) }))))
     .filter((item) => item.available)
     .map((item) => item.employee);
@@ -100,6 +103,7 @@ export async function runDeepDiscuss(task: string) {
 
     const proposal = await synthesizePlan(meeting.id, task, meeting.messages);
     setProposal(meeting.id, proposal);
+    await runGuardianReview(meeting.id, task, selectedEmployees, failedEmployees);
     for (const employee of selectedEmployees) {
       if (failedEmployees.has(employee)) {
         setEmployeeStatus(employee, "ERROR");
@@ -117,6 +121,33 @@ export async function runDeepDiscuss(task: string) {
   } finally {
     // Keep the last genuine state visible so the local office can reflect the completed or failed meeting.
   }
+}
+
+async function runGuardianReview(meetingId: string, task: string, selectedEmployees: EmployeeId[], failedEmployees: Set<EmployeeId>) {
+  const findings: string[] = [];
+  const dashboard = getDashboardState();
+  if (failedEmployees.size) findings.push(`${Array.from(failedEmployees).join(", ")} had a verified provider-round failure; retain successful research and consider a fallback before implementation.`);
+  const blockedEmployees = dashboard.employees.filter((employee) => employee.status === "ERROR" && employee.id !== "Sentinel").map((employee) => employee.id);
+  if (blockedEmployees.length) findings.push(`${blockedEmployees.join(", ")} currently has a verified error state; investigate the recorded failure before assigning corrective work.`);
+  const runtimeAlerts = dashboard.activities.filter((activity) => (activity.kind === "sandbox" || activity.kind === "terminal" || activity.kind === "tool") && /\b(error|failed|failure|blocked)\b/i.test(activity.message)).slice(0, 3);
+  runtimeAlerts.forEach((activity) => findings.push(`Verified runtime alert: ${activity.message.slice(0, 260)}`));
+  if (!selectedEmployees.includes("Sentinel")) {
+    findings.push("Sentinel was unavailable for this meeting; no Guardian review was generated.");
+  } else {
+    try {
+      setEmployeeStatus("Sentinel", "REVIEWING");
+      const review = await withProviderRoundDeadline(generateForEmployee("Sentinel", {
+        system: employeeInstructions.Sentinel,
+        user: `Owner task: ${task}\n\nVerified conditions: ${findings.join(" ") || "No provider or sandbox error was recorded during planning."}\n\nReturn one concise owner-review finding. Do not claim to fix anything.`,
+      }), "Sentinel", "synthesis");
+      findings.push(review.trim().slice(0, 500));
+      setEmployeeStatus("Sentinel", "WAITING");
+    } catch {
+      findings.push("Sentinel review was unavailable; no automatic corrective action was attempted.");
+      setEmployeeStatus("Sentinel", "ERROR");
+    }
+  }
+  setGuardianFindings(meetingId, findings.length ? findings : ["No verified planning or runtime issue requires correction before owner review."]);
 }
 
 async function runRound(
@@ -137,7 +168,7 @@ async function runRound(
   const contributions = await settleConcurrentRoundJobs(employees, async (employee) => {
     const provider = getEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
-    const content = await withProviderRoundDeadline(adapter.generate({
+    const content = await withProviderRoundDeadline(generateForEmployee(employee, {
       system: `${employeeInstructions[employee]} You are participating in the ${round} round of an owner-approved software planning meeting. Do not claim that files, tests, or tools have run. Be concise, concrete, and cite risks.`,
       user: `Owner task:\n${task}\n\nEarlier team material:\n${previousSummary}\n\nProvide your ${round} contribution.`,
     }), employee, round);
@@ -203,7 +234,7 @@ export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }
 
 export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
-  const latencyPriority: EmployeeId[] = ["Manus", "Atlas", "Nova", "SambaNova", "Gemini", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
+  const latencyPriority: EmployeeId[] = ["Manus", "Atlas", "Nova", "Sentinel", "SambaNova", "Gemini", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
   return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
 }
 
