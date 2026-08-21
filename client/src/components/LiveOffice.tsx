@@ -4,7 +4,17 @@ import { allocateCompactCabinSlots, type CompactCabinSlot } from "./cabinSlots";
 import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 
 export type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
-type Props = { employees: OfficeEmployee[]; onOpenManager: () => void; onDeskFiles: () => void; onProviderLocker: () => void; onExitDoor: () => void; onInspect: (target: string) => void; managementPanel?: ReactNode };
+type Props = {
+  employees: OfficeEmployee[];
+  onOpenManager: () => void;
+  onDeskFiles: () => void;
+  onProviderLocker: () => void;
+  onExitDoor: () => void;
+  onOpenEmployeeRoom: (employee: string) => void;
+  onInspectEmployeeComputer: (employee: string) => void;
+  onInspect: (target: string) => void;
+  managementPanel?: ReactNode;
+};
 
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
 const illustratedEmployees: Record<string, string> = {
@@ -39,12 +49,13 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
     hotspots: assignments.flatMap((slot) => [
       { employee: slot.employee, target: `${slot.employee} Desk` },
       { employee: slot.employee, target: `${slot.employee} Laptop` },
+      { employee: slot.employee, target: `${slot.employee} Room` },
       { employee: slot.employee, target: slot.employee },
     ]),
   };
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onInspect, managementPanel }: Props) {
+export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, managementPanel }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
@@ -89,8 +100,9 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         <button onClick={() => onInspect("DeepDiscuss Room")} className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room" />
         <button onClick={() => onInspect("Test Lab")} className="office-hotspot office-test" aria-label="Open Test Lab" /><button onClick={() => onInspect("Lounge")} className="office-hotspot map-lounge" aria-label="Open Lounge" />
         <button onClick={() => onInspect("Central Corridor")} className="office-corridor-zone" aria-label="Inspect Central Corridor" />
+        {assignments.filter((slot) => slot.employee !== "Manus").map((slot) => <button key={`${slot.id}-room`} onClick={() => onOpenEmployeeRoom(slot.employee)} className="office-room-zone" style={slot.room} aria-label={`Enter ${slot.employee}'s room`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-desk`} onClick={() => onInspect(`${slot.employee} Desk`)} className="office-work-zone" style={{ left: slot.desk.x, top: slot.desk.y }} aria-label={`Inspect ${slot.employee} desk`} />)}
-        {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspect(`${slot.employee} Laptop`)} className="office-laptop-zone" style={slot.laptop} aria-label={`Inspect ${slot.employee} laptop`} />)}
+        {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspectEmployeeComputer(slot.employee)} className="office-laptop-zone" style={slot.laptop} aria-label={`Open ${slot.employee}'s computer live work`} />)}
         {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`}>
           <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name] ?? illustratedEmployees.Mistral} alt="" />{employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />}
         </button>; })}
