@@ -255,4 +255,6 @@
 - [x] Require Docker Desktop or Podman on first local sandbox use and fail clearly without ever falling back to host command execution.
 - [x] Enforce one non-root, network-disabled, resource-limited container plus one persistent volume per employee sandbox.
 - [ ] Run the real Docker Desktop or Podman lifecycle, persistence, network-isolation, and cross-employee access acceptance test on a local runtime-enabled computer.
+- [x] Create and deliver a clean source-code archive of the current checkpoint before continuing release prerequisites.
+- [x] Generate and deliver one unified master office overview image showing all employee rooms and office areas together.
 - [x] Verify the authenticated npm identity, ownership or availability of the `@aetheroffice` scope, and scoped package release configuration without publishing.
