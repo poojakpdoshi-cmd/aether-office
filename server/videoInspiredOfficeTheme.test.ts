@@ -27,7 +27,7 @@ describe("video-informed post-animation office treatment", () => {
     expect(office).toContain("const horizontalFirst = Math.abs(deltaX) >= Math.abs(deltaY)");
     expect(office).toContain("duration: Math.min(1450, 620 + Math.hypot(deltaX, deltaY) * 2.1)");
     expect(office).toContain('easing: "linear"');
-    expect(styles).toContain(".text-free-office .illustrated-walking .illustrated-agent-portrait");
+    expect(styles).toContain(".text-free-office .illustrated-walking .office-motion-marker");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
   });
 });

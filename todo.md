@@ -294,3 +294,6 @@
 - [x] Return instant local manager replies for greetings, basic help, and model-identity questions, reserving configured-provider calls for substantive approved work.
 - [x] Make model-identity questions return the approved General Manager of AetherOffice role answer without exposing a provider or hidden model identity.
 - [x] Add regression coverage for responsive side-rail geometry, motion safety, fast manager reply routing, and identity-response privacy.
+- [x] Remove the broken half-cut employee walking overlay shown during real-state animation without changing unrelated office features.
+- [x] Replace it with a clean, natural movement treatment that remains truthful to active state and does not misrepresent idle or error work.
+- [x] Add visual and regression checks for idle, error, and active movement states after the animation-only correction.

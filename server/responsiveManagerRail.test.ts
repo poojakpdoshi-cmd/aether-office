@@ -13,7 +13,7 @@ describe("responsive manager rail and fast manager reply safeguards", () => {
   });
 
   it("uses a smooth compositor-friendly walking loop instead of a step animation", () => {
-    expect(css).toContain("720ms cubic-bezier(.36,.07,.19,.97)");
+    expect(css).toContain("680ms cubic-bezier(.36,.07,.19,.97)");
     expect(css).toContain("translate3d");
     expect(css).not.toContain("steps(2, end)");
   });

@@ -6,12 +6,13 @@ const artworkSource = readFileSync(new URL("../client/src/components/officeArtwo
 const floorStyles = readFileSync(new URL("../client/src/pages/owner-floor.css", import.meta.url), "utf8");
 
 describe("horizontal text-free office map", () => {
-  it("uses the approved Manager-Cabin-free 16:9 artwork with a larger Discussion Room and no Manus marker", () => {
+  it("uses the approved Manager-Cabin-free 16:9 artwork with a larger Discussion Room and no broken employee portrait overlay", () => {
     expect(artworkSource).toContain("aetheroffice-office-no-manager-cabin_a8a18332.png");
-    expect(officeSource).toContain('employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />');
+    expect(officeSource).toContain('className="office-motion-marker"');
+    expect(officeSource).not.toContain('className="illustrated-agent-portrait"');
     expect(floorStyles).toContain("aspect-ratio: 16 / 9");
     expect(floorStyles).toContain(".text-free-office .office-deep-discuss { left: 32%; top: 35%; width: 36%; height: 42%; }");
-    expect(floorStyles).toContain(".text-free-office .illustrated-agent-dot");
+    expect(floorStyles).toContain(".text-free-office .office-motion-marker");
   });
 
   it("keeps the Discussion Room directly clickable without a visible frame", () => {

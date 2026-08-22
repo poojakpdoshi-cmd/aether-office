@@ -121,7 +121,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         {assignments.map((slot) => <button key={`${slot.id}-desk`} onClick={() => onInspect(`${slot.employee} Desk`)} className="office-work-zone" style={{ left: slot.desk.x, top: slot.desk.y }} aria-label={`Inspect ${slot.employee} desk`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspectEmployeeComputer(slot.employee)} className="office-laptop-zone" style={slot.laptop} aria-label={`Open ${slot.employee}'s computer live work`} />)}
         {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`}>
-          <img className="illustrated-agent-portrait" src={illustratedEmployees[employee.name] ?? illustratedEmployees.Mistral} alt="" />{employee.name === "Manus" ? null : <span className="illustrated-agent-dot" />}
+          <span className="office-motion-marker" aria-hidden="true"><i /></span>
         </button>; })}
       </div>
     </div>
