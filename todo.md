@@ -289,3 +289,8 @@
 - [x] Preserve no-fabrication rules by displaying explicit idle, unavailable-runtime, and no-active-process states instead of synthetic terminal work.
 - [x] Clearly display the current seven-day Manus temporary-orchestrator lifecycle and preserve Atlas, Nova, and Sentinel continuity after expiry.
 - [x] Add responsive and regression coverage for room-first navigation, computer monitor data, no-fabrication behavior, and Manus expiry continuity.
+- [x] Keep the manager rail beside the office map at available tablet and desktop widths, stacking it below only on genuinely narrow mobile screens.
+- [x] Refine real-state employee movement and workstation animation without fabricating work activity or relying on character artifacts.
+- [x] Return instant local manager replies for greetings, basic help, and model-identity questions, reserving configured-provider calls for substantive approved work.
+- [x] Make model-identity questions return the approved General Manager of AetherOffice role answer without exposing a provider or hidden model identity.
+- [x] Add regression coverage for responsive side-rail geometry, motion safety, fast manager reply routing, and identity-response privacy.

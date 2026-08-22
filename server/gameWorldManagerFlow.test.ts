@@ -28,7 +28,7 @@ describe("playable office-world manager flow", () => {
     expect(home).toContain("showWorldControls ? <OfficeWorldControls");
     expect(office).toContain('className="office-empty-floor-zone"');
     expect(styles).toContain(".office-room-trail");
-    expect(styles).toContain(".text-free-office.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); align-items: start; min-height: 0;");
+    expect(styles).toContain(".text-free-office.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(260px, 315px); align-items: start; min-height: 0;");
     expect(controls).toContain('id="office-world-controls"');
   });
 

@@ -67,11 +67,11 @@
 
 .text-free-office .office-exit-door-hotspot { position: absolute; z-index: 9; right: 1.5%; bottom: 3%; width: 8%; height: 18%; border: 0; background: transparent; padding: 0; color: transparent; cursor: pointer; }
 .text-free-office .office-exit-door-hotspot:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
-.text-free-office.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); align-items: start; min-height: 0; gap: clamp(14px, 2vw, 26px); padding: 18px clamp(14px, 2vw, 28px); place-items: initial; background: #ece5d2; }
+.text-free-office.office-with-control { grid-template-columns: minmax(0, 1fr) minmax(260px, 315px); align-items: start; min-height: 0; gap: clamp(10px, 1.5vw, 22px); padding: 14px clamp(10px, 1.5vw, 24px); place-items: initial; background: #ece5d2; }
 .office-with-control .real-office-stage { width: min(100%, calc(100dvh * 1.72)); margin-inline: auto; border: 4px solid #253637; background: #a7c3af; box-shadow: 5px 5px 0 #253637, 0 18px 32px rgba(45,63,58,.18); }
 .office-with-control .real-office-backdrop { filter: saturate(.82) contrast(.92) brightness(1.04); }
 .office-post-animation-control { width: 100%; animation: office-control-settle 420ms cubic-bezier(.23,1,.32,1) both; }
-.office-control-chatbox { width: 100%; max-height: min(560px, calc(100dvh - 36px)); overflow: auto; border: 2px solid #253637; border-radius: 4px; background: #fff8e9; box-shadow: 5px 5px 0 #253637; color: #253637; padding: 14px; }
+.office-control-chatbox { width: 100%; max-height: min(560px, calc((100vw - 340px) * .5625)); overflow: auto; border: 2px solid #253637; border-radius: 4px; background: #fff8e9; box-shadow: 5px 5px 0 #253637; color: #253637; padding: 14px; }
 .office-control-chatbox .text-white, .office-control-chatbox .text-slate-100, .office-control-chatbox .text-slate-200 { color: #253637; }
 .office-control-chatbox .text-slate-300, .office-control-chatbox .text-slate-400, .office-control-chatbox .text-slate-500 { color: #64726b; }
 .office-control-chatbox .text-sky-100, .office-control-chatbox .text-sky-200, .office-control-chatbox .text-violet-200 { color: #355f61; }
@@ -118,9 +118,9 @@
 /* Crop only the moving upper-body overlay to remove the recorded trouser artifact without altering the approved office world. */
 .text-free-office .illustrated-walking .illustrated-agent-portrait { clip-path: inset(0 0 43% 0); transform-origin: 50% 16%; }
 @keyframes office-control-settle { from { opacity: 0; transform: translate3d(16px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
-.text-free-office .illustrated-walking .illustrated-agent-portrait { animation: aether-office-step 360ms steps(2, end) infinite; }
-@keyframes aether-office-step { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-2px) rotate(1deg); } }
-@media (max-width: 1050px) { .text-free-office.office-with-control { grid-template-columns: 1fr; padding: 0; gap: 0; } .office-with-control .real-office-stage { width: min(100vw, 177.778dvh); border-inline: 0; box-shadow: 0 3px 0 #253637; } .office-control-chatbox { max-height: none; border-radius: 0; border-inline: 0; box-shadow: none; } .office-room-trail { grid-template-columns: 1fr; }.office-world-controls-grid { grid-template-columns:1fr; } }
+.text-free-office .illustrated-walking .illustrated-agent-portrait { animation: aether-office-step 720ms cubic-bezier(.36,.07,.19,.97) infinite; will-change: transform; }
+@keyframes aether-office-step { 0%,100% { transform: translate3d(0,0,0) rotate(-1deg); } 28% { transform: translate3d(2px,-3px,0) rotate(.8deg); } 58% { transform: translate3d(5px,-1px,0) rotate(-.45deg); } 78% { transform: translate3d(2px,-2px,0) rotate(.4deg); } }
+@media (max-width: 720px) { .text-free-office.office-with-control { grid-template-columns: 1fr; padding: 0; gap: 0; } .office-with-control .real-office-stage { width: min(100vw, 177.778dvh); border-inline: 0; box-shadow: 0 3px 0 #253637; } .office-control-chatbox { max-height: none; border-radius: 0; border-inline: 0; box-shadow: none; } .office-room-trail { grid-template-columns: 1fr; }.office-world-controls-grid { grid-template-columns:1fr; } }
 .office-bottom-panel { width: min(100%, 980px); margin: 0 auto; border-top: 1px solid rgba(148, 163, 184, .22); background: linear-gradient(180deg, rgba(18, 26, 40, .98), rgba(7, 12, 23, .99)); padding: 14px clamp(14px, 2vw, 24px) 18px; box-shadow: 0 -12px 35px rgba(0, 0, 0, .22), inset 0 1px 0 rgba(255,255,255,.06); }
 .office-exit-panel { display: none; }
 .office-bottom-panel .office-exit-panel-head { max-width: 980px; margin-inline: auto; }
