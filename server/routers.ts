@@ -28,7 +28,14 @@ export const appRouter = router({
   }),
 
   aether: router({
-    dashboard: publicProcedure.query(() => getDashboardState()),
+    dashboard: publicProcedure.query(async () => {
+      const dashboard = getDashboardState();
+      const configuredProviders = new Set((await listProviderStatuses()).filter((provider) => provider.configured).map((provider) => provider.id));
+      return {
+        ...dashboard,
+        setupRequiredEmployeeIds: dashboard.employees.filter((employee) => !configuredProviders.has(employee.provider)).map((employee) => employee.id),
+      };
+    }),
     competitionIsolation: publicProcedure.query(() => competitionIsolationStatus()),
     providers: publicProcedure.query(() => listProviderStatuses()),
     provisionEmployees: ownerProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured) throw new Error(`${status?.label ?? input.provider} must be configured before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),

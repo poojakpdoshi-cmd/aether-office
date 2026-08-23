@@ -83,7 +83,10 @@ export async function runDeepDiscuss(task: string) {
   const selectedEmployees = (await Promise.all(requestedEmployees.map(async (employee) => ({ employee, available: await isEmployeeAvailable(employee) }))))
     .filter((item) => item.available)
     .map((item) => item.employee);
-  if (!selectedEmployees.length) throw new Error("No configured provider is available for the selected meeting.");
+  if (!selectedEmployees.length) {
+    resetEmployeeStatuses();
+    throw new Error("Provider setup required: add at least one API key before starting a manager research meeting.");
+  }
 
   const meeting = createMeeting(task, selectedEmployees);
   try {

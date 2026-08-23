@@ -297,3 +297,6 @@
 - [x] Remove the broken half-cut employee walking overlay shown during real-state animation without changing unrelated office features.
 - [x] Replace it with a clean, natural movement treatment that remains truthful to active state and does not misrepresent idle or error work.
 - [x] Add visual and regression checks for idle, error, and active movement states after the animation-only correction.
+- [x] Replace the misleading employee ERROR state caused only by missing provider configuration with an explicit setup-required state.
+- [x] Preserve ERROR for genuine configured-provider, sandbox, process, test, or controlled execution failures.
+- [x] Add regression coverage for unconfigured-provider setup messaging and genuine failure-state distinction.
