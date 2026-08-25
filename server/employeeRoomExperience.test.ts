@@ -13,6 +13,12 @@ describe("immersive employee room experience", () => {
     expect(home).toContain('<EmployeeRoomScene employee={relatedEmployee} onOpenComputer={() => setOfficeFocus(`${relatedEmployee.name} Computer`)} />');
   });
 
+  it("uses a complete anime-inspired personal-room scene while keeping the real-monitor hotspot explicit", () => {
+    expect(experience).toContain("bg-[radial-gradient(circle_at_78%_12%");
+    expect(experience).toContain("verified activity");
+    expect(experience).toContain("Open real computer monitor");
+  });
+
   it("renders only real isolated process and sandbox evidence in the computer monitor", () => {
     expect(experience).toContain("EmployeeComputerMonitor");
     expect(experience).toContain("No real sandbox process has run for this employee yet.");

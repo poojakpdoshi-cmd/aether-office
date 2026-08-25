@@ -304,3 +304,7 @@
 - [x] Implement a visible, character-like corridor movement treatment that clearly reads as a moving employee over the approved office art.
 - [x] Restrict the improved movement to genuine real-state transitions and leave idle/error states without fake animated workers.
 - [x] Add visual and regression coverage that confirms the improved character movement is visible at desktop and mobile sizes.
+- [x] Replace the current corridor walker with a cohesive Japanese-anime-inspired employee movement treatment without restoring portrait artifacts or placeholder icons.
+- [x] Redesign employee personal-room scenes with a Japanese-anime-inspired visual language while keeping the employee-at-computer and computer-tap monitor interactions intact.
+- [x] Preserve real-state-only movement, no-fabrication safeguards, and reduced-motion behavior throughout the visual redesign.
+- [x] Add regression, desktop, and mobile visual validation for the Japanese-anime-inspired motion and employee-room redesign.
