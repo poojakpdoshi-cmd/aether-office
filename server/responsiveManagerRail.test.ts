@@ -6,10 +6,11 @@ const css = readFileSync(fileURLToPath(new URL("../client/src/pages/owner-floor.
 const chat = readFileSync(fileURLToPath(new URL("./aether/managerChat.ts", import.meta.url)), "utf8");
 
 describe("responsive manager rail and fast manager reply safeguards", () => {
-  it("keeps a compact side rail through tablet widths and stacks only on narrow mobile widths", () => {
+  it("prioritizes a video-scale map at compact desktop widths and keeps a side rail on wide desktop screens", () => {
     expect(css).toContain("minmax(260px, 315px)");
+    expect(css).toContain("@media (max-width: 1280px) and (min-width: 721px)");
+    expect(css).toContain("width:min(100%,calc((100dvh - 20px) * 1.777))");
     expect(css).toContain("@media (max-width: 720px)");
-    expect(css).not.toContain("@media (max-width: 1050px)");
   });
 
   it("uses a smooth compositor-friendly anime character walking loop instead of a step animation", () => {

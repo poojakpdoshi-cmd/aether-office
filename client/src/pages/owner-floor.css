@@ -72,6 +72,7 @@
 .office-with-control .real-office-backdrop { filter: saturate(.82) contrast(.92) brightness(1.04); }
 .office-post-animation-control { width: 100%; animation: office-control-settle 420ms cubic-bezier(.23,1,.32,1) both; }
 .office-control-chatbox { width: 100%; max-height: min(560px, calc((100vw - 340px) * .5625)); overflow: auto; border: 2px solid #253637; border-radius: 4px; background: #fff8e9; box-shadow: 5px 5px 0 #253637; color: #253637; padding: 14px; }
+@media (max-width: 1280px) and (min-width: 721px) { .text-free-office.office-with-control { grid-template-columns:1fr; gap:12px; padding:10px; } .office-with-control .real-office-stage { width:min(100%,calc((100dvh - 20px) * 1.777)); } .office-post-animation-control { width:min(100%,760px); margin-inline:auto; } .office-control-chatbox { max-height:none; } }
 .office-control-chatbox .text-white, .office-control-chatbox .text-slate-100, .office-control-chatbox .text-slate-200 { color: #253637; }
 .office-control-chatbox .text-slate-300, .office-control-chatbox .text-slate-400, .office-control-chatbox .text-slate-500 { color: #64726b; }
 .office-control-chatbox .text-sky-100, .office-control-chatbox .text-sky-200, .office-control-chatbox .text-violet-200 { color: #355f61; }

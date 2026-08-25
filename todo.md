@@ -308,3 +308,7 @@
 - [x] Redesign employee personal-room scenes with a Japanese-anime-inspired visual language while keeping the employee-at-computer and computer-tap monitor interactions intact.
 - [x] Preserve real-state-only movement, no-fabrication safeguards, and reduced-motion behavior throughout the visual redesign.
 - [x] Add regression, desktop, and mobile visual validation for the Japanese-anime-inspired motion and employee-room redesign.
+- [x] Expand the primary 16:9 office map to a video-scale, dominant desktop presentation without hiding physical interactions.
+- [x] Rebalance the manager rail so it stays accessible without making the office map feel small or squeezed.
+- [x] Preserve a full-width readable office map and sensible manager-chat stacking on narrow mobile screens.
+- [x] Add regression and desktop/mobile visual validation for the video-scale office-map layout.
