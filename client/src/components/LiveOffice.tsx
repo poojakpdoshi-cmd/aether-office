@@ -20,9 +20,6 @@ type Props = {
 };
 
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
-const illustratedEmployees: Record<string, string> = {
-  Manus: "/manus-storage/illustrated-manus_46107b3d.png", Gemini: "/manus-storage/illustrated-gemini_908df82a.png", DeepSeek: "/manus-storage/illustrated-deepseek_8bbe4ac7.png", Mistral: "/manus-storage/illustrated-mistral_e37410fe.png", Grok: "/manus-storage/illustrated-grok_1ba33ae9.png",
-};
 export function resolveOfficeLocation(employee: OfficeEmployee, slot: CompactCabinSlot) {
   if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" };
   if (employee.status === "THINKING") return { ...slot.station, state: "walking" };
@@ -120,9 +117,7 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
         {assignments.filter((slot) => slot.employee !== "Manus").map((slot) => <button key={`${slot.id}-room`} onClick={() => onOpenEmployeeRoom(slot.employee)} className="office-room-zone" style={slot.room} aria-label={`Enter ${slot.employee}'s room`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-desk`} onClick={() => onInspect(`${slot.employee} Desk`)} className="office-work-zone" style={{ left: slot.desk.x, top: slot.desk.y }} aria-label={`Inspect ${slot.employee} desk`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspectEmployeeComputer(slot.employee)} className="office-laptop-zone" style={slot.laptop} aria-label={`Open ${slot.employee}'s computer live work`} />)}
-        {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`}>
-          <span className="office-anime-walker" aria-hidden="true"><span className="office-anime-hair" /><span className="office-anime-face"><i className="office-anime-eye office-anime-eye-left" /><i className="office-anime-eye office-anime-eye-right" /></span><span className="office-anime-uniform"><i className="office-anime-arm office-anime-arm-left" /><i className="office-anime-arm office-anime-arm-right" /></span><span className="office-anime-legs"><i /><i /></span></span>
-        </button>; })}
+        {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`} />; })}
       </div>
     </div>
     {sideControl && postAnimationReady ? <div className="office-post-animation-control">{sideControl}</div> : managementPanel}

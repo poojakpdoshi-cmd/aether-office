@@ -27,5 +27,7 @@ describe("AetherOffice non-default workspace controls", () => {
 
   it("renders the newest persisted meeting in the manager rail instead of retaining a stale first meeting", () => {
     expect(homeSource).toContain("dashboard?.meetings.slice().sort((left, right) => right.updatedAt - left.updatedAt)[0]");
+    expect(homeSource).toContain('refetchOnMount: "always", refetchOnWindowFocus: "always", staleTime: 0');
+    expect(homeSource).toContain("onSuccess: async () => { await dashboardQuery.refetch();");
   });
 });

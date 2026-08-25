@@ -407,7 +407,7 @@ export default function Home() {
   const [projectPreviewUrl, setProjectPreviewUrl] = useState("");
   const startedManagerTaskRef = useRef<string | null>(null);
   const providerQuery = trpc.aether.providers.useQuery();
-  const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500 });
+  const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500, refetchOnMount: "always", refetchOnWindowFocus: "always", staleTime: 0 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
   const projectPreviewQuery = trpc.aether.projectPreview.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected), refetchInterval: 1500 });
   const latestBrowserEvidenceQuery = trpc.aether.latestBrowserEvidence.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected) });
@@ -442,7 +442,7 @@ export default function Home() {
     const target = officeFocus === "Manager" ? "Manus" : employeeTarget;
     return liveEmployees.find((employee) => employee.name === target)?.name;
   }, [liveEmployees, officeFocus]);
-  const startDeepDiscussMutation = trpc.aether.startDeepDiscuss.useMutation({ onSuccess: () => { dashboardQuery.refetch(); setManagerMessages((messages) => [...messages, { role: "manager", content: "The manager meeting is complete. Every configured available employee has contributed research, Sentinel has completed its verified review, and the consolidated plan is ready for your approval." }]); } });
+  const startDeepDiscussMutation = trpc.aether.startDeepDiscuss.useMutation({ onSuccess: async () => { await dashboardQuery.refetch(); setManagerMessages((messages) => [...messages, { role: "manager", content: "The manager meeting is complete. The plan uses verified contributions that completed successfully; review the Guardian notice before owner approval." }]); } });
   const managerChatMutation = trpc.aether.managerChat.useMutation({
     onSuccess: (result) => {
       setManagerMessages((messages) => [...messages, { role: "manager", content: result.reply }]);

@@ -32,12 +32,13 @@ describe("playable office-world manager flow", () => {
     expect(controls).toContain('id="office-world-controls"');
   });
 
-  it("gives the first manager fast primary status and replaces the recorded broken portrait overlay with a complete anime-inspired character walker", () => {
+  it("gives the first manager fast primary status while keeping the photo-real office map free of synthetic worker overlays", () => {
     expect(chat).toContain('index === 0 ? " · Fast lead" : ""');
     expect(home).toContain("speakManagerText(result.reply)");
     expect(styles).toContain(".text-free-office .illustrated-agent-portrait { display: none !important; }");
-    expect(styles).toContain(".text-free-office .illustrated-walking .office-anime-walker");
-    expect(styles).not.toContain(".illustrated-error .office-anime-walker");
-    expect(office).toContain('className="office-anime-walker"');
+    expect(styles).not.toContain("office-anime-walker");
+    expect(styles).not.toContain("office-motion-marker");
+    expect(office).not.toContain('className="office-anime-walker"');
+    expect(office).not.toContain("illustrated-agent-portrait");
   });
 });

@@ -325,3 +325,8 @@
 - [x] Deduplicate same-provider worker profiles during a meeting after the provider has a verified unavailable response.
 - [x] Replace repeated Guardian provider-error details with one concise, truthful, actionable provider availability notice.
 - [x] Add regression and real-meeting validation for provider-level fallback and concise Guardian presentation.
+- [x] Reproduce the owner browser’s stale manager-meeting display against the current dashboard response.
+- [x] Repair the client cache, query invalidation, or meeting selection defect that keeps an old failure wall visible.
+- [x] Add regression coverage and validate the exact client-visible refreshed meeting state.
+- [x] Remove the mismatched anime/chibi movement overlay from the photo-real office map without restoring a portrait, icon, or cropped figure.
+- [x] Validate the office remains clean and interactive on desktop and mobile with no synthetic walker overlay.

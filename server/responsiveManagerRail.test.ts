@@ -13,9 +13,9 @@ describe("responsive manager rail and fast manager reply safeguards", () => {
     expect(css).toContain("@media (max-width: 720px)");
   });
 
-  it("uses a smooth compositor-friendly anime character walking loop instead of a step animation", () => {
-    expect(css).toContain("560ms cubic-bezier(.37,0,.63,1)");
-    expect(css).toContain("translate3d");
+  it("keeps the responsive office map free of a synthetic walking-character overlay", () => {
+    expect(css).not.toContain("office-anime-walker");
+    expect(css).not.toContain("office-motion-marker");
     expect(css).not.toContain("steps(2,end)");
   });
 
