@@ -97,11 +97,13 @@ export async function runDeepDiscuss(task: string) {
     analysisOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const analysis = meeting.messages.filter((message) => message.round === "analysis");
-    const critiqueOutcome = await runRound(meeting.id, task, selectedEmployees, "critique", analysis);
+    const critiqueEmployees = remainingRoundEmployees(selectedEmployees, failedEmployees);
+    const critiqueOutcome = await runRound(meeting.id, task, critiqueEmployees, "critique", analysis);
     critiqueOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const critique = meeting.messages.filter((message) => message.round === "critique");
-    const debateOutcome = await runRound(meeting.id, task, selectedEmployees, "debate", [...analysis, ...critique]);
+    const debateEmployees = remainingRoundEmployees(critiqueEmployees, failedEmployees);
+    const debateOutcome = await runRound(meeting.id, task, debateEmployees, "debate", [...analysis, ...critique]);
     debateOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const proposal = await synthesizePlan(meeting.id, task, meeting.messages);
@@ -202,6 +204,10 @@ export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (
 
 export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
   return Promise.allSettled(employees.map((employee) => work(employee)));
+}
+
+export function remainingRoundEmployees(employees: EmployeeId[], failedEmployees: ReadonlySet<EmployeeId>) {
+  return employees.filter((employee) => !failedEmployees.has(employee));
 }
 
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {

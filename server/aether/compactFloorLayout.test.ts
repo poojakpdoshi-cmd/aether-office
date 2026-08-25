@@ -36,6 +36,9 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain("onConfigureProvider={setSetupProvider}");
     expect(homePage).toContain("onProvision={(provider, count) => provisionEmployeesMutation.mutate");
     expect(homePage).toContain("onUpload={uploadFile}");
+    expect(homePage).toContain("workspaceSelected={Boolean(workspaceQuery.data?.selected)}");
+    expect(homePage).toContain("onOpenServiceFloor={() => setShowWorldControls(true)}");
+    expect(homePage).toContain("onSelectWorkspace={(path) => selectWorkspaceMutation.mutate({ path })}");
   });
 
   it("launches the Office view as a text-free animated map with accessible invisible targets", () => {

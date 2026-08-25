@@ -315,3 +315,7 @@
 - [x] Remove visible ERROR badges from the manager rail and employee-room route without deleting genuine backend failure records.
 - [x] Preserve setup-required guidance and retain real failure detail only in authorized monitoring and activity views.
 - [x] Add regression and visual validation for the cleaned status presentation.
+- [x] Reproduce the reported manager meeting, team research, plan approval, and controlled-work workflow from persisted local state.
+- [x] Diagnose and repair any verified break between plan approval and owner-authorized controlled work without simulating success.
+- [x] Make provider, sandbox, and Sentinel failure messaging actionable without presenting a completed workflow when no controlled work ran.
+- [x] Add real end-to-end workflow regression coverage and validate the repaired path.

@@ -7,7 +7,7 @@ import { homedir } from "node:os";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { cancelWorkspaceExecution, configureProjectPreview, createGitCommit, createWorkspaceFile, generateProofReport, getEmployeeInspection, getEvidenceGallery, getProjectPreview, getWorkspaceExecution, getWorkspaceTree, importWorkspaceUpload, readEvidenceReport, readEvidenceScreenshot, readWorkspaceFile, revertGitCommit, runProjectBrowserTest, runWorkspaceCommand, selectWorkspace, startWorkspaceCommand, writeWorkspaceFile } from "./workspace";
-import { assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
+import { applyProposalAction, assertExecutionAllowed, createMeeting, resetStateForTests, setProposal } from "./state";
 
 let root = "";
 
@@ -141,6 +141,15 @@ describe("controlled workspace tools", () => {
     const meeting = createMeeting("Add a file", ["Manus"]);
     setProposal(meeting.id, { objective: "Add a file", techStack: ["Node.js"], filesToCreateModify: ["src/new.ts"], risks: [], confidencePercent: 80 });
     expect(() => assertExecutionAllowed(meeting.id, true)).toThrow("must be approved");
+  });
+
+  it("runs a real controlled workspace operation only after the owner approves a proposal", async () => {
+    const meeting = createMeeting("Create a verified calculator entry point", ["Manus"]);
+    setProposal(meeting.id, { objective: "Create a verified calculator entry point", techStack: ["TypeScript"], filesToCreateModify: ["src/calculator.ts"], risks: [], confidencePercent: 80 });
+    applyProposalAction(meeting.id, "Approve");
+    expect(() => assertExecutionAllowed(meeting.id, true)).not.toThrow();
+    await createWorkspaceFile("src/calculator.ts", "export const add = (a: number, b: number) => a + b;\n", "Manus", "Owner-approved controlled calculator implementation.");
+    expect(await readFile(join(root, "src", "calculator.ts"), "utf8")).toContain("export const add");
   });
 
   it("rejects unapproved commands and shell-control characters before execution", async () => {

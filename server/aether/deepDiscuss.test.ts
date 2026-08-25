@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTaskCapabilities, parseProposal, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
+import { classifyTaskCapabilities, parseProposal, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
 import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -54,6 +54,10 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     });
     expect(outcomes[0]).toMatchObject({ status: "fulfilled", value: "verified Gemini contribution" });
     expect(outcomes[1]).toMatchObject({ status: "rejected" });
+  });
+
+  it("does not retry a provider with a verified failure in later discussion rounds", () => {
+    expect(remainingRoundEmployees(["Manus", "Gemini", "Mistral"], new Set(["Gemini"]))).toEqual(["Manus", "Mistral"]);
   });
 
   it("classifies task domains before selecting role-aligned employees", () => {
