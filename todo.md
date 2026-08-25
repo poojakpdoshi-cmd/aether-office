@@ -312,3 +312,6 @@
 - [x] Rebalance the manager rail so it stays accessible without making the office map feel small or squeezed.
 - [x] Preserve a full-width readable office map and sensible manager-chat stacking on narrow mobile screens.
 - [x] Add regression and desktop/mobile visual validation for the video-scale office-map layout.
+- [x] Remove visible ERROR badges from the manager rail and employee-room route without deleting genuine backend failure records.
+- [x] Preserve setup-required guidance and retain real failure detail only in authorized monitoring and activity views.
+- [x] Add regression and visual validation for the cleaned status presentation.
