@@ -6,10 +6,10 @@ import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
 export type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
 type Props = {
   employees: OfficeEmployee[];
-  onOpenManager: () => void;
-  onDeskFiles: () => void;
-  onProviderLocker: () => void;
-  onExitDoor: () => void;
+  onOpenManager?: () => void;
+  onDeskFiles?: () => void;
+  onProviderLocker?: () => void;
+  onExitDoor?: () => void;
   onOpenEmployeeRoom: (employee: string) => void;
   onInspectEmployeeComputer: (employee: string) => void;
   onInspect: (target: string) => void;
@@ -60,7 +60,7 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   };
 }
 
-export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLocker, onExitDoor, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, onOpenEmptyFloor, showManagerCabin = true, sideControl, managementPanel }: Props) {
+export function LiveOffice({ employees, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, onOpenEmptyFloor, sideControl, managementPanel }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
@@ -107,9 +107,6 @@ export function LiveOffice({ employees, onOpenManager, onDeskFiles, onProviderLo
       <div className="office-map-overlay">
         <div className="illustrated-readability" />
         <div className="deep-discuss-room-frame" aria-hidden="true"><i /><i /></div>
-        {showManagerCabin ? <><button onClick={onOpenManager} className="office-hotspot office-manager" aria-label="Open Manager Cabin" />
-          <button onClick={onDeskFiles} className="manager-file-pile" aria-label="Provide files or photos to the Manager" />
-          <button onClick={onProviderLocker} className="manager-provider-locker" aria-label="Open the secure Provider Locker" /><button onClick={onExitDoor} className="office-exit-door-hotspot" aria-label="Open the office management panel" /></> : null}
         <button onClick={() => onInspect("DeepDiscuss Room")} className="office-hotspot office-deep-discuss" aria-label="Open DeepDiscuss Room" />
         <button onClick={() => onInspect("Test Lab")} className="office-hotspot office-test" aria-label="Open Test Lab" /><button onClick={() => onInspect("Lounge")} className="office-hotspot map-lounge" aria-label="Open Lounge" />
         <button onClick={() => onInspect("Central Corridor")} className="office-corridor-zone" aria-label="Inspect Central Corridor" />

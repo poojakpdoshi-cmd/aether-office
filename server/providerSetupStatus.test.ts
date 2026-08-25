@@ -18,9 +18,10 @@ describe("provider setup status", () => {
     expect(discussion).toContain("Provider setup required: add at least one API key");
   });
 
-  it("labels unconfigured workers as setup required while retaining real failures without displaying manager-rail error badges", () => {
+  it("labels unconfigured workers as setup required while retaining real failures outside the simplified manager rail", () => {
     expect(home).toContain('"SETUP REQUIRED"');
     expect(home).toContain("setupRequiredEmployeeIds.has(employee.id)");
-    expect(managerRail).toContain('manager.status !== "ERROR"');
+    expect(managerRail).not.toContain('manager.status !== "ERROR"');
+    expect(managerRail).not.toContain("Primary manager");
   });
 });

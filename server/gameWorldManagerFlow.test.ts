@@ -32,8 +32,9 @@ describe("playable office-world manager flow", () => {
     expect(controls).toContain('id="office-world-controls"');
   });
 
-  it("gives the first manager fast primary status while keeping the photo-real office map free of synthetic worker overlays", () => {
-    expect(chat).toContain('index === 0 ? " · Fast lead" : ""');
+  it("keeps the simplified manager rail and photo-real office map free of synthetic worker overlays", () => {
+    expect(chat).not.toContain('index === 0 ? " · Fast lead" : ""');
+    expect(chat).not.toContain("Primary manager");
     expect(home).toContain("speakManagerText(result.reply)");
     expect(styles).toContain(".text-free-office .illustrated-agent-portrait { display: none !important; }");
     expect(styles).not.toContain("office-anime-walker");

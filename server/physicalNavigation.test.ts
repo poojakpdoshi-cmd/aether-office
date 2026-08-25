@@ -5,14 +5,14 @@ import { join } from "node:path";
 const root = process.cwd();
 
 describe("physical office navigation", () => {
-  it("keeps the exit door and manager files as direct invisible map targets", () => {
+  it("keeps the empty-floor service-floor route as a direct invisible map target and removes stale no-op manager hotspots", () => {
     const office = readFileSync(join(root, "client/src/components/LiveOffice.tsx"), "utf8");
     const styles = readFileSync(join(root, "client/src/pages/owner-floor.css"), "utf8");
-    expect(office).toContain("office-exit-door-hotspot");
-    expect(office).toContain("manager-file-pile");
-    expect(office).toContain("onExitDoor");
-    expect(office).toContain("managementPanel");
-    expect(styles).toContain(".text-free-office .office-exit-door-hotspot");
+    expect(office).toContain("office-empty-floor-zone");
+    expect(office).toContain("onOpenEmptyFloor");
+    expect(office).not.toContain("office-exit-door-hotspot");
+    expect(office).not.toContain("manager-file-pile");
+    expect(styles).toContain(".text-free-office .office-empty-floor-zone");
     expect(styles).toContain(".text-free-office .real-office-stage { position: relative;");
     expect(styles).toContain("overflow: hidden;");
     expect(styles).toContain(".office-bottom-panel");

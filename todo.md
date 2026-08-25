@@ -330,3 +330,6 @@
 - [x] Add regression coverage and validate the exact client-visible refreshed meeting state.
 - [x] Remove the mismatched anime/chibi movement overlay from the photo-real office map without restoring a portrait, icon, or cropped figure.
 - [x] Validate the office remains clean and interactive on desktop and mobile with no synthetic walker overlay.
+- [x] Inspect and repair the user-reported non-working office-map targets referenced by the failed visual-editor comments.
+- [x] Identify and remove or block the exact manager-rail section referenced by the failed visual-editor comment without removing required workflow controls blindly.
+- [x] Add regression and visual validation for the scoped visual-editor repair.
