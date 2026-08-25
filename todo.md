@@ -319,3 +319,6 @@
 - [x] Diagnose and repair any verified break between plan approval and owner-authorized controlled work without simulating success.
 - [x] Make provider, sandbox, and Sentinel failure messaging actionable without presenting a completed workflow when no controlled work ran.
 - [x] Add real end-to-end workflow regression coverage and validate the repaired path.
+- [x] Reproduce and diagnose the live "No provider completed the analysis round" manager-meeting failure without exposing keys.
+- [x] Repair any verified provider configuration, selection, timeout, or error-reporting defect that blocks real meeting research.
+- [x] Add provider-round regression coverage and validate a real configured-provider meeting path or report the exact external provider prerequisite.

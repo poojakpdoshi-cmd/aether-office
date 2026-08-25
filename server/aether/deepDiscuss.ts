@@ -1,4 +1,4 @@
-import type { DeepDiscussRound, EmployeeId, TeamProposal } from "../../shared/aether";
+import type { DeepDiscussRound, EmployeeId, ProviderId, TeamProposal } from "../../shared/aether";
 import {
   addActivity,
   addDiscussionMessage,
@@ -29,7 +29,8 @@ const employeeInstructions: Record<EmployeeId, string> = {
   "Nemotron 3 Ultra": "You are Nemotron 3 Ultra, a reasoning and systems specialist. Focus on complex architecture, long-context constraints, tool boundaries, and high-confidence risk analysis.",
 };
 
-const DEFAULT_PROVIDER_ROUND_TIMEOUT_MS = 6_000;
+const DEFAULT_PROVIDER_ROUND_TIMEOUT_MS = 12_000;
+const MAX_CONCURRENT_CALLS_PER_PROVIDER = 2;
 
 function providerRoundTimeoutMs() {
   const configured = Number.parseInt(process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS || "", 10);
@@ -203,7 +204,28 @@ export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (
 }
 
 export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
-  return Promise.allSettled(employees.map((employee) => work(employee)));
+  const results = new Array<PromiseSettledResult<T>>(employees.length);
+  const jobsByProvider = new Map<ProviderId, Array<{ employee: EmployeeId; index: number }>>();
+  employees.forEach((employee, index) => {
+    const provider = getEmployeeProvider(employee);
+    const jobs = jobsByProvider.get(provider) ?? [];
+    jobs.push({ employee, index });
+    jobsByProvider.set(provider, jobs);
+  });
+
+  await Promise.all(Array.from(jobsByProvider.values()).map(async (jobs) => {
+    for (let offset = 0; offset < jobs.length; offset += MAX_CONCURRENT_CALLS_PER_PROVIDER) {
+      const batch = jobs.slice(offset, offset + MAX_CONCURRENT_CALLS_PER_PROVIDER);
+      await Promise.all(batch.map(async ({ employee, index }) => {
+        try {
+          results[index] = { status: "fulfilled", value: await work(employee) };
+        } catch (reason) {
+          results[index] = { status: "rejected", reason };
+        }
+      }));
+    }
+  }));
+  return results;
 }
 
 export function remainingRoundEmployees(employees: EmployeeId[], failedEmployees: ReadonlySet<EmployeeId>) {

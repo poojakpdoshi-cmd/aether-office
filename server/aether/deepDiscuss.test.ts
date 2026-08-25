@@ -74,10 +74,27 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     vi.useFakeTimers();
     try {
       const outcome = expect(withProviderRoundDeadline(new Promise<string>(() => undefined), "Gemini", "analysis")).rejects.toThrow("latency budget");
-      await vi.advanceTimersByTimeAsync(6_000);
+      await vi.advanceTimersByTimeAsync(12_000);
       await outcome;
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("limits concurrent calls that share one configured provider while allowing different providers to proceed", async () => {
+    let activeMistral = 0;
+    let maximumMistral = 0;
+    const outcomes = await settleConcurrentRoundJobs(["Mistral", "Mistral Worker 1", "Mistral Worker 2", "Gemini"], async (employee) => {
+      const isMistral = employee.startsWith("Mistral");
+      if (isMistral) {
+        activeMistral += 1;
+        maximumMistral = Math.max(maximumMistral, activeMistral);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 10));
+      if (isMistral) activeMistral -= 1;
+      return `${employee} complete`;
+    });
+    expect(maximumMistral).toBe(2);
+    expect(outcomes.every((outcome) => outcome.status === "fulfilled")).toBe(true);
   });
 });
