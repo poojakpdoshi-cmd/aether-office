@@ -27,7 +27,10 @@ describe("video-informed post-animation office treatment", () => {
     expect(office).toContain("const horizontalFirst = Math.abs(deltaX) >= Math.abs(deltaY)");
     expect(office).toContain("duration: Math.min(1450, 620 + Math.hypot(deltaX, deltaY) * 2.1)");
     expect(office).toContain('easing: "linear"');
-    expect(styles).toContain(".text-free-office .illustrated-walking .office-motion-marker");
+    expect(office).toContain('className="office-walker"');
+    expect(styles).toContain(".text-free-office .illustrated-walking .office-walker");
+    expect(styles).toContain("@keyframes aether-office-character-walk");
     expect(styles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(styles).toContain(".text-free-office .illustrated-walking .office-walker { display:none; animation:none; }");
   });
 });

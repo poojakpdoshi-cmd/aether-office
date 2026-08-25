@@ -8,11 +8,11 @@ const floorStyles = readFileSync(new URL("../client/src/pages/owner-floor.css", 
 describe("horizontal text-free office map", () => {
   it("uses the approved Manager-Cabin-free 16:9 artwork with a larger Discussion Room and no broken employee portrait overlay", () => {
     expect(artworkSource).toContain("aetheroffice-office-no-manager-cabin_a8a18332.png");
-    expect(officeSource).toContain('className="office-motion-marker"');
+    expect(officeSource).toContain('className="office-walker"');
     expect(officeSource).not.toContain('className="illustrated-agent-portrait"');
     expect(floorStyles).toContain("aspect-ratio: 16 / 9");
     expect(floorStyles).toContain(".text-free-office .office-deep-discuss { left: 32%; top: 35%; width: 36%; height: 42%; }");
-    expect(floorStyles).toContain(".text-free-office .office-motion-marker");
+    expect(floorStyles).toContain(".text-free-office .office-walker");
   });
 
   it("keeps the Discussion Room directly clickable without a visible frame", () => {

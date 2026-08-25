@@ -12,10 +12,10 @@ describe("responsive manager rail and fast manager reply safeguards", () => {
     expect(css).not.toContain("@media (max-width: 1050px)");
   });
 
-  it("uses a smooth compositor-friendly walking loop instead of a step animation", () => {
-    expect(css).toContain("680ms cubic-bezier(.36,.07,.19,.97)");
+  it("uses a smooth compositor-friendly complete character walking loop instead of a step animation", () => {
+    expect(css).toContain("520ms cubic-bezier(.37,0,.63,1)");
     expect(css).toContain("translate3d");
-    expect(css).not.toContain("steps(2, end)");
+    expect(css).not.toContain("steps(2,end)");
   });
 
   it("routes basic manager identity questions before any provider-backed fallback", () => {

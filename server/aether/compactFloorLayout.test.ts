@@ -65,8 +65,9 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain('Live current work only');
   });
 
-  it("limits the map roster to configured providers and maps real statuses to meeting and workstation positions", () => {
-    expect(homePage).toContain('profile.provider === "manus" || configuredProviderIds.has(profile.provider)');
+  it("keeps setup-required profiles visible without misrepresenting them as configured and maps real statuses to office positions", () => {
+    expect(homePage).toContain('const setupRequired = setupRequiredEmployeeIds.has(profile.id);');
+    expect(homePage).toContain('displayStatus: setupRequired ? "SETUP REQUIRED" as const : profile.status as EmployeeStatus');
     expect(homePage).toContain('Configured ${profile.provider} profile');
     expect(officeComponent).toContain('if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" }');
     expect(officeComponent).toContain('const { assignments } = allocateCompactCabinSlots(employees.map((employee) => employee.name))');

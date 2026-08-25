@@ -300,3 +300,7 @@
 - [x] Replace the misleading employee ERROR state caused only by missing provider configuration with an explicit setup-required state.
 - [x] Preserve ERROR for genuine configured-provider, sandbox, process, test, or controlled execution failures.
 - [x] Add regression coverage for unconfigured-provider setup messaging and genuine failure-state distinction.
+- [x] Remove the disliked teal placeholder walking icon from the office map without restoring the broken portrait overlay.
+- [x] Implement a visible, character-like corridor movement treatment that clearly reads as a moving employee over the approved office art.
+- [x] Restrict the improved movement to genuine real-state transitions and leave idle/error states without fake animated workers.
+- [x] Add visual and regression coverage that confirms the improved character movement is visible at desktop and mobile sizes.

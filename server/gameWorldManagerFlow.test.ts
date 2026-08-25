@@ -32,12 +32,12 @@ describe("playable office-world manager flow", () => {
     expect(controls).toContain('id="office-world-controls"');
   });
 
-  it("gives the first manager fast primary status and replaces the recorded broken portrait overlay with a motion marker", () => {
+  it("gives the first manager fast primary status and replaces the recorded broken portrait overlay with a complete character walker", () => {
     expect(chat).toContain('index === 0 ? " · Fast lead" : ""');
     expect(home).toContain("speakManagerText(result.reply)");
     expect(styles).toContain(".text-free-office .illustrated-agent-portrait { display: none !important; }");
-    expect(styles).toContain(".text-free-office .illustrated-walking .office-motion-marker");
-    expect(styles).not.toContain(".illustrated-error .office-motion-marker");
-    expect(office).toContain('className="office-motion-marker"');
+    expect(styles).toContain(".text-free-office .illustrated-walking .office-walker");
+    expect(styles).not.toContain(".illustrated-error .office-walker");
+    expect(office).toContain('className="office-walker"');
   });
 });
