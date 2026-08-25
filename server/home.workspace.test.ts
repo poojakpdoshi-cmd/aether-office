@@ -24,4 +24,8 @@ describe("AetherOffice non-default workspace controls", () => {
     expect(homeSource).toContain("no remote-push capability");
     expect(homeSource).toContain("Revert locally");
   });
+
+  it("renders the newest persisted meeting in the manager rail instead of retaining a stale first meeting", () => {
+    expect(homeSource).toContain("dashboard?.meetings.slice().sort((left, right) => right.updatedAt - left.updatedAt)[0]");
+  });
 });

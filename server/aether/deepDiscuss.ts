@@ -131,12 +131,14 @@ export async function runDeepDiscuss(task: string) {
 
 async function runGuardianReview(meetingId: string, task: string, selectedEmployees: EmployeeId[], failedEmployees: Set<EmployeeId>) {
   const findings: string[] = [];
-  const dashboard = getDashboardState();
-  if (failedEmployees.size) findings.push(`${Array.from(failedEmployees).join(", ")} had a verified provider-round failure; retain successful research and consider a fallback before implementation.`);
-  const blockedEmployees = dashboard.employees.filter((employee) => employee.status === "ERROR" && employee.id !== "Sentinel").map((employee) => employee.id);
-  if (blockedEmployees.length) findings.push(`${blockedEmployees.join(", ")} currently has a verified error state; investigate the recorded failure before assigning corrective work.`);
-  const runtimeAlerts = dashboard.activities.filter((activity) => (activity.kind === "sandbox" || activity.kind === "terminal" || activity.kind === "tool") && /\b(error|failed|failure|blocked)\b/i.test(activity.message)).slice(0, 3);
-  runtimeAlerts.forEach((activity) => findings.push(`Verified runtime alert: ${activity.message.slice(0, 260)}`));
+  const failedProviders = Array.from(new Set(Array.from(failedEmployees).map((employee) => getEmployeeProvider(employee))));
+  if (failedProviders.length) {
+    findings.push(providerAvailabilityNotice(failedEmployees));
+    findings.push("Guardian notice: no automatic correction has run. Any provider change or corrective work remains owner-approved.");
+    if (selectedEmployees.includes("Sentinel")) setEmployeeStatus("Sentinel", "WAITING");
+    setGuardianFindings(meetingId, findings);
+    return;
+  }
   if (!selectedEmployees.includes("Sentinel")) {
     findings.push("Sentinel was unavailable for this meeting; no Guardian review was generated.");
   } else {
@@ -144,7 +146,7 @@ async function runGuardianReview(meetingId: string, task: string, selectedEmploy
       setEmployeeStatus("Sentinel", "REVIEWING");
       const review = await withProviderRoundDeadline(generateForEmployee("Sentinel", {
         system: employeeInstructions.Sentinel,
-        user: `Owner task: ${task}\n\nVerified conditions: ${findings.join(" ") || "No provider or sandbox error was recorded during planning."}\n\nReturn one concise owner-review finding. Do not claim to fix anything.`,
+      user: `Owner task: ${task}\n\nVerified conditions: ${findings.join(" ") || "No provider or sandbox error was recorded during planning."}\n\nReturn one concise owner-review finding. Do not claim to fix anything, expose raw provider details, or list employee profiles.`,
       }), "Sentinel", "synthesis");
       findings.push(review.trim().slice(0, 500));
       setEmployeeStatus("Sentinel", "WAITING");
@@ -184,6 +186,10 @@ async function runRound(
   for (let index = 0; index < contributions.length; index += 1) {
     const result = contributions[index]!;
     const employee = employees[index]!;
+    if (result.status === "skipped") {
+      setEmployeeStatus(employee, "WAITING");
+      continue;
+    }
     if (result.status === "rejected") {
       failedEmployees.push(employee);
       setEmployeeStatus(employee, "ERROR");
@@ -203,8 +209,10 @@ export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (
   return Promise.all(employees.map((employee) => work(employee)));
 }
 
+type RoundJobResult<T> = PromiseSettledResult<T> | { status: "skipped"; reason: unknown };
+
 export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
-  const results = new Array<PromiseSettledResult<T>>(employees.length);
+  const results = new Array<RoundJobResult<T>>(employees.length);
   const jobsByProvider = new Map<ProviderId, Array<{ employee: EmployeeId; index: number }>>();
   employees.forEach((employee, index) => {
     const provider = getEmployeeProvider(employee);
@@ -214,8 +222,17 @@ export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work
   });
 
   await Promise.all(Array.from(jobsByProvider.values()).map(async (jobs) => {
-    for (let offset = 0; offset < jobs.length; offset += MAX_CONCURRENT_CALLS_PER_PROVIDER) {
-      const batch = jobs.slice(offset, offset + MAX_CONCURRENT_CALLS_PER_PROVIDER);
+    const [primary, ...remaining] = jobs;
+    if (!primary) return;
+    try {
+      results[primary.index] = { status: "fulfilled", value: await work(primary.employee) };
+    } catch (reason) {
+      results[primary.index] = { status: "rejected", reason };
+      remaining.forEach(({ index }) => { results[index] = { status: "skipped", reason }; });
+      return;
+    }
+    for (let offset = 0; offset < remaining.length; offset += MAX_CONCURRENT_CALLS_PER_PROVIDER) {
+      const batch = remaining.slice(offset, offset + MAX_CONCURRENT_CALLS_PER_PROVIDER);
       await Promise.all(batch.map(async ({ employee, index }) => {
         try {
           results[index] = { status: "fulfilled", value: await work(employee) };
@@ -230,6 +247,11 @@ export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work
 
 export function remainingRoundEmployees(employees: EmployeeId[], failedEmployees: ReadonlySet<EmployeeId>) {
   return employees.filter((employee) => !failedEmployees.has(employee));
+}
+
+export function providerAvailabilityNotice(failedEmployees: ReadonlySet<EmployeeId>) {
+  const labels = Array.from(new Set(Array.from(failedEmployees).map((employee) => getProviderAdapter(getEmployeeProvider(employee)).label))).join(", ");
+  return `Provider availability notice: ${labels} did not respond for this meeting. The plan uses only completed research; reconnect or choose a fallback on the Service Floor before assigning corrective work.`;
 }
 
 async function synthesizePlan(meetingId: string, task: string, messages: Array<{ employee: EmployeeId; content: string }>): Promise<TeamProposal> {

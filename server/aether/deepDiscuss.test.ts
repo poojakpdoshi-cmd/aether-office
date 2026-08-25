@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTaskCapabilities, parseProposal, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
+import { classifyTaskCapabilities, parseProposal, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
 import { resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -58,6 +58,22 @@ describe("DeepDiscuss selection and proposal parsing", () => {
 
   it("does not retry a provider with a verified failure in later discussion rounds", () => {
     expect(remainingRoundEmployees(["Manus", "Gemini", "Mistral"], new Set(["Gemini"]))).toEqual(["Manus", "Mistral"]);
+  });
+
+  it("skips duplicate worker profiles after their shared provider has a verified failure", async () => {
+    const attempted: string[] = [];
+    const outcomes = await settleConcurrentRoundJobs(["Gemini", "Gemini Worker 1", "Gemini Worker 2"], async (employee) => {
+      attempted.push(employee);
+      throw new Error("configured provider unavailable");
+    });
+    expect(attempted).toEqual(["Gemini"]);
+    expect(outcomes.map((outcome) => outcome.status)).toEqual(["rejected", "skipped", "skipped"]);
+  });
+
+  it("renders one provider availability notice without duplicate worker-profile names", () => {
+    const notice = providerAvailabilityNotice(new Set(["Gemini", "Gemini Worker 1", "Gemini Worker 2"]));
+    expect(notice).toContain("Gemini did not respond");
+    expect(notice).not.toContain("Worker");
   });
 
   it("classifies task domains before selecting role-aligned employees", () => {

@@ -322,3 +322,6 @@
 - [x] Reproduce and diagnose the live "No provider completed the analysis round" manager-meeting failure without exposing keys.
 - [x] Repair any verified provider configuration, selection, timeout, or error-reporting defect that blocks real meeting research.
 - [x] Add provider-round regression coverage and validate a real configured-provider meeting path or report the exact external provider prerequisite.
+- [x] Deduplicate same-provider worker profiles during a meeting after the provider has a verified unavailable response.
+- [x] Replace repeated Guardian provider-error details with one concise, truthful, actionable provider availability notice.
+- [x] Add regression and real-meeting validation for provider-level fallback and concise Guardian presentation.

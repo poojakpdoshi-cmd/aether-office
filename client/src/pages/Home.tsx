@@ -428,7 +428,7 @@ export default function Home() {
   const providerStatuses = providerQuery.data ?? [];
   const configuredCount = providerStatuses.filter((provider) => provider.configured).length;
   const dashboard = dashboardQuery.data;
-  const latestMeeting = dashboard?.meetings[0];
+  const latestMeeting = dashboard?.meetings.slice().sort((left, right) => right.updatedAt - left.updatedAt)[0];
   const configuredProviderIds = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id));
   const setupRequiredEmployeeIds = new Set(dashboard?.setupRequiredEmployeeIds ?? []);
   const employeeDisplayStatus = (employee: { id: string; status: EmployeeStatus }): EmployeeStatus | "SETUP REQUIRED" => setupRequiredEmployeeIds.has(employee.id) ? "SETUP REQUIRED" : employee.status;
