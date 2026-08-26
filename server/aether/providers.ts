@@ -19,10 +19,35 @@ export type ProviderAdapter = {
   id: ProviderId;
   label: string;
   isConfigured: () => Promise<boolean>;
-  generate: (input: { system: string; user: string }) => Promise<string>;
+  generate: (input: { system: string; user: string; maxTokens?: number }) => Promise<string>;
 };
 
 type ProviderConfigurationInput = { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean; verifiedAt?: number };
+
+const MAX_RATE_LIMIT_RETRIES = 2;
+const MAX_RATE_LIMIT_DELAY_MS = 8_000;
+
+export function rateLimitRetryDelayMs(response: Response, retryIndex: number) {
+  const retryAfter = response.headers.get("retry-after");
+  const retryAfterSeconds = retryAfter === null ? Number.NaN : Number(retryAfter);
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds >= 0) return Math.min(retryAfterSeconds * 1_000, MAX_RATE_LIMIT_DELAY_MS);
+  return Math.min(1_000 * 2 ** retryIndex, MAX_RATE_LIMIT_DELAY_MS);
+}
+
+async function fetchWithRateLimitRetry(url: string, init: RequestInit) {
+  for (let retryIndex = 0; ; retryIndex += 1) {
+    let response: Response;
+    try {
+      response = await fetch(url, { ...init, signal: AbortSignal.timeout(providerRequestTimeoutMs()) });
+    } catch (error) {
+      if (retryIndex >= MAX_RATE_LIMIT_RETRIES) throw error;
+      await new Promise<void>((resolve) => setTimeout(resolve, Math.min(1_000 * 2 ** retryIndex, MAX_RATE_LIMIT_DELAY_MS)));
+      continue;
+    }
+    if (response.status !== 429 || retryIndex >= MAX_RATE_LIMIT_RETRIES) return response;
+    await new Promise<void>((resolve) => setTimeout(resolve, rateLimitRetryDelayMs(response, retryIndex)));
+  }
+}
 
 const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured" | "verified">> = {
   manus: { id: "manus", label: "Manus", route: "built-in", availability: "ready" },
@@ -76,7 +101,7 @@ const manusAdapter: ProviderAdapter = {
   },
 };
 
-function providerRequestTimeoutMs() {
+export function providerRequestTimeoutMs() {
   const configured = Number.parseInt(process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS || "", 10);
   return Number.isFinite(configured) && configured >= 1_000 && configured <= 60_000 ? configured : 12_000;
 }
@@ -87,11 +112,11 @@ function directAdapter(provider: ProviderId): ProviderAdapter {
     id: provider,
     label: metadata.label,
     isConfigured: async () => Boolean(await getEffectiveProviderConfig(provider)),
-    generate: async ({ system, user }) => {
+    generate: async ({ system, user, maxTokens }) => {
       const config = await getEffectiveProviderConfig(provider);
       if (!config) throw new Error(`${metadata.label} is not configured.`);
       if (!config.baseUrl || !config.model) throw new Error(`${metadata.label} needs a model and chat-completions endpoint before it can join a meeting.`);
-      const response = await fetch(config.baseUrl, {
+      const response = await fetchWithRateLimitRetry(config.baseUrl, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -104,8 +129,8 @@ function directAdapter(provider: ProviderId): ProviderAdapter {
             { role: "user", content: user },
           ],
           temperature: 0.35,
+          ...(provider === "openrouter" ? { max_tokens: maxTokens ?? 1024 } : {}),
         }),
-        signal: AbortSignal.timeout(providerRequestTimeoutMs()),
       });
       if (!response.ok) throw new Error(`${metadata.label} request failed with status ${response.status}.`);
       const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -181,7 +206,7 @@ export async function resolveEmployeeProvider(employee: EmployeeId): Promise<Pro
   return (await getVerifiedManagerFallbackProvider()) ?? assigned;
 }
 
-export async function generateForEmployee(employee: EmployeeId, input: { system: string; user: string }): Promise<string> {
+export async function generateForEmployee(employee: EmployeeId, input: { system: string; user: string; maxTokens?: number }): Promise<string> {
   const assignedProvider = getEmployeeProvider(employee);
   const provider = await resolveEmployeeProvider(employee);
   if (assignedProvider === "manus" && provider === "manus") {
@@ -197,11 +222,10 @@ export async function generateForEmployee(employee: EmployeeId, input: { system:
   if (provider !== "openrouter" || !profile?.model) return getProviderAdapter(provider).generate(input);
   const config = await getEffectiveProviderConfig("openrouter");
   if (!config?.baseUrl) throw new Error("OpenRouter is not configured.");
-  const response = await fetch(config.baseUrl, {
+  const response = await fetchWithRateLimitRetry(config.baseUrl, {
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${config.apiKey}` },
-    body: JSON.stringify({ model: profile.model, messages: [{ role: "system", content: input.system }, { role: "user", content: input.user }], temperature: 0.35 }),
-    signal: AbortSignal.timeout(providerRequestTimeoutMs()),
+    body: JSON.stringify({ model: profile.model, messages: [{ role: "system", content: input.system }, { role: "user", content: input.user }], temperature: 0.35, max_tokens: input.maxTokens ?? 1024 }),
   });
   if (response.status === 429) throw new Error("OpenRouter is rate-limiting this local meeting. Wait for the provider limit to reset, then start a new owner-approved meeting.");
   if (!response.ok) throw new Error(`OpenRouter model ${profile.model} is currently unavailable (${response.status}).`);
@@ -258,21 +282,24 @@ async function verifyProviderConfiguration(input: ProviderConfigurationInput) {
   const model = input.model?.trim() || defaults?.model;
   if (!baseUrl || !model) throw new Error(`${metadata.label} needs a chat-completions endpoint and model before it can be verified.`);
 
-  let response: Response;
-  try {
-    response = await fetch(baseUrl, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${input.apiKey.trim()}` },
-      body: JSON.stringify({ model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: input.provider === "openrouter" ? 128 : 8, temperature: 0 }),
-      signal: AbortSignal.timeout(12_000),
-    });
-  } catch {
-    throw new Error(`${metadata.label} could not be reached. Check the local network and endpoint, then try again.`);
+  const completionBudgets = input.provider === "openrouter" ? [128, 512] : [8];
+  for (const maxTokens of completionBudgets) {
+    let response: Response;
+    try {
+      response = await fetchWithRateLimitRetry(baseUrl, {
+        method: "POST",
+        headers: { "content-type": "application/json", authorization: `Bearer ${input.apiKey.trim()}` },
+        body: JSON.stringify({ model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: maxTokens, temperature: 0 }),
+      });
+    } catch {
+      throw new Error(`${metadata.label} could not be reached. Check the local network and endpoint, then try again.`);
+    }
+    if (response.status === 429) throw new Error(`${metadata.label} is rate-limiting verification. Wait for the provider limit to reset, then use Re-verify key; no key was saved.`);
+    if (!response.ok) throw new Error(`${metadata.label} rejected the configuration (status ${response.status}). Check the key, model, and account access, then try again.`);
+    const payload = await response.json().catch(() => undefined) as { choices?: Array<{ message?: { content?: string } }> } | undefined;
+    if (payload?.choices?.[0]?.message?.content?.trim()) return;
   }
-  if (response.status === 429) throw new Error(`${metadata.label} is rate-limiting verification. Wait for the provider limit to reset, then use Re-verify key; no key was saved.`);
-  if (!response.ok) throw new Error(`${metadata.label} rejected the configuration (status ${response.status}). Check the key, model, and account access, then try again.`);
-  const payload = await response.json().catch(() => undefined) as { choices?: Array<{ message?: { content?: string } }> } | undefined;
-  if (!payload?.choices?.[0]?.message?.content?.trim()) throw new Error(`${metadata.label} returned no chat completion during verification. Check the selected model and endpoint, then try again.`);
+  throw new Error(`${metadata.label} returned no chat completion during verification. Check the selected model and endpoint, then try again.`);
 }
 
 async function getEffectiveProviderConfig(provider: ProviderId): Promise<EffectiveProviderConfig | undefined> {

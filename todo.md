@@ -356,6 +356,13 @@
 - [ ] Re-run the bounded three-employee OpenRouter meeting after the external OpenRouter 429 rate limit clears, then confirm only the resulting owner-reviewable proposal; do not auto-approve or perform workspace work.
 - [x] Retry the isolated three-employee difficult planning meeting on the owner-authorized current OpenRouter free route after a safe availability recheck.
 - [x] Recheck the OpenRouter free route after an extended cooldown and record the repeated HTTP 429 without attempting further multi-employee work.
+- [x] Capture safe OpenRouter rate-limit metadata and implement bounded retry/backoff behavior that never fabricates provider success or exposes credentials.
+- [x] Preserve real free-model synthesis content when it is label-structured rather than strict JSON, while rejecting incomplete proposals.
+- [x] Normalize complete snake_case free-model synthesis schemas without accepting missing required proposal fields.
+- [x] Inspect safe free-route completion metadata for DeepDiscuss-sized prompts and repair repeatable empty-completion behavior without logging content.
+- [x] Pace same-provider OpenRouter free-route employees without removing concurrency for other configured providers, then retest the real planning meeting.
+- [x] Preserve successful analysis evidence when all providers fail a later critique round, then retry owner-reviewable synthesis without fabricating missing discussion work.
+- [x] Give strict OpenRouter free-route synthesis a larger bounded completion budget than ordinary discussion rounds, then retest the real owner-reviewable proposal.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.

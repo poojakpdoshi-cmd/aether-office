@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTaskCapabilities, mayContinueAfterRoundFailure, parseProposal, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
+import { classifyTaskCapabilities, mayContinueAfterRoundFailure, parseProposal, providerConcurrency, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
 import { provisionOpenRouterProfiles, resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -23,6 +23,16 @@ describe("DeepDiscuss selection and proposal parsing", () => {
 
   it("rejects incomplete proposal JSON instead of fabricating a plan", () => {
     expect(() => parseProposal('{"objective":"Only title"}', "Fallback")).toThrow("incomplete TEAM PROPOSAL");
+  });
+
+  it("accepts complete labeled proposal sections when a free model does not return strict JSON", () => {
+    const proposal = parseProposal(`Objective: Secure local workspace\nTech Stack:\n- React\n- Express\nFiles to Create/Modify:\n- server/aether/providers.ts\nRisks:\n- Provider quota\nConfidence: 74%`, "Fallback");
+    expect(proposal).toMatchObject({ objective: "Secure local workspace", techStack: ["React", "Express"], filesToCreateModify: ["server/aether/providers.ts"], risks: ["Provider quota"], confidencePercent: 74 });
+  });
+
+  it("accepts complete snake_case proposal fields returned by compatible free models", () => {
+    const proposal = parseProposal(JSON.stringify({ summary: "Secure local workspace", tech_stack: ["React"], files_to_create_modify: ["server/aether/deepDiscuss.ts"], risk_assessment: ["Provider quota"], confidence_percent: 81 }), "Fallback");
+    expect(proposal).toMatchObject({ objective: "Secure local workspace", techStack: ["React"], filesToCreateModify: ["server/aether/deepDiscuss.ts"], risks: ["Provider quota"], confidencePercent: 81 });
   });
 
   it("uses an active discussion teammate for synthesis after temporary Manus expires", () => {
@@ -60,8 +70,10 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     expect(remainingRoundEmployees(["Manus", "Gemini", "Mistral"], new Set(["Gemini"]))).toEqual(["Manus", "Mistral"]);
   });
 
-  it("allows synthesis after an all-failed debate only when genuine earlier research exists", () => {
+  it("allows synthesis after an all-failed later round only when genuine earlier research exists", () => {
     expect(mayContinueAfterRoundFailure("analysis", 3)).toBe(false);
+    expect(mayContinueAfterRoundFailure("critique", 0)).toBe(false);
+    expect(mayContinueAfterRoundFailure("critique", 3)).toBe(true);
     expect(mayContinueAfterRoundFailure("debate", 0)).toBe(false);
     expect(mayContinueAfterRoundFailure("debate", 3)).toBe(true);
   });
@@ -124,5 +136,11 @@ describe("DeepDiscuss selection and proposal parsing", () => {
     });
     expect(maximumMistral).toBe(2);
     expect(outcomes.every((outcome) => outcome.status === "fulfilled")).toBe(true);
+  });
+
+  it("serializes provisioned OpenRouter free-route profiles to avoid a provider burst", async () => {
+    resetStateForTests();
+    const workers = provisionOpenRouterProfiles("openrouter/free", 3).created.map((employee) => employee.id);
+    expect(providerConcurrency(workers)).toBe(1);
   });
 });

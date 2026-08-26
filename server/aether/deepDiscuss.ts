@@ -99,7 +99,7 @@ export async function runDeepDiscuss(task: string) {
 
     const analysis = meeting.messages.filter((message) => message.round === "analysis");
     const critiqueEmployees = remainingRoundEmployees(selectedEmployees, failedEmployees);
-    const critiqueOutcome = await runRound(meeting.id, task, critiqueEmployees, "critique", analysis);
+    const critiqueOutcome = await runRound(meeting.id, task, critiqueEmployees, "critique", analysis, { allowAllFailed: mayContinueAfterRoundFailure("critique", analysis.length) });
     critiqueOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const critique = meeting.messages.filter((message) => message.round === "critique");
@@ -207,7 +207,7 @@ async function runRound(
 }
 
 export function mayContinueAfterRoundFailure(round: Exclude<DeepDiscussRound, "synthesis">, completedEarlierMessages: number) {
-  return round === "debate" && completedEarlierMessages > 0;
+  return round !== "analysis" && completedEarlierMessages > 0;
 }
 
 export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {
@@ -236,8 +236,9 @@ export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work
       remaining.forEach(({ index }) => { results[index] = { status: "skipped", reason }; });
       return;
     }
-    for (let offset = 0; offset < remaining.length; offset += MAX_CONCURRENT_CALLS_PER_PROVIDER) {
-      const batch = remaining.slice(offset, offset + MAX_CONCURRENT_CALLS_PER_PROVIDER);
+    const concurrency = providerConcurrency(jobs.map(({ employee }) => employee));
+    for (let offset = 0; offset < remaining.length; offset += concurrency) {
+      const batch = remaining.slice(offset, offset + concurrency);
       await Promise.all(batch.map(async ({ employee, index }) => {
         try {
           results[index] = { status: "fulfilled", value: await work(employee) };
@@ -248,6 +249,12 @@ export async function settleConcurrentRoundJobs<T>(employees: EmployeeId[], work
     }
   }));
   return results;
+}
+
+export function providerConcurrency(employees: EmployeeId[]) {
+  const state = getDashboardState();
+  const usesFreeOpenRouterRoute = employees.some((employee) => getEmployeeProvider(employee) === "openrouter" && state.employees.find((profile) => profile.id === employee)?.model === "openrouter/free");
+  return usesFreeOpenRouterRoute ? 1 : MAX_CONCURRENT_CALLS_PER_PROVIDER;
 }
 
 export function remainingRoundEmployees(employees: EmployeeId[], failedEmployees: ReadonlySet<EmployeeId>) {
@@ -270,6 +277,7 @@ async function synthesizePlan(meetingId: string, task: string, messages: Array<{
       const content = await withProviderRoundDeadline(generateForEmployee(synthesisEmployee, {
         system: "You are the active AI company meeting synthesizer. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
         user: `Owner task:\n${task}\n\nTeam discussion:\n${source}`,
+        maxTokens: 2048,
       }), synthesisEmployee, "synthesis");
       const proposal = parseProposal(content, task);
       addDiscussionMessage(meetingId, { employee: synthesisEmployee, provider, round: "synthesis", content: JSON.stringify(proposal) });
@@ -300,18 +308,58 @@ export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employ
 
 export function parseProposal(content: string, fallbackObjective: string): TeamProposal {
   const json = content.match(/\{[\s\S]*\}/)?.[0];
-  if (!json) throw new Error("Manus did not return a structured TEAM PROPOSAL.");
-  const parsed = JSON.parse(json) as Partial<TeamProposal>;
-  if (!Array.isArray(parsed.techStack) || !Array.isArray(parsed.filesToCreateModify) || !Array.isArray(parsed.risks)) {
-    throw new Error("Manus returned an incomplete TEAM PROPOSAL.");
+  let incompleteJson = false;
+  if (json) {
+    try {
+      const parsed = normalizeProposalKeys(JSON.parse(json) as Partial<TeamProposal> & Record<string, unknown>);
+      if (Array.isArray(parsed.techStack) && Array.isArray(parsed.filesToCreateModify) && Array.isArray(parsed.risks)) {
+        return normalizedProposal(parsed, fallbackObjective);
+      }
+      incompleteJson = true;
+    } catch {
+      // Free-model output may contain braces outside a valid JSON proposal; try exact labeled sections below.
+    }
   }
+  const labeled = parseLabeledProposal(content);
+  if (!labeled) throw new Error(incompleteJson ? "Manus returned an incomplete TEAM PROPOSAL." : "The provider did not return a complete structured TEAM PROPOSAL.");
+  return normalizedProposal(labeled, fallbackObjective);
+}
+
+function normalizedProposal(parsed: Partial<TeamProposal>, fallbackObjective: string): TeamProposal {
   return {
     objective: typeof parsed.objective === "string" && parsed.objective.trim() ? parsed.objective : fallbackObjective,
-    techStack: parsed.techStack.map(String).slice(0, 12),
-    filesToCreateModify: parsed.filesToCreateModify.map(String).slice(0, 30),
-    risks: parsed.risks.map(String).slice(0, 12),
+    techStack: (parsed.techStack ?? []).map(String).slice(0, 12),
+    filesToCreateModify: (parsed.filesToCreateModify ?? []).map(String).slice(0, 30),
+    risks: (parsed.risks ?? []).map(String).slice(0, 12),
     confidencePercent: Math.min(100, Math.max(0, Math.round(Number(parsed.confidencePercent) || 0))),
   };
+}
+
+function normalizeProposalKeys(parsed: Partial<TeamProposal> & Record<string, unknown>): Partial<TeamProposal> {
+  const value = (...keys: string[]) => keys.map((key) => parsed[key]).find((candidate) => candidate !== undefined);
+  return {
+    objective: value("objective", "summary", "plan") as string | undefined,
+    techStack: value("techStack", "tech_stack", "technologyStack", "technology_stack", "technologies") as string[] | undefined,
+    filesToCreateModify: value("filesToCreateModify", "files_to_create_modify", "files", "filesToModify", "files_to_modify") as string[] | undefined,
+    risks: value("risks", "risk_assessment", "riskAssessment") as string[] | undefined,
+    confidencePercent: value("confidencePercent", "confidence_percent", "confidence", "confidence_score") as number | undefined,
+  };
+}
+
+function parseLabeledProposal(content: string): Partial<TeamProposal> | undefined {
+  const section = (labels: string[]) => {
+    const labelExpression = labels.map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+    const match = content.match(new RegExp(`(?:^|\\n)\\s*(?:[#>*_ -]*\\s*)?(?:${labelExpression})\\s*[:\\-]\\s*([\\s\\S]*?)(?=\\n\\s*(?:[#>*_ -]*\\s*)?(?:objective|tech(?:nology)? stack|files?(?: to create| to modify|\\s*\/\\s*modify)?|risks?|confidence(?: percent| score)?)[\\s:\\-]|$)`, "i"));
+    return match?.[1]?.trim();
+  };
+  const list = (value: string | undefined) => value?.split(/\n|;/).map((item) => item.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim()).filter(Boolean) ?? [];
+  const objective = section(["objective"]);
+  const techStack = list(section(["tech stack", "technology stack"]));
+  const filesToCreateModify = list(section(["files to create/modify", "files to create", "files to modify", "files"]));
+  const risks = list(section(["risks", "risk"]));
+  const confidence = section(["confidence percent", "confidence score", "confidence"]);
+  if (!objective || !techStack.length || !filesToCreateModify.length || !risks.length || !confidence) return undefined;
+  return { objective, techStack, filesToCreateModify, risks, confidencePercent: Number(confidence.match(/\d+/)?.[0]) };
 }
 
 export async function inspectVisualReference(dataUrl: string, prompt: string) {

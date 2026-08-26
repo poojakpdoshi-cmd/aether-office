@@ -2,8 +2,9 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { configureProvider, generateForEmployee, getEmployeeProvider, getProviderDefaults, isEmployeeAvailable, listProviderStatuses, recognizeProviderKey, resolveEmployeeProvider, reverifyConfiguredProvider } from "./providers";
+import { configureProvider, generateForEmployee, getEmployeeProvider, getProviderDefaults, isEmployeeAvailable, listProviderStatuses, providerRequestTimeoutMs, rateLimitRetryDelayMs, recognizeProviderKey, resolveEmployeeProvider, reverifyConfiguredProvider } from "./providers";
 import { readProviderConfig } from "./vault";
+import { provisionOpenRouterProfiles, resetStateForTests } from "./state";
 
 describe("recognizeProviderKey", () => {
   it("recognizes only provider prefixes that are safe to identify without probing multiple services", () => {
@@ -147,6 +148,63 @@ describe("recognizeProviderKey", () => {
     }
   });
 
+  it("honors a bounded Retry-After delay and retries a transient OpenRouter verification limit", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-retry-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    let attempts = 0;
+    globalThis.fetch = async () => {
+      attempts += 1;
+      if (attempts === 1) return new Response(JSON.stringify({ error: "rate limit" }), { status: 429, headers: { "retry-after": "0" } });
+      return new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    try {
+      await configureProvider({ provider: "openrouter", apiKey: "retry-openrouter-key", model: "openrouter/free" }, { verifyConnection: true });
+      expect(attempts).toBe(2);
+      expect(rateLimitRetryDelayMs(new Response(null, { headers: { "retry-after": "99" } }), 0)).toBe(8_000);
+      expect(rateLimitRetryDelayMs(new Response(null), 2)).toBe(4_000);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("retries a transient transport failure before treating OpenRouter as unreachable", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-network-retry-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    let attempts = 0;
+    globalThis.fetch = async () => {
+      attempts += 1;
+      if (attempts === 1) throw new TypeError("simulated transient transport failure");
+      return new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    try {
+      await configureProvider({ provider: "openrouter", apiKey: "network-retry-openrouter-key", model: "openrouter/free" }, { verifyConnection: true });
+      expect(attempts).toBe(2);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("uses the bounded DeepDiscuss deadline for each provider retry signal", () => {
+    const originalTimeout = process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS;
+    process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS = "20000";
+    try {
+      expect(providerRequestTimeoutMs()).toBe(20_000);
+    } finally {
+      if (originalTimeout === undefined) delete process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS;
+      else process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS = originalTimeout;
+    }
+  });
+
   it("persists a provider only after its selected endpoint returns a valid chat completion", async () => {
     const originalConfigHome = process.env.AETHER_CONFIG_HOME;
     const originalFetch = globalThis.fetch;
@@ -183,6 +241,55 @@ describe("recognizeProviderKey", () => {
       if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
       else process.env.AETHER_CONFIG_HOME = originalConfigHome;
       rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("retries only an empty OpenRouter handshake with a larger completion budget", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-empty-handshake-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    const budgets: unknown[] = [];
+    globalThis.fetch = async (_url, init) => {
+      budgets.push((JSON.parse(String(init?.body)) as { max_tokens?: unknown }).max_tokens);
+      const content = budgets.length === 1 ? "" : "OK";
+      return new Response(JSON.stringify({ choices: [{ message: { content } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    try {
+      await configureProvider({ provider: "openrouter", apiKey: "empty-handshake-openrouter-key", model: "openrouter/free" }, { verifyConnection: true });
+      expect(budgets).toEqual([128, 512]);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("sets a bounded completion budget for a provisioned OpenRouter free-route employee", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-generation-budget-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    resetStateForTests();
+    let requestBody: { max_tokens?: unknown } | undefined;
+    globalThis.fetch = async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body)) as { max_tokens?: unknown };
+      return new Response(JSON.stringify({ choices: [{ message: { content: "Planning response" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    try {
+      await configureProvider({ provider: "openrouter", apiKey: "generation-budget-openrouter-key", model: "openrouter/free" }, { verifyConnection: true });
+      const [worker] = provisionOpenRouterProfiles("openrouter/free", 1).created;
+      await generateForEmployee(worker!.id, { system: "Plan safely.", user: "Provide an observation." });
+      expect(requestBody?.max_tokens).toBe(1024);
+      await generateForEmployee(worker!.id, { system: "Synthesize safely.", user: "Return a complete plan.", maxTokens: 2048 });
+      expect(requestBody?.max_tokens).toBe(2048);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+      resetStateForTests();
     }
   });
 
