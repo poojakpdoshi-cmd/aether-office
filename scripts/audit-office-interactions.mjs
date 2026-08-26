@@ -58,6 +58,8 @@ try {
     }, expectedArtworkSource[style], { timeout: 15_000 });
     const artwork = await page.locator("img.real-office-backdrop").evaluate((image) => ({ source: image.getAttribute("src"), complete: image.complete, width: image.naturalWidth }));
     record(`${style} artwork loaded`, artwork.complete && artwork.width > 0, `Source: ${artwork.source ?? "missing"}; natural width: ${artwork.width}.`);
+    const activeAnimation = await page.locator("img.real-office-backdrop").evaluate((image) => getComputedStyle(image).animationName);
+    record(`${style} ambient animation active`, activeAnimation === `office-${style}-drift`, `Active image animation: ${activeAnimation}.`);
     await page.screenshot({ path: `${outputDirectory}/${style}-desktop.png`, fullPage: false });
   }
 

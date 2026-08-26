@@ -17,6 +17,20 @@
 .text-free-office .real-office-backdrop { z-index: 1; object-fit: cover; filter: saturate(.84) brightness(.96); }
 .office-animation-warm .real-office-backdrop { filter:saturate(.9) sepia(.08) brightness(1.04); }
 .office-animation-stealth .real-office-backdrop { filter:saturate(.82) hue-rotate(10deg) brightness(.72) contrast(1.08); }
+.real-office-stage::after { content:""; position:absolute; z-index:1; inset:-8%; pointer-events:none; opacity:0; }
+@media (prefers-reduced-motion: no-preference) {
+  .office-animation-metro .real-office-backdrop { will-change:transform; animation:office-metro-drift 15s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-warm .real-office-backdrop { will-change:transform; animation:office-warm-drift 18s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-stealth .real-office-backdrop { will-change:transform; animation:office-stealth-drift 12s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-warm .real-office-stage::after { background:radial-gradient(circle at 28% 12%,rgba(255,246,183,.20),transparent 28%),linear-gradient(110deg,transparent 34%,rgba(255,239,173,.11) 48%,transparent 62%); opacity:1; animation:office-warm-lantern 7s ease-in-out infinite alternate; }
+  .office-animation-stealth .real-office-stage::after { background:linear-gradient(112deg,transparent 34%,rgba(109,181,255,.13) 49%,transparent 64%),radial-gradient(circle at 70% 42%,rgba(245,180,93,.10),transparent 25%); opacity:1; animation:office-stealth-sweep 5.5s ease-in-out infinite alternate; }
+}
+@keyframes office-metro-drift { from { transform:scale(1.008) translate3d(-.25%,-.15%,0); } to { transform:scale(1.028) translate3d(.35%,.2%,0); } }
+@keyframes office-warm-drift { from { transform:scale(1.012) translate3d(.3%,.15%,0); } to { transform:scale(1.035) translate3d(-.3%,-.2%,0); } }
+@keyframes office-stealth-drift { from { transform:scale(1.014) translate3d(-.35%,.2%,0); } to { transform:scale(1.04) translate3d(.25%,-.25%,0); } }
+@keyframes office-warm-lantern { from { transform:translate3d(-1.5%,0,0); filter:brightness(.94); } to { transform:translate3d(1.5%,.6%,0); filter:brightness(1.1); } }
+@keyframes office-stealth-sweep { from { transform:translate3d(-3%,.5%,0); opacity:.5; } to { transform:translate3d(3%,-.5%,0); opacity:1; } }
+@media (prefers-reduced-motion: reduce) { .office-animation-metro .real-office-backdrop, .office-animation-warm .real-office-backdrop, .office-animation-stealth .real-office-backdrop, .real-office-stage::after { animation:none !important; } }
 .office-animation-picker { position:absolute; z-index:20; top:10px; right:10px; display:flex; align-items:center; gap:7px; border:1.5px solid #253637; border-radius:3px; background:rgba(255,248,233,.94); box-shadow:3px 3px 0 rgba(37,54,55,.85); padding:6px 7px; color:#253637; }
 .office-animation-picker label { font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
 .office-animation-picker select { border:1px solid #77887d; border-radius:2px; background:#fffdf4; color:#253637; padding:3px 5px; font-size:10px; font-weight:700; outline:none; }

@@ -20,4 +20,14 @@ describe("office motion performance", () => {
     expect(officeSource).not.toContain('office-walking-person');
     expect(officeStyles).not.toContain("office-walking-person");
   });
+
+  it("adds three transform-only ambient office treatments without restoring a synthetic worker overlay", () => {
+    expect(officeStyles).toContain(".office-animation-metro .real-office-backdrop { will-change:transform; animation:office-metro-drift");
+    expect(officeStyles).toContain(".office-animation-warm .real-office-backdrop { will-change:transform; animation:office-warm-drift");
+    expect(officeStyles).toContain(".office-animation-stealth .real-office-backdrop { will-change:transform; animation:office-stealth-drift");
+    expect(officeStyles).toContain(".office-animation-warm .real-office-stage::after");
+    expect(officeStyles).toContain(".office-animation-stealth .real-office-stage::after");
+    expect(officeStyles).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(officeStyles).not.toContain("office-anime-walker");
+  });
 });
