@@ -76,6 +76,11 @@ const manusAdapter: ProviderAdapter = {
   },
 };
 
+function providerRequestTimeoutMs() {
+  const configured = Number.parseInt(process.env.AETHER_DEEP_DISCUSS_TIMEOUT_MS || "", 10);
+  return Number.isFinite(configured) && configured >= 1_000 && configured <= 60_000 ? configured : 12_000;
+}
+
 function directAdapter(provider: ProviderId): ProviderAdapter {
   const metadata = providerMeta[provider];
   return {
@@ -100,7 +105,7 @@ function directAdapter(provider: ProviderId): ProviderAdapter {
           ],
           temperature: 0.35,
         }),
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(providerRequestTimeoutMs()),
       });
       if (!response.ok) throw new Error(`${metadata.label} request failed with status ${response.status}.`);
       const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -196,6 +201,7 @@ export async function generateForEmployee(employee: EmployeeId, input: { system:
     method: "POST",
     headers: { "content-type": "application/json", authorization: `Bearer ${config.apiKey}` },
     body: JSON.stringify({ model: profile.model, messages: [{ role: "system", content: input.system }, { role: "user", content: input.user }], temperature: 0.35 }),
+    signal: AbortSignal.timeout(providerRequestTimeoutMs()),
   });
   if (!response.ok) throw new Error(`OpenRouter model ${profile.model} is currently unavailable (${response.status}).`);
   const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -256,7 +262,7 @@ async function verifyProviderConfiguration(input: ProviderConfigurationInput) {
     response = await fetch(baseUrl, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${input.apiKey.trim()}` },
-      body: JSON.stringify({ model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: 8, temperature: 0 }),
+      body: JSON.stringify({ model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: input.provider === "openrouter" ? 128 : 8, temperature: 0 }),
       signal: AbortSignal.timeout(12_000),
     });
   } catch {

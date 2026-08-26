@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { classifyTaskCapabilities, parseProposal, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
-import { resetStateForTests, setTemporaryUntilForTests } from "./state";
+import { provisionOpenRouterProfiles, resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
   it("selects only relevant staff for a frontend security task", () => {
@@ -84,6 +84,12 @@ describe("DeepDiscuss selection and proposal parsing", () => {
   it("prefers latency-priority active contributors for synthesis with ordered fallback", () => {
     resetStateForTests();
     expect(selectLatencyPrioritySynthesisEmployees([{ employee: "DeepSeek" }, { employee: "Gemini" }, { employee: "SambaNova" }])).toEqual(["SambaNova", "Gemini", "DeepSeek"]);
+  });
+
+  it("uses a successful dynamically provisioned OpenRouter worker when no named employee contributed", () => {
+    resetStateForTests();
+    const [worker] = provisionOpenRouterProfiles("openrouter/free", 1).created;
+    expect(selectLatencyPrioritySynthesisEmployees([{ employee: worker!.id }])).toEqual([worker!.id]);
   });
 
   it("bounds a slow provider response so the round can settle and continue", async () => {

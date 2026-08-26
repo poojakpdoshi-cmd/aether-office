@@ -148,6 +148,27 @@ describe("recognizeProviderKey", () => {
     }
   });
 
+  it("gives the OpenRouter handshake enough tokens for free routes that emit reasoning before text", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-verification-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    let requestBody: { max_tokens?: unknown } | undefined;
+    globalThis.fetch = async (_url, init) => {
+      requestBody = JSON.parse(String(init?.body)) as { max_tokens?: unknown };
+      return new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    };
+    try {
+      await configureProvider({ provider: "openrouter", apiKey: "openrouter-test-key", model: "openrouter/free" }, { verifyConnection: true });
+      expect(requestBody?.max_tokens).toBe(128);
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
   it("uses a verified external provider for the local manager when the Manus runtime is unavailable", async () => {
     const originalConfigHome = process.env.AETHER_CONFIG_HOME;
     const originalForgeKey = process.env.BUILT_IN_FORGE_API_KEY;

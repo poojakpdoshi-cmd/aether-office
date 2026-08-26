@@ -288,7 +288,9 @@ export function selectSynthesisEmployee(messages: Array<{ employee: EmployeeId }
 export function selectLatencyPrioritySynthesisEmployees(messages: Array<{ employee: EmployeeId }>) {
   const contributors = new Set(messages.map((message) => message.employee));
   const latencyPriority: EmployeeId[] = ["Manus", "Atlas", "Nova", "Sentinel", "SambaNova", "Gemini", "North Mini Code", "Mistral", "DeepSeek", "Grok", "Nemotron 3 Ultra", "Devstral Small 2"];
-  return latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
+  const prioritized = latencyPriority.filter((employee) => contributors.has(employee) && isEmployeeActive(employee));
+  const remainingContributors = Array.from(contributors).filter((employee) => !prioritized.includes(employee) && isEmployeeActive(employee));
+  return [...prioritized, ...remainingContributors];
 }
 
 export function parseProposal(content: string, fallbackObjective: string): TeamProposal {
