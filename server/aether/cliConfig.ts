@@ -67,7 +67,7 @@ export async function configureCliProvider(input: {
     ...(input.baseUrl ? { baseUrl: input.baseUrl } : {}),
     ...(input.model ? { model: input.model } : {}),
     ...(input.compatibilityAcknowledged ? { compatibilityAcknowledged: true } : {}),
-  });
+  }, { verifyConnection: true });
 }
 
 export async function testCliProviderConfiguration(provider: Exclude<ProviderId, "manus">) {

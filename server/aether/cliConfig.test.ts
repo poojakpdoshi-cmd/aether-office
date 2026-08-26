@@ -25,12 +25,18 @@ describe("terminal provider setup bridge", () => {
     const directory = mkdtempSync(join(tmpdir(), "aether-cli-config-"));
     temporaryHomes.push(directory);
     process.env.AETHER_CONFIG_HOME = directory;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
 
-    const status = await configureCliProvider({ provider: "nemotron", apiKey: "nvidia-test-key" });
+    try {
+      const status = await configureCliProvider({ provider: "nemotron", apiKey: "nvidia-test-key" });
 
-    expect(status).toMatchObject({ id: "nemotron", configured: true, secretEnvironmentVariable: "NVIDIA_API_KEY" });
-    expect(JSON.stringify(status)).not.toContain("nvidia-test-key");
-    await expect(hasConfiguredExternalProvider()).resolves.toBe(true);
+      expect(status).toMatchObject({ id: "nemotron", configured: true, secretEnvironmentVariable: "NVIDIA_API_KEY" });
+      expect(JSON.stringify(status)).not.toContain("nvidia-test-key");
+      await expect(hasConfiguredExternalProvider()).resolves.toBe(true);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it("requires the existing explicit acknowledgement before saving Devstral Small 2", async () => {

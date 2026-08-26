@@ -38,4 +38,10 @@ describe("AetherOffice non-default workspace controls", () => {
     expect(homeSource).toContain("animationStyle={officeAnimationStyle}");
     expect(homeSource).toContain("onAnimationStyleChange={setOfficeAnimationStyle}");
   });
+
+  it("requires provider verification before saving and surfaces the safe backend failure reason", () => {
+    expect(homeSource).toContain('configureProviderMutation.isPending ? "Verifying…" : "Verify & save"');
+    expect(homeSource).toContain("configureProviderMutation.error.message");
+    expect(homeSource).not.toContain("The provider could not be saved. Check the local configuration and try again.");
+  });
 });

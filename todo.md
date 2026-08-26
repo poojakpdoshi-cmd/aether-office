@@ -341,3 +341,5 @@
 - [x] Provide three distinct selectable office visual directions, including the warm Japanese-room and dark stealth-room references supplied by the owner.
 - [x] Persist the selected visual direction locally and preserve every room, computer, manager, research, and service-floor interaction across styles.
 - [x] Add style-selector regression coverage and validate all three styles on desktop and mobile.
+- [x] Diagnose and repair the reported failure after local provider API-key configuration without exposing keys or falsely marking a provider as usable.
+- [x] Add safe regression coverage for the repaired configured-provider launch and meeting path.

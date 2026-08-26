@@ -42,7 +42,7 @@ export const appRouter = router({
     provisionOpenRouterProfiles: ownerProcedure.input(z.object({ model: z.string().trim().min(3).max(160), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === "openrouter"); if (!status?.configured) throw new Error("Configure the encrypted OpenRouter key before creating OpenRouter employee profiles."); return provisionOpenRouterProfiles(input.model, input.count); }),
     configureProvider: ownerProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
-      .mutation(({ input }) => configureProvider(input)),
+      .mutation(({ input }) => configureProvider(input, { verifyConnection: true })),
     recognizeEmployee: ownerProcedure
       .input(z.object({ apiKey: z.string().trim().min(8).max(1000) }))
       .mutation(({ input }) => recognizeAndConfigureProvider(input.apiKey)),

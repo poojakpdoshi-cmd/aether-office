@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { configureProvider, getEmployeeProvider, getProviderDefaults, listProviderStatuses, recognizeProviderKey } from "./providers";
+import { readProviderConfig } from "./vault";
 
 describe("recognizeProviderKey", () => {
   it("recognizes only provider prefixes that are safe to identify without probing multiple services", () => {
@@ -72,6 +73,41 @@ describe("recognizeProviderKey", () => {
         model: "gemini-3.7-flash",
       });
     } finally {
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("verifies a provider before persisting it and keeps rejected credentials out of the vault", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-provider-verification-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: "invalid key" }), { status: 401 });
+    try {
+      await expect(configureProvider({ provider: "gemini", apiKey: "invalid-key", ...getProviderDefaults("gemini") }, { verifyConnection: true })).rejects.toThrow("Gemini rejected the configuration (status 401)");
+      expect(await readProviderConfig("gemini")).toBeUndefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("persists a provider only after its selected endpoint returns a valid chat completion", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-provider-verified-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    try {
+      const status = await configureProvider({ provider: "gemini", apiKey: "verified-test-key", ...getProviderDefaults("gemini") }, { verifyConnection: true });
+      expect(status).toMatchObject({ id: "gemini", configured: true, route: "direct" });
+      expect(JSON.stringify(status)).not.toContain("verified-test-key");
+    } finally {
+      globalThis.fetch = originalFetch;
       if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
       else process.env.AETHER_CONFIG_HOME = originalConfigHome;
       rmSync(configHome, { recursive: true, force: true });

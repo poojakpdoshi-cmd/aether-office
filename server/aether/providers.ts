@@ -21,6 +21,8 @@ export type ProviderAdapter = {
   generate: (input: { system: string; user: string }) => Promise<string>;
 };
 
+type ProviderConfigurationInput = { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean };
+
 const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
   manus: { id: "manus", label: "Manus", route: "built-in", availability: "ready" },
   gemini: { id: "gemini", label: "Gemini", route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY", availability: "ready" },
@@ -205,6 +207,29 @@ export function getProviderDefaults(provider: ProviderId) {
   return environmentDefaults[provider];
 }
 
+async function verifyProviderConfiguration(input: ProviderConfigurationInput) {
+  const metadata = providerMeta[input.provider];
+  const defaults = environmentDefaults[input.provider];
+  const baseUrl = input.baseUrl?.trim().replace(/\/$/, "") || defaults?.baseUrl;
+  const model = input.model?.trim() || defaults?.model;
+  if (!baseUrl || !model) throw new Error(`${metadata.label} needs a chat-completions endpoint and model before it can be verified.`);
+
+  let response: Response;
+  try {
+    response = await fetch(baseUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${input.apiKey.trim()}` },
+      body: JSON.stringify({ model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: 8, temperature: 0 }),
+      signal: AbortSignal.timeout(12_000),
+    });
+  } catch {
+    throw new Error(`${metadata.label} could not be reached. Check the local network and endpoint, then try again.`);
+  }
+  if (!response.ok) throw new Error(`${metadata.label} rejected the configuration (status ${response.status}). Check the key, model, and account access, then try again.`);
+  const payload = await response.json().catch(() => undefined) as { choices?: Array<{ message?: { content?: string } }> } | undefined;
+  if (!payload?.choices?.[0]?.message?.content?.trim()) throw new Error(`${metadata.label} returned no chat completion during verification. Check the selected model and endpoint, then try again.`);
+}
+
 async function getEffectiveProviderConfig(provider: ProviderId): Promise<EffectiveProviderConfig | undefined> {
   if (provider === "manus") return undefined;
   const persisted = await readProviderConfig(provider);
@@ -219,8 +244,9 @@ async function getEffectiveProviderConfig(provider: ProviderId): Promise<Effecti
   return apiKey ? { apiKey, ...environmentDefaults[provider] } : undefined;
 }
 
-export async function configureProvider(input: { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean }) {
+export async function configureProvider(input: ProviderConfigurationInput, options: { verifyConnection?: boolean } = {}) {
   if (input.provider === "devstral" && !input.compatibilityAcknowledged) throw new Error("Devstral Small 2 is retired. Owner acknowledgement and endpoint compatibility are required before configuration.");
+  if (options.verifyConnection) await verifyProviderConfiguration(input);
   await saveProviderConfig(input.provider, input);
   const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider);
   return status;
