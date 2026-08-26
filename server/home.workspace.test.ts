@@ -33,6 +33,7 @@ describe("AetherOffice non-default workspace controls", () => {
 
   it("persists the selected office animation style locally", () => {
     expect(homeSource).toContain('window.localStorage.getItem("aether-office-animation-style")');
+    expect(homeSource).toContain('saved === "warm" || saved === "stealth" || saved === "metro" ? saved : "metro"');
     expect(homeSource).toContain('window.localStorage.setItem("aether-office-animation-style", officeAnimationStyle)');
     expect(homeSource).toContain("animationStyle={officeAnimationStyle}");
     expect(homeSource).toContain("onAnimationStyleChange={setOfficeAnimationStyle}");

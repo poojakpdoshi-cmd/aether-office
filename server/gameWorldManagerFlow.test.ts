@@ -47,6 +47,8 @@ describe("playable office-world manager flow", () => {
     expect(office).toContain('htmlFor="office-animation-style"');
     expect(office).toContain("Set your animation");
     expect(office).toContain("OFFICE_ANIMATION_STYLES");
+    expect(office).toContain('`office-animation-${animationStyle}`');
+    expect(office).toContain("Object.entries(OFFICE_ANIMATION_STYLES)");
     expect(office).toContain("onOpenEmployeeRoom");
     expect(office).toContain("onInspectEmployeeComputer");
     expect(office).toContain("onOpenEmptyFloor");

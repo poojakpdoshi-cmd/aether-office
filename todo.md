@@ -340,4 +340,4 @@
 - [x] Add a visible top-right “Set your animation” control to the office map.
 - [x] Provide three distinct selectable office visual directions, including the warm Japanese-room and dark stealth-room references supplied by the owner.
 - [x] Persist the selected visual direction locally and preserve every room, computer, manager, research, and service-floor interaction across styles.
-- [ ] Add style-selector regression coverage and validate all three styles on desktop and mobile.
+- [x] Add style-selector regression coverage and validate all three styles on desktop and mobile.
