@@ -130,6 +130,23 @@ describe("recognizeProviderKey", () => {
     }
   });
 
+  it("reports OpenRouter verification rate limits without saving the supplied key", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-openrouter-rate-limit-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    globalThis.fetch = async () => new Response(JSON.stringify({ error: "rate limit" }), { status: 429 });
+    try {
+      await expect(configureProvider({ provider: "openrouter", apiKey: "rate-limited-openrouter-key", model: "openrouter/free" }, { verifyConnection: true })).rejects.toThrow("rate-limiting verification");
+      expect(await readProviderConfig("openrouter")).toBeUndefined();
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
   it("persists a provider only after its selected endpoint returns a valid chat completion", async () => {
     const originalConfigHome = process.env.AETHER_CONFIG_HOME;
     const originalFetch = globalThis.fetch;

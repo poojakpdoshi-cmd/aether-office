@@ -203,6 +203,7 @@ export async function generateForEmployee(employee: EmployeeId, input: { system:
     body: JSON.stringify({ model: profile.model, messages: [{ role: "system", content: input.system }, { role: "user", content: input.user }], temperature: 0.35 }),
     signal: AbortSignal.timeout(providerRequestTimeoutMs()),
   });
+  if (response.status === 429) throw new Error("OpenRouter is rate-limiting this local meeting. Wait for the provider limit to reset, then start a new owner-approved meeting.");
   if (!response.ok) throw new Error(`OpenRouter model ${profile.model} is currently unavailable (${response.status}).`);
   const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const content = payload.choices?.[0]?.message?.content;
@@ -268,6 +269,7 @@ async function verifyProviderConfiguration(input: ProviderConfigurationInput) {
   } catch {
     throw new Error(`${metadata.label} could not be reached. Check the local network and endpoint, then try again.`);
   }
+  if (response.status === 429) throw new Error(`${metadata.label} is rate-limiting verification. Wait for the provider limit to reset, then use Re-verify key; no key was saved.`);
   if (!response.ok) throw new Error(`${metadata.label} rejected the configuration (status ${response.status}). Check the key, model, and account access, then try again.`);
   const payload = await response.json().catch(() => undefined) as { choices?: Array<{ message?: { content?: string } }> } | undefined;
   if (!payload?.choices?.[0]?.message?.content?.trim()) throw new Error(`${metadata.label} returned no chat completion during verification. Check the selected model and endpoint, then try again.`);

@@ -351,6 +351,7 @@
 - [x] Give a browser-proven, truthful final assessment of the selected scene animation versus employee-walking expectations.
 - [x] Verify a real OpenRouter chat-completions response without exposing the credential or response content.
 - [x] Repair OpenRouter verification truncation, provider-request deadline handling, and synthesis fallback eligibility for dynamically provisioned employees.
+- [x] Surface OpenRouter HTTP 429 verification and meeting rate limits as safe actionable retry guidance without saving or exposing the key.
 - [ ] Re-run the bounded three-employee OpenRouter meeting after the external OpenRouter 429 rate limit clears, then confirm only the resulting owner-reviewable proposal; do not auto-approve or perform workspace work.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
