@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const homeSource = readFileSync(new URL("../client/src/pages/Home.tsx", import.meta.url), "utf8");
+const chatSource = readFileSync(new URL("../client/src/components/OfficeControlChatbox.tsx", import.meta.url), "utf8");
 
 describe("AetherOffice non-default workspace controls", () => {
   it("keeps editor, controlled execution, and local-only Git controls behind explicit workspace views", () => {
@@ -51,5 +52,12 @@ describe("AetherOffice non-default workspace controls", () => {
     expect(homeSource).toContain("provider.configured && provider.verified");
     expect(homeSource).toContain("trpc.aether.reverifyProvider.useMutation");
     expect(homeSource).toContain("reverifyProviderMutation.mutate({ provider: status.id })");
+  });
+
+  it("does not present hosted preview authorization failures as broken manager work", () => {
+    expect(homeSource).toContain("trpc.aether.localControl.useQuery");
+    expect(homeSource).toContain("enabled: canManageLocalOffice");
+    expect(chatSource).toContain("Open AetherOffice through the local desktop launcher");
+    expect(chatSource).toContain("disabled={!canManage || !message.trim() || chatPending}");
   });
 });

@@ -412,9 +412,11 @@ export default function Home() {
   const [projectPreviewUrl, setProjectPreviewUrl] = useState("");
   const startedManagerTaskRef = useRef<string | null>(null);
   const providerQuery = trpc.aether.providers.useQuery();
+  const localControlQuery = trpc.aether.localControl.useQuery();
+  const canManageLocalOffice = Boolean(localControlQuery.data?.canManage);
   useEffect(() => { window.localStorage.setItem("aether-office-animation-style", officeAnimationStyle); }, [officeAnimationStyle]);
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500, refetchOnMount: "always", refetchOnWindowFocus: "always", staleTime: 0 });
-  const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
+  const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { enabled: canManageLocalOffice, refetchInterval: 3000 });
   const projectPreviewQuery = trpc.aether.projectPreview.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected), refetchInterval: 1500 });
   const latestBrowserEvidenceQuery = trpc.aether.latestBrowserEvidence.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected) });
   const latestProofReportQuery = trpc.aether.latestProofReport.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected) });
@@ -731,6 +733,7 @@ export default function Home() {
         taskPending={startDeepDiscussMutation.isPending}
         meeting={latestMeeting}
         approvalPending={proposalActionMutation.isPending}
+        canManage={canManageLocalOffice}
         manusLifecycle={manusLifecycle}
         workspaceSelected={Boolean(workspaceQuery.data?.selected)}
         error={managerChatMutation.error?.message ?? startDeepDiscussMutation.error?.message}

@@ -28,6 +28,7 @@ export const appRouter = router({
   }),
 
   aether: router({
+    localControl: publicProcedure.query(({ ctx }) => ({ canManage: Boolean(ctx.localOwner || ctx.user?.role === "admin") })),
     dashboard: publicProcedure.query(async () => {
       const dashboard = getDashboardState();
       const configuredProviders = new Set((await listProviderStatuses()).filter((provider) => provider.configured && provider.verified).map((provider) => provider.id));
