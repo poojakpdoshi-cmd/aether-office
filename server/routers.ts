@@ -7,7 +7,7 @@ import { APPROVAL_MODES, PROPOSAL_ACTIONS, PROVIDER_IDS } from "../shared/aether
 import { inspectVisualReference, runDeepDiscuss } from "./aether/deepDiscuss";
 import { respondToManagerChat } from "./aether/managerChat";
 import { evaluateImplementation } from "./aether/evaluation";
-import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider } from "./aether/providers";
+import { configureProvider, listProviderStatuses, recognizeAndConfigureProvider, removeConfiguredProvider, reverifyConfiguredProvider } from "./aether/providers";
 import { applyProposalAction, assertExecutionAllowed, getDashboardState, getEmployeeRoom, getEmployeeSandbox, getSandboxProcess, listEmployeeRooms, listSandboxProcesses, provisionEmployees, provisionOpenRouterProfiles, setApprovalMode } from "./aether/state";
 import { destroyEmployeeSandbox, restartEmployeeSandbox, runEmployeeSandboxCommand, startEmployeeSandbox, stopEmployeeSandbox, stopEmployeeSandboxProcess } from "./aether/sandboxManager";
 import { competitionIsolationStatus } from "./aether/teamIsolation";
@@ -43,6 +43,9 @@ export const appRouter = router({
     configureProvider: ownerProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
       .mutation(({ input }) => configureProvider(input, { verifyConnection: true })),
+    reverifyProvider: ownerProcedure
+      .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]) }))
+      .mutation(({ input }) => reverifyConfiguredProvider(input.provider)),
     recognizeEmployee: ownerProcedure
       .input(z.object({ apiKey: z.string().trim().min(8).max(1000) }))
       .mutation(({ input }) => recognizeAndConfigureProvider(input.apiKey)),

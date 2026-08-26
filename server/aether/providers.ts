@@ -289,6 +289,18 @@ export async function configureProvider(input: ProviderConfigurationInput, optio
   return status;
 }
 
+export async function reverifyConfiguredProvider(provider: Exclude<ProviderId, "manus">) {
+  const stored = await readProviderConfig(provider);
+  if (!stored) throw new Error(`${providerMeta[provider].label} has no encrypted local key to re-verify.`);
+  return configureProvider({
+    provider,
+    apiKey: stored.apiKey,
+    ...(stored.baseUrl ? { baseUrl: stored.baseUrl } : {}),
+    ...(stored.model ? { model: stored.model } : {}),
+    ...(stored.compatibilityAcknowledged ? { compatibilityAcknowledged: true } : {}),
+  }, { verifyConnection: true });
+}
+
 /**
  * Identify only API-key prefixes that are unambiguous. Ambiguous `sk-` keys are
  * deliberately not guessed, because sending a secret to multiple providers would

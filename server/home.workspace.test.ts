@@ -44,4 +44,12 @@ describe("AetherOffice non-default workspace controls", () => {
     expect(homeSource).toContain("configureProviderMutation.error.message");
     expect(homeSource).not.toContain("The provider could not be saved. Check the local configuration and try again.");
   });
+
+  it("labels older encrypted provider entries as needing re-verification before work can start", () => {
+    expect(homeSource).toContain('status?.configured ? "Re-verify key" : "Not configured"');
+    expect(homeSource).toContain('status?.configured && !status?.verified ? "Re-verify"');
+    expect(homeSource).toContain("provider.configured && provider.verified");
+    expect(homeSource).toContain("trpc.aether.reverifyProvider.useMutation");
+    expect(homeSource).toContain("reverifyProviderMutation.mutate({ provider: status.id })");
+  });
 });

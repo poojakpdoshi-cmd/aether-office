@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { configureProvider, generateForEmployee, getEmployeeProvider, getProviderDefaults, isEmployeeAvailable, listProviderStatuses, recognizeProviderKey, resolveEmployeeProvider } from "./providers";
+import { configureProvider, generateForEmployee, getEmployeeProvider, getProviderDefaults, isEmployeeAvailable, listProviderStatuses, recognizeProviderKey, resolveEmployeeProvider, reverifyConfiguredProvider } from "./providers";
 import { readProviderConfig } from "./vault";
 
 describe("recognizeProviderKey", () => {
@@ -67,12 +67,46 @@ describe("recognizeProviderKey", () => {
     try {
       await configureProvider({ provider: "gemini", apiKey: "gemini-test-key", ...getProviderDefaults("gemini") });
       const gemini = (await listProviderStatuses()).find((provider) => provider.id === "gemini");
-      expect(gemini).toMatchObject({ configured: true, route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY" });
+      expect(gemini).toMatchObject({ configured: true, verified: false, route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY" });
       expect(getProviderDefaults("gemini")).toMatchObject({
         baseUrl: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions",
         model: "gemini-3.7-flash",
       });
     } finally {
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps legacy saved provider entries out of employee work until they are re-verified", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-provider-legacy-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    try {
+      await configureProvider({ provider: "gemini", apiKey: "legacy-saved-key", ...getProviderDefaults("gemini") });
+      expect((await listProviderStatuses()).find((provider) => provider.id === "gemini")).toMatchObject({ configured: true, verified: false });
+      await expect(isEmployeeAvailable("Gemini")).resolves.toBe(false);
+    } finally {
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("re-verifies an existing encrypted key server-side without returning it to the caller", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-provider-reverify-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    try {
+      await configureProvider({ provider: "gemini", apiKey: "legacy-reverify-key", ...getProviderDefaults("gemini") });
+      const status = await reverifyConfiguredProvider("gemini");
+      expect(status).toMatchObject({ id: "gemini", verified: true });
+      expect(JSON.stringify(status)).not.toContain("legacy-reverify-key");
+    } finally {
+      globalThis.fetch = originalFetch;
       if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
       else process.env.AETHER_CONFIG_HOME = originalConfigHome;
       rmSync(configHome, { recursive: true, force: true });

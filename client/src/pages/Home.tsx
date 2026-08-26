@@ -431,6 +431,7 @@ export default function Home() {
       providerQuery.refetch();
     },
   });
+  const reverifyProviderMutation = trpc.aether.reverifyProvider.useMutation({ onSuccess: () => providerQuery.refetch() });
   const providerStatuses = providerQuery.data ?? [];
   const configuredCount = providerStatuses.filter((provider) => provider.configured && provider.verified).length;
   const dashboard = dashboardQuery.data;
@@ -841,7 +842,7 @@ export default function Home() {
                     {status?.compatibilityWarning ? <p className="mt-1 max-w-56 text-[10px] leading-4 text-amber-200">{status.compatibilityWarning}</p> : null}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" disabled={provider === "Manus"} onClick={() => setSetupProvider(provider)} className="border-white/10 bg-white/[0.03] text-xs text-slate-200 hover:bg-white/[0.08]">{status?.availability === "retired-gated" ? "Review" : status?.configured && !status?.verified ? "Re-verify" : status?.configured ? "Update" : "Set up"}</Button>
+                <Button variant="outline" size="sm" disabled={provider === "Manus" || reverifyProviderMutation.isPending} onClick={() => status?.configured && !status?.verified && status.id !== "manus" ? reverifyProviderMutation.mutate({ provider: status.id }) : setSetupProvider(provider)} className="border-white/10 bg-white/[0.03] text-xs text-slate-200 hover:bg-white/[0.08]">{status?.configured && !status?.verified && reverifyProviderMutation.isPending ? "Verifying…" : status?.availability === "retired-gated" ? "Review" : status?.configured && !status?.verified ? "Re-verify" : status?.configured ? "Update" : "Set up"}</Button>
               </div>
             );
           })}
