@@ -45,7 +45,7 @@ export function getCliProviderDefaults(id: Exclude<ProviderId, "manus">) {
 
 export async function hasConfiguredExternalProvider() {
   const statuses = await listProviderStatuses();
-  return statuses.some((status) => status.id !== "manus" && status.configured);
+  return statuses.some((status) => status.id !== "manus" && status.configured && status.verified);
 }
 
 export async function configureCliProvider(input: {

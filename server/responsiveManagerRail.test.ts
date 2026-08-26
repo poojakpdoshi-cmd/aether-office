@@ -20,7 +20,7 @@ describe("responsive manager rail and fast manager reply safeguards", () => {
   });
 
   it("routes basic manager identity questions before any provider-backed fallback", () => {
-    expect(chat.indexOf("managerIdentityPattern")).toBeLessThan(chat.indexOf("getProviderAdapter(\"manus\").generate"));
+    expect(chat.indexOf("managerIdentityPattern")).toBeLessThan(chat.indexOf("generateForEmployee(\"Manus\""));
     expect(chat).toContain("General Manager of AetherOffice");
   });
 });

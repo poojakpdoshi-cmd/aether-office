@@ -30,7 +30,7 @@ export const appRouter = router({
   aether: router({
     dashboard: publicProcedure.query(async () => {
       const dashboard = getDashboardState();
-      const configuredProviders = new Set((await listProviderStatuses()).filter((provider) => provider.configured).map((provider) => provider.id));
+      const configuredProviders = new Set((await listProviderStatuses()).filter((provider) => provider.configured && provider.verified).map((provider) => provider.id));
       return {
         ...dashboard,
         setupRequiredEmployeeIds: dashboard.employees.filter((employee) => !configuredProviders.has(employee.provider)).map((employee) => employee.id),
@@ -38,8 +38,8 @@ export const appRouter = router({
     }),
     competitionIsolation: publicProcedure.query(() => competitionIsolationStatus()),
     providers: publicProcedure.query(() => listProviderStatuses()),
-    provisionEmployees: ownerProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured) throw new Error(`${status?.label ?? input.provider} must be configured before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),
-    provisionOpenRouterProfiles: ownerProcedure.input(z.object({ model: z.string().trim().min(3).max(160), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === "openrouter"); if (!status?.configured) throw new Error("Configure the encrypted OpenRouter key before creating OpenRouter employee profiles."); return provisionOpenRouterProfiles(input.model, input.count); }),
+    provisionEmployees: ownerProcedure.input(z.object({ provider: z.enum(PROVIDER_IDS), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider); if (!status?.configured || !status.verified) throw new Error(`${status?.label ?? input.provider} must be verified before employees can be provisioned.`); return provisionEmployees(input.provider, input.count); }),
+    provisionOpenRouterProfiles: ownerProcedure.input(z.object({ model: z.string().trim().min(3).max(160), count: z.number().int().min(1).max(5), ownerConfirmed: z.literal(true) })).mutation(async ({ input }) => { const status = (await listProviderStatuses()).find((provider) => provider.id === "openrouter"); if (!status?.configured || !status.verified) throw new Error("Verify the encrypted OpenRouter key before creating OpenRouter employee profiles."); return provisionOpenRouterProfiles(input.model, input.count); }),
     configureProvider: ownerProcedure
       .input(z.object({ provider: z.enum(PROVIDER_IDS).exclude(["manus"]), apiKey: z.string().trim().min(8).max(1000), baseUrl: z.string().url().max(1000).optional(), model: z.string().trim().max(300).optional(), compatibilityAcknowledged: z.boolean().optional() }))
       .mutation(({ input }) => configureProvider(input, { verifyConnection: true })),

@@ -432,10 +432,10 @@ export default function Home() {
     },
   });
   const providerStatuses = providerQuery.data ?? [];
-  const configuredCount = providerStatuses.filter((provider) => provider.configured).length;
+  const configuredCount = providerStatuses.filter((provider) => provider.configured && provider.verified).length;
   const dashboard = dashboardQuery.data;
   const latestMeeting = dashboard?.meetings.slice().sort((left, right) => right.updatedAt - left.updatedAt)[0];
-  const configuredProviderIds = new Set(providerStatuses.filter((provider) => provider.configured).map((provider) => provider.id));
+  const configuredProviderIds = new Set(providerStatuses.filter((provider) => provider.configured && provider.verified).map((provider) => provider.id));
   const setupRequiredEmployeeIds = new Set(dashboard?.setupRequiredEmployeeIds ?? []);
   const employeeDisplayStatus = (employee: { id: string; status: EmployeeStatus }): EmployeeStatus | "SETUP REQUIRED" => setupRequiredEmployeeIds.has(employee.id) ? "SETUP REQUIRED" : employee.status;
   const liveEmployees = (dashboard?.employees ?? []).map((profile) => {
@@ -837,11 +837,11 @@ export default function Home() {
                   <div className="grid h-9 w-9 place-items-center rounded-lg bg-white/[0.06] text-sky-200"><Bot className="h-4 w-4" /></div>
                   <div>
                     <p className="text-sm font-medium text-slate-100">{provider}</p>
-                    <p className={cn("mt-0.5 text-xs", status?.availability === "retired-gated" ? "text-amber-300" : status?.configured ? "text-emerald-300" : "text-slate-500")}>{status?.availability === "retired-gated" ? "Retired compatibility route" : status?.configured ? "Configured" : "Not configured"}</p>
+                    <p className={cn("mt-0.5 text-xs", status?.availability === "retired-gated" ? "text-amber-300" : status?.verified ? "text-emerald-300" : status?.configured ? "text-amber-300" : "text-slate-500")}>{status?.availability === "retired-gated" ? "Retired compatibility route" : status?.verified ? "Verified" : status?.configured ? "Re-verify key" : "Not configured"}</p>
                     {status?.compatibilityWarning ? <p className="mt-1 max-w-56 text-[10px] leading-4 text-amber-200">{status.compatibilityWarning}</p> : null}
                   </div>
                 </div>
-                <Button variant="outline" size="sm" disabled={provider === "Manus"} onClick={() => setSetupProvider(provider)} className="border-white/10 bg-white/[0.03] text-xs text-slate-200 hover:bg-white/[0.08]">{status?.availability === "retired-gated" ? "Review" : status?.configured ? "Update" : "Set up"}</Button>
+                <Button variant="outline" size="sm" disabled={provider === "Manus"} onClick={() => setSetupProvider(provider)} className="border-white/10 bg-white/[0.03] text-xs text-slate-200 hover:bg-white/[0.08]">{status?.availability === "retired-gated" ? "Review" : status?.configured && !status?.verified ? "Re-verify" : status?.configured ? "Update" : "Set up"}</Button>
               </div>
             );
           })}

@@ -9,6 +9,7 @@ type StoredProviderConfig = {
   model?: string;
   baseUrl?: string;
   compatibilityAcknowledged?: boolean;
+  verifiedAt?: number;
 };
 
 type VaultPayload = Partial<Record<ProviderId | "arcee", StoredProviderConfig>>;
@@ -95,6 +96,7 @@ export async function saveProviderConfig(provider: Exclude<ProviderId, "manus">,
     ...(config.model?.trim() ? { model: config.model.trim() } : {}),
     ...(config.baseUrl?.trim() ? { baseUrl: config.baseUrl.trim().replace(/\/$/, "") } : {}),
     ...(config.compatibilityAcknowledged ? { compatibilityAcknowledged: true } : {}),
+    ...(Number.isFinite(config.verifiedAt) ? { verifiedAt: config.verifiedAt } : {}),
   };
   await writeVault(payload);
 }

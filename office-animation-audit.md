@@ -18,6 +18,10 @@ The protected manager workflow is intentionally staged: a greeting returns the l
 
 The local production audit now creates a temporary, one-time local-owner session through the same handoff used by the desktop launcher. It verified the manager greeting and a substantive task proposal in the actual browser UI. The task became an approval-gated proposal and did not start provider research. Provider-backed research and approval actions remain separately gated and are not claimed as completed by this audit.
 
+## Visible Ambient Motion Repair
+
+The office scene now has a clearly perceptible non-character light layer for each selected direction: cool workstation light movement in Metro, warm lantern and workstation glow movement in Warm Japanese, and a blue night sweep in Stealth. Each treatment changes its transform in the real browser, sits above the artwork but below all map controls, and remains disabled when the operating system requests reduced motion. Visual inspection confirmed that the Warm Japanese layer preserves its garden-and-wood office detail, while the Stealth layer preserves room readability and the dark night treatment. No pasted worker, portrait, chibi, or cropped character overlay was introduced.
+
 > The three selectable choices are distinct **office visual directions with real ambient motion**. Metro uses a slow office drift; Warm Japanese uses a slower drift with lantern-light movement; and Stealth night uses a tighter night drift with a light sweep. These are transform-only browser animations and are disabled for reduced-motion users. They do not claim to be three independently generated employee-walking videos. The active status transition implementation uses transform-only FLIP movement on real employee state targets and deliberately renders no pasted, chibi, cropped, or synthetic character overlay. A scene-matched motion asset would still be required before claiming visible employee walking in each visual direction.
 
 ## Repaired Map Collision

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { configureProvider, getEmployeeProvider, getProviderDefaults, listProviderStatuses, recognizeProviderKey } from "./providers";
+import { configureProvider, generateForEmployee, getEmployeeProvider, getProviderDefaults, isEmployeeAvailable, listProviderStatuses, recognizeProviderKey, resolveEmployeeProvider } from "./providers";
 import { readProviderConfig } from "./vault";
 
 describe("recognizeProviderKey", () => {
@@ -104,10 +104,33 @@ describe("recognizeProviderKey", () => {
     globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
     try {
       const status = await configureProvider({ provider: "gemini", apiKey: "verified-test-key", ...getProviderDefaults("gemini") }, { verifyConnection: true });
-      expect(status).toMatchObject({ id: "gemini", configured: true, route: "direct" });
+      expect(status).toMatchObject({ id: "gemini", configured: true, verified: true, route: "direct" });
       expect(JSON.stringify(status)).not.toContain("verified-test-key");
     } finally {
       globalThis.fetch = originalFetch;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
+
+  it("uses a verified external provider for the local manager when the Manus runtime is unavailable", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalForgeKey = process.env.BUILT_IN_FORGE_API_KEY;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-manager-fallback-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    delete process.env.BUILT_IN_FORGE_API_KEY;
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "External manager reply" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    try {
+      await configureProvider({ provider: "gemini", apiKey: "verified-fallback-key", ...getProviderDefaults("gemini") }, { verifyConnection: true });
+      await expect(resolveEmployeeProvider("Manus")).resolves.toBe("gemini");
+      await expect(isEmployeeAvailable("Atlas")).resolves.toBe(true);
+      await expect(generateForEmployee("Manus", { system: "Be concise.", user: "Hello" })).resolves.toBe("External manager reply");
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalForgeKey === undefined) delete process.env.BUILT_IN_FORGE_API_KEY;
+      else process.env.BUILT_IN_FORGE_API_KEY = originalForgeKey;
       if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
       else process.env.AETHER_CONFIG_HOME = originalConfigHome;
       rmSync(configHome, { recursive: true, force: true });

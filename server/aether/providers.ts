@@ -7,6 +7,7 @@ export type ProviderStatus = {
   id: ProviderId;
   label: string;
   configured: boolean;
+  verified: boolean;
   route: "built-in" | "direct" | "gateway";
   model?: string;
   secretEnvironmentVariable?: string;
@@ -21,9 +22,9 @@ export type ProviderAdapter = {
   generate: (input: { system: string; user: string }) => Promise<string>;
 };
 
-type ProviderConfigurationInput = { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean };
+type ProviderConfigurationInput = { provider: Exclude<ProviderId, "manus">; apiKey: string; baseUrl?: string; model?: string; compatibilityAcknowledged?: boolean; verifiedAt?: number };
 
-const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured">> = {
+const providerMeta: Record<ProviderId, Omit<ProviderStatus, "configured" | "verified">> = {
   manus: { id: "manus", label: "Manus", route: "built-in", availability: "ready" },
   gemini: { id: "gemini", label: "Gemini", route: "direct", secretEnvironmentVariable: "GEMINI_API_KEY", availability: "ready" },
   mistral: { id: "mistral", label: "Mistral", route: "direct", secretEnvironmentVariable: "MISTRAL_API_KEY", availability: "ready" },
@@ -99,6 +100,7 @@ function directAdapter(provider: ProviderId): ProviderAdapter {
           ],
           temperature: 0.35,
         }),
+        signal: AbortSignal.timeout(12_000),
       });
       if (!response.ok) throw new Error(`${metadata.label} request failed with status ${response.status}.`);
       const payload = (await response.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -136,6 +138,7 @@ export async function listProviderStatuses(): Promise<ProviderStatus[]> {
     return {
       ...metadata,
       configured: await adapters[metadata.id].isConfigured(),
+      verified: await hasVerifiedProviderConfig(metadata.id),
       model: metadata.id === "manus" ? "gpt-5-mini" : effective?.model?.slice(0, 120),
     };
   }));
@@ -159,8 +162,32 @@ export function getProviderAdapter(provider: ProviderId) {
   return adapters[provider];
 }
 
+export async function getVerifiedManagerFallbackProvider(): Promise<Exclude<ProviderId, "manus"> | undefined> {
+  const candidates = (Object.keys(providerMeta) as ProviderId[]).filter((provider): provider is Exclude<ProviderId, "manus"> => provider !== "manus" && providerMeta[provider].availability === "ready");
+  for (const provider of candidates) {
+    if (await hasVerifiedProviderConfig(provider) && await adapters[provider].isConfigured()) return provider;
+  }
+  return undefined;
+}
+
+export async function resolveEmployeeProvider(employee: EmployeeId): Promise<ProviderId> {
+  const assigned = getEmployeeProvider(employee);
+  if (assigned !== "manus" || await manusAdapter.isConfigured()) return assigned;
+  return (await getVerifiedManagerFallbackProvider()) ?? assigned;
+}
+
 export async function generateForEmployee(employee: EmployeeId, input: { system: string; user: string }): Promise<string> {
-  const provider = getEmployeeProvider(employee);
+  const assignedProvider = getEmployeeProvider(employee);
+  const provider = await resolveEmployeeProvider(employee);
+  if (assignedProvider === "manus" && provider === "manus") {
+    try {
+      return await manusAdapter.generate(input);
+    } catch {
+      const fallback = await getVerifiedManagerFallbackProvider();
+      if (!fallback) throw new Error("The built-in manager is unavailable and no verified external provider is configured for local fallback.");
+      return adapters[fallback].generate(input);
+    }
+  }
   const profile = getDashboardState().employees.find((candidate) => candidate.id === employee);
   if (provider !== "openrouter" || !profile?.model) return getProviderAdapter(provider).generate(input);
   const config = await getEffectiveProviderConfig("openrouter");
@@ -178,8 +205,8 @@ export async function generateForEmployee(employee: EmployeeId, input: { system:
 }
 
 export async function isEmployeeAvailable(employee: EmployeeId) {
-  const provider = getEmployeeProvider(employee);
-  if (!isEmployeeActive(employee) || !(await adapters[provider].isConfigured())) return false;
+  const provider = await resolveEmployeeProvider(employee);
+  if (!isEmployeeActive(employee) || !(await adapters[provider].isConfigured()) || !(await hasVerifiedProviderConfig(provider))) return false;
   if (provider === "devstral") return Boolean((await readProviderConfig("devstral"))?.compatibilityAcknowledged);
   return true;
 }
@@ -205,6 +232,16 @@ const environmentDefaults: Partial<Record<ProviderId, Omit<EffectiveProviderConf
 
 export function getProviderDefaults(provider: ProviderId) {
   return environmentDefaults[provider];
+}
+
+async function hasVerifiedProviderConfig(provider: ProviderId) {
+  if (provider === "manus") return manusAdapter.isConfigured();
+  const persisted = await readProviderConfig(provider);
+  if (persisted) return Boolean(persisted.verifiedAt);
+  const compatibleGateway = provider === "northmini" ? "openrouter" : provider === "devstral" ? "mistral" : undefined;
+  if (compatibleGateway) return Boolean((await readProviderConfig(compatibleGateway))?.verifiedAt);
+  const environmentVariable = providerMeta[provider].secretEnvironmentVariable;
+  return Boolean(environmentVariable && process.env[environmentVariable]);
 }
 
 async function verifyProviderConfiguration(input: ProviderConfigurationInput) {
@@ -247,7 +284,7 @@ async function getEffectiveProviderConfig(provider: ProviderId): Promise<Effecti
 export async function configureProvider(input: ProviderConfigurationInput, options: { verifyConnection?: boolean } = {}) {
   if (input.provider === "devstral" && !input.compatibilityAcknowledged) throw new Error("Devstral Small 2 is retired. Owner acknowledgement and endpoint compatibility are required before configuration.");
   if (options.verifyConnection) await verifyProviderConfiguration(input);
-  await saveProviderConfig(input.provider, input);
+  await saveProviderConfig(input.provider, { ...input, ...(options.verifyConnection ? { verifiedAt: Date.now() } : {}) });
   const status = (await listProviderStatuses()).find((provider) => provider.id === input.provider);
   return status;
 }
@@ -279,7 +316,7 @@ export async function recognizeAndConfigureProvider(apiKey: string) {
     body: JSON.stringify({ model: defaults.model, messages: [{ role: "user", content: "Reply with OK." }], max_tokens: 8 }),
   });
   if (!response.ok) return { recognized: false as const, status: undefined };
-  const status = await configureProvider({ provider, apiKey, ...defaults });
+  const status = await configureProvider({ provider, apiKey, ...defaults }, { verifyConnection: true });
   return { recognized: true as const, provider, status };
 }
 

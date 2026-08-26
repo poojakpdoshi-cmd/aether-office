@@ -11,7 +11,7 @@ import {
   setGuardianFindings,
   setProposal,
 } from "./state";
-import { generateForEmployee, getConfiguredVisionProvider, getEmployeeProvider, getProviderAdapter, isEmployeeAvailable } from "./providers";
+import { generateForEmployee, getConfiguredVisionProvider, getEmployeeProvider, getProviderAdapter, isEmployeeAvailable, resolveEmployeeProvider } from "./providers";
 import { invokeLLM } from "../_core/llm";
 
 const employeeInstructions: Record<EmployeeId, string> = {
@@ -174,7 +174,7 @@ async function runRound(
     addActivity({ kind: "provider", message: `${employee} started ${round}.`, employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `Discussing ${round}` } });
   }
   const contributions = await settleConcurrentRoundJobs(employees, async (employee) => {
-    const provider = getEmployeeProvider(employee);
+    const provider = await resolveEmployeeProvider(employee);
     const adapter = getProviderAdapter(provider);
     const content = await withProviderRoundDeadline(generateForEmployee(employee, {
       system: `${employeeInstructions[employee]} You are participating in the ${round} round of an owner-approved software planning meeting. Do not claim that files, tests, or tools have run. Be concise, concrete, and cite risks.`,
@@ -261,8 +261,8 @@ async function synthesizePlan(meetingId: string, task: string, messages: Array<{
   for (const synthesisEmployee of candidates) {
     try {
       setEmployeeStatus(synthesisEmployee, "THINKING");
-      const provider = getEmployeeProvider(synthesisEmployee);
-      const content = await withProviderRoundDeadline(getProviderAdapter(provider).generate({
+      const provider = await resolveEmployeeProvider(synthesisEmployee);
+      const content = await withProviderRoundDeadline(generateForEmployee(synthesisEmployee, {
         system: "You are the active AI company meeting synthesizer. Create a final owner-reviewable plan. Return strict JSON only with keys objective, techStack, filesToCreateModify, risks, confidencePercent. All arrays contain strings. confidencePercent is an integer from 0 to 100. Do not claim to have changed files or run tests.",
         user: `Owner task:\n${task}\n\nTeam discussion:\n${source}`,
       }), synthesisEmployee, "synthesis");

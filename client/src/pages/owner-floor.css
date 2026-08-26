@@ -17,25 +17,31 @@
 .text-free-office .real-office-backdrop { z-index: 1; object-fit: cover; filter: saturate(.84) brightness(.96); }
 .office-animation-warm .real-office-backdrop { filter:saturate(.9) sepia(.08) brightness(1.04); }
 .office-animation-stealth .real-office-backdrop { filter:saturate(.82) hue-rotate(10deg) brightness(.72) contrast(1.08); }
-.real-office-stage::after { content:""; position:absolute; z-index:1; inset:-8%; pointer-events:none; opacity:0; }
+.real-office-stage::before, .real-office-stage::after { content:""; position:absolute; z-index:2; inset:-8%; pointer-events:none; opacity:0; mix-blend-mode:screen; }
 @media (prefers-reduced-motion: no-preference) {
-  .office-animation-metro .real-office-backdrop { will-change:transform; animation:office-metro-drift 15s cubic-bezier(.45,0,.55,1) infinite alternate; }
-  .office-animation-warm .real-office-backdrop { will-change:transform; animation:office-warm-drift 18s cubic-bezier(.45,0,.55,1) infinite alternate; }
-  .office-animation-stealth .real-office-backdrop { will-change:transform; animation:office-stealth-drift 12s cubic-bezier(.45,0,.55,1) infinite alternate; }
-  .office-animation-warm .real-office-stage::after { background:radial-gradient(circle at 28% 12%,rgba(255,246,183,.20),transparent 28%),linear-gradient(110deg,transparent 34%,rgba(255,239,173,.11) 48%,transparent 62%); opacity:1; animation:office-warm-lantern 7s ease-in-out infinite alternate; }
-  .office-animation-stealth .real-office-stage::after { background:linear-gradient(112deg,transparent 34%,rgba(109,181,255,.13) 49%,transparent 64%),radial-gradient(circle at 70% 42%,rgba(245,180,93,.10),transparent 25%); opacity:1; animation:office-stealth-sweep 5.5s ease-in-out infinite alternate; }
+  .office-animation-metro .real-office-backdrop { will-change:transform; animation:office-metro-drift 8s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-warm .real-office-backdrop { will-change:transform; animation:office-warm-drift 9s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-stealth .real-office-backdrop { will-change:transform; animation:office-stealth-drift 7s cubic-bezier(.45,0,.55,1) infinite alternate; }
+  .office-animation-metro .real-office-stage::before { background:radial-gradient(ellipse at 15% 25%,rgba(116,216,255,.52),transparent 15%),radial-gradient(ellipse at 81% 72%,rgba(131,223,255,.38),transparent 16%),radial-gradient(ellipse at 50% 55%,rgba(255,246,203,.18),transparent 28%); opacity:.62; animation:office-metro-worklight 2.8s ease-in-out infinite alternate; }
+  .office-animation-warm .real-office-stage::before { background:radial-gradient(circle at 18% 22%,rgba(255,197,106,.64),transparent 14%),radial-gradient(circle at 78% 28%,rgba(255,224,149,.48),transparent 16%),radial-gradient(circle at 51% 69%,rgba(255,171,89,.28),transparent 22%); opacity:.68; animation:office-warm-worklight 3.2s ease-in-out infinite alternate; }
+  .office-animation-stealth .real-office-stage::before { background:linear-gradient(105deg,transparent 32%,rgba(91,206,255,.44) 46%,rgba(194,239,255,.14) 52%,transparent 63%),radial-gradient(ellipse at 71% 42%,rgba(60,142,255,.52),transparent 21%); opacity:.72; animation:office-stealth-worklight 2.4s ease-in-out infinite alternate; }
+  .office-animation-warm .real-office-stage::after { background:radial-gradient(circle at 28% 12%,rgba(255,246,183,.32),transparent 28%),linear-gradient(110deg,transparent 34%,rgba(255,239,173,.20) 48%,transparent 62%); opacity:1; animation:office-warm-lantern 4.2s ease-in-out infinite alternate; }
+  .office-animation-stealth .real-office-stage::after { background:linear-gradient(112deg,transparent 30%,rgba(109,181,255,.32) 49%,transparent 66%),radial-gradient(circle at 70% 42%,rgba(245,180,93,.19),transparent 25%); opacity:1; animation:office-stealth-sweep 3.6s ease-in-out infinite alternate; }
 }
 @keyframes office-metro-drift { from { transform:scale(1.008) translate3d(-.25%,-.15%,0); } to { transform:scale(1.028) translate3d(.35%,.2%,0); } }
 @keyframes office-warm-drift { from { transform:scale(1.012) translate3d(.3%,.15%,0); } to { transform:scale(1.035) translate3d(-.3%,-.2%,0); } }
 @keyframes office-stealth-drift { from { transform:scale(1.014) translate3d(-.35%,.2%,0); } to { transform:scale(1.04) translate3d(.25%,-.25%,0); } }
 @keyframes office-warm-lantern { from { transform:translate3d(-1.5%,0,0); filter:brightness(.94); } to { transform:translate3d(1.5%,.6%,0); filter:brightness(1.1); } }
 @keyframes office-stealth-sweep { from { transform:translate3d(-3%,.5%,0); opacity:.5; } to { transform:translate3d(3%,-.5%,0); opacity:1; } }
-@media (prefers-reduced-motion: reduce) { .office-animation-metro .real-office-backdrop, .office-animation-warm .real-office-backdrop, .office-animation-stealth .real-office-backdrop, .real-office-stage::after { animation:none !important; } }
+@keyframes office-metro-worklight { from { transform:translate3d(-2.5%,-1%,0) scale(.98); opacity:.24; } to { transform:translate3d(2.5%,1%,0) scale(1.04); opacity:.9; } }
+@keyframes office-warm-worklight { from { transform:translate3d(2%,0,0) scale(.98); opacity:.26; } to { transform:translate3d(-2%,1.5%,0) scale(1.05); opacity:.95; } }
+@keyframes office-stealth-worklight { from { transform:translate3d(-4%,1%,0) scale(.98); opacity:.18; } to { transform:translate3d(4%,-1%,0) scale(1.05); opacity:.92; } }
+@media (prefers-reduced-motion: reduce) { .office-animation-metro .real-office-backdrop, .office-animation-warm .real-office-backdrop, .office-animation-stealth .real-office-backdrop, .real-office-stage::before, .real-office-stage::after { animation:none !important; } }
 .office-animation-picker { position:absolute; z-index:20; top:10px; right:10px; display:flex; align-items:center; gap:7px; border:1.5px solid #253637; border-radius:3px; background:rgba(255,248,233,.94); box-shadow:3px 3px 0 rgba(37,54,55,.85); padding:6px 7px; color:#253637; }
 .office-animation-picker label { font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
 .office-animation-picker select { border:1px solid #77887d; border-radius:2px; background:#fffdf4; color:#253637; padding:3px 5px; font-size:10px; font-weight:700; outline:none; }
 .office-animation-picker select:focus-visible { outline:2px solid #355f61; outline-offset:2px; }
-.text-free-office .office-map-overlay { position: absolute; z-index: 2; inset: 0; }
+.text-free-office .office-map-overlay { position: absolute; z-index: 4; inset: 0; }
 .text-free-office .illustrated-readability { display: none; }
 .text-free-office .deep-discuss-room-frame span,
 .text-free-office .office-hotspot > *,

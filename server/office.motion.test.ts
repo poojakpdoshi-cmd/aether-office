@@ -27,6 +27,11 @@ describe("office motion performance", () => {
     expect(officeStyles).toContain(".office-animation-stealth .real-office-backdrop { will-change:transform; animation:office-stealth-drift");
     expect(officeStyles).toContain(".office-animation-warm .real-office-stage::after");
     expect(officeStyles).toContain(".office-animation-stealth .real-office-stage::after");
+    expect(officeStyles).toContain(".office-animation-metro .real-office-stage::before");
+    expect(officeStyles).toContain("office-metro-worklight");
+    expect(officeStyles).toContain("office-warm-worklight");
+    expect(officeStyles).toContain("office-stealth-worklight");
+    expect(officeStyles).toContain(".text-free-office .office-map-overlay { position: absolute; z-index: 4;");
     expect(officeStyles).toContain("@media (prefers-reduced-motion: reduce)");
     expect(officeStyles).not.toContain("office-anime-walker");
   });

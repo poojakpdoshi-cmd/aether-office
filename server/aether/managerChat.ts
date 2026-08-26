@@ -1,4 +1,4 @@
-import { getProviderAdapter } from "./providers";
+import { generateForEmployee } from "./providers";
 
 export type ManagerChatReply = {
   reply: string;
@@ -31,7 +31,7 @@ export async function respondToManagerChat(message: string): Promise<ManagerChat
     };
   }
   try {
-    const response = await getProviderAdapter("manus").generate({
+    const response = await generateForEmployee("Manus", {
       system: "You are Manus, the primary fast manager of a local-first AI software office. Reply in one or two short sentences. Be helpful and professional. Do not claim files, tests, commands, or employee work have run. Do not start a team task; ask the owner to state an explicit task when appropriate.",
       user: clean,
     });

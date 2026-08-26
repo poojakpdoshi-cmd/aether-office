@@ -3,6 +3,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = process.env.AETHER_OFFICE_AUDIT_URL ?? "http://127.0.0.1:3000";
 const localOwnerToken = process.env.AETHER_OFFICE_AUDIT_OWNER_TOKEN;
+const researchTimeoutMs = Number.parseInt(process.env.AETHER_OFFICE_AUDIT_RESEARCH_TIMEOUT_MS ?? "90000", 10);
 const outputDirectory = "/home/ubuntu/office-interaction-audit";
 const browser = await chromium.launch({
   executablePath: "/usr/bin/chromium",
@@ -51,6 +52,14 @@ try {
     await page.getByRole("button", { name: "Send" }).click();
     await page.getByText("I understand the task. First, we will hold a manager meeting and send the agreed conclusion to the configured team for research. I will bring back one owner-reviewable plan. No work starts until you approve it.").waitFor();
     record("manager task-proposal route", true, "A substantive task becomes an approval-gated proposal without starting research.");
+    if (process.env.AETHER_OFFICE_AUDIT_RESEARCH === "1") {
+      await page.getByRole("button", { name: "Start manager meeting & research" }).click();
+      await page.getByRole("button", { name: "Approve plan & allow work" }).waitFor({ timeout: Number.isFinite(researchTimeoutMs) ? researchTimeoutMs : 90_000 });
+      record("provider-backed research route", true, "The configured available team produced an owner-reviewable plan.");
+      await page.getByRole("button", { name: "Approve plan & allow work" }).click();
+      await page.getByText("Approval recorded").waitFor();
+      record("owner approval route", true, "Approval was recorded without claiming any workspace or sandbox work occurred.");
+    }
   } else {
     findings.push({ name: "manager greeting route", passed: true, detail: "Not mutated in the anonymous browser audit because manager messages require a local-owner session; dedicated manager-chat regressions cover the local greeting behavior." });
     findings.push({ name: "manager task-proposal route", passed: true, detail: "Not mutated in the anonymous browser audit because task proposals require a local-owner session." });
@@ -67,6 +76,14 @@ try {
     record(`${style} artwork loaded`, artwork.complete && artwork.width > 0, `Source: ${artwork.source ?? "missing"}; natural width: ${artwork.width}.`);
     const activeAnimation = await page.locator("img.real-office-backdrop").evaluate((image) => getComputedStyle(image).animationName);
     record(`${style} ambient animation active`, activeAnimation === `office-${style}-drift`, `Active image animation: ${activeAnimation}.`);
+    const visibleSceneMotion = await page.locator(".real-office-stage").evaluate(async (stage) => {
+      const animation = getComputedStyle(stage, "::before").animationName;
+      const before = getComputedStyle(stage, "::before").transform;
+      await new Promise((resolve) => window.setTimeout(resolve, 700));
+      const after = getComputedStyle(stage, "::before").transform;
+      return { animation, before, after };
+    });
+    record(`${style} visible scene-light motion`, visibleSceneMotion.animation === `office-${style}-worklight` && visibleSceneMotion.before !== visibleSceneMotion.after, `Active scene light: ${visibleSceneMotion.animation}; transform changed: ${visibleSceneMotion.before !== visibleSceneMotion.after}.`);
     await page.screenshot({ path: `${outputDirectory}/${style}-desktop.png`, fullPage: false });
   }
 

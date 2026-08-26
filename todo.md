@@ -343,3 +343,6 @@
 - [x] Add style-selector regression coverage and validate all three styles on desktop and mobile.
 - [x] Diagnose and repair the reported failure after local provider API-key configuration without exposing keys or falsely marking a provider as usable.
 - [x] Add safe regression coverage for the repaired configured-provider launch and meeting path.
+- [x] Diagnose and repair the report that the selected office animation is not visibly moving in the user’s active view.
+- [ ] Diagnose and repair the report that configured AI providers do not complete manager research or work.
+- [ ] Add visual-motion and real configured-provider workflow evidence for the repaired paths.
