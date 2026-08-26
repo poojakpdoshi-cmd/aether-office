@@ -355,6 +355,7 @@
 - [x] Preserve completed earlier DeepDiscuss research and allow a proposal-synthesis attempt when only the final debate round has a verified provider-wide failure.
 - [ ] Re-run the bounded three-employee OpenRouter meeting after the external OpenRouter 429 rate limit clears, then confirm only the resulting owner-reviewable proposal; do not auto-approve or perform workspace work.
 - [x] Retry the isolated three-employee difficult planning meeting on the owner-authorized current OpenRouter free route after a safe availability recheck.
+- [x] Recheck the OpenRouter free route after an extended cooldown and record the repeated HTTP 429 without attempting further multi-employee work.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
