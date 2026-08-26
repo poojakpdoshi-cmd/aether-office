@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { EMPTY_FLOOR_HOTSPOT, serviceFloorOverlapsAnyLaptop } from "../client/src/components/officeHotspots";
 
 const root = process.cwd();
 
@@ -25,6 +26,8 @@ describe("physical office navigation", () => {
     expect(styles).toContain(".text-free-office .office-work-zone { z-index: 7;");
     expect(styles).toContain(".text-free-office .office-laptop-zone { position: absolute; z-index: 8;");
     expect(styles).toContain(".text-free-office .office-empty-floor-zone { position: absolute; z-index: 9;");
+    expect(EMPTY_FLOOR_HOTSPOT).toEqual({ left: "65%", top: "70%", width: "14%", height: "20%" });
+    expect(serviceFloorOverlapsAnyLaptop()).toBe(false);
   });
 
   it("keeps management UI conditional instead of visible at office launch", () => {

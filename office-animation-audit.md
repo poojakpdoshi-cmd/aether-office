@@ -9,3 +9,15 @@ The real-browser audit will now exercise named room and laptop routes under Metr
 The browser audit intentionally does not submit a manager message, start a provider research round, record approval, modify workspace settings, or invoke a sandbox command. Those routes require a local-owner session and must not be bypassed by an anonymous automation context. The dedicated manager-chat regression covers the local greeting response; protected workflow routes remain subject to their owner-authorization checks.
 
 At 390 × 844, the Warm Japanese and Stealth night selections both retain the complete office overview, a readable top-right selector, and a clear transition into the manager rail below the map. The selector does not cover the chat controls or the visible office art. The complete browser audit also confirmed Metro, Warm, and Stealth image loading at the same mobile viewport.
+
+## Active Interaction Inventory
+
+The browser audit found 40 labelled map controls. They consist of DeepDiscuss, Test Lab, Lounge, Central Corridor, the empty-floor Service Floor entry, eight employee-room entries, nine laptop monitor entries, nine desk entries, and nine employee-state entries. The audit asserted every current named cabin and computer target, then opened Gemini’s room and computer under all three visual selections. It also opened the DeepDiscuss detail and Service Floor without starting research or changing configuration.
+
+The protected manager workflow is intentionally staged: a greeting returns the local manager reply; a substantive request becomes a task candidate; the owner explicitly starts the research meeting; the resulting plan remains pending approval; approval itself does not claim work occurred; and controlled workspace or sandbox actions remain owner-approved operations. Dedicated regressions cover the greeting, task proposal, manager identity privacy, provider meeting rounds, approval policy, and controlled-work safeguards.
+
+> The three selectable choices are distinct **office visual directions**. They do not claim to be three independently generated employee-walking videos. The active status transition implementation uses transform-only FLIP movement on real employee state targets and deliberately renders no pasted, chibi, cropped, or synthetic character overlay. A scene-matched motion asset would be required before claiming visible employee walking in each visual direction.
+
+## Repaired Map Collision
+
+The expanded audit found that the previous broad empty-floor Service Floor target overlaid the lower-right Devstral Small 2 laptop. The target has been narrowed and shifted to the open central-right floor, preserving its higher interaction priority while restoring direct laptop access. The browser audit subsequently opened every named non-manager room and every named laptop monitor successfully, then re-opened the Service Floor. Type checking, all 136 regressions, and the production build passed after the repair.

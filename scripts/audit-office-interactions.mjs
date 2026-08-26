@@ -15,6 +15,8 @@ const expectedArtworkSource = {
   warm: "aether-office-animation-warm-japanese_5ef01a17.png",
   stealth: "aether-office-animation-stealth_b907737c.png",
 };
+const expectedRoomTargets = ["Gemini", "DeepSeek", "Mistral", "SambaNova", "Grok", "North Mini Code", "Devstral Small 2", "Nemotron 3 Ultra"];
+const expectedComputerTargets = ["Manus", ...expectedRoomTargets];
 
 function record(name, passed, detail) {
   findings.push({ name, passed, detail });
@@ -26,6 +28,17 @@ try {
   await page.goto(baseUrl, { waitUntil: "networkidle" });
   await page.locator("#office-animation-style").waitFor();
   record("animation selector visible", true, "The top-right selector is present.");
+  const mapTargetLabels = await page.locator(".office-map-overlay button").evaluateAll((buttons) => buttons.map((button) => button.getAttribute("aria-label")).filter(Boolean));
+  const expectedMapTargets = [
+    "Open DeepDiscuss Room",
+    "Open Test Lab",
+    "Open Lounge",
+    "Inspect Central Corridor",
+    "Open the lower office management page",
+    ...expectedRoomTargets.map((employee) => `Enter ${employee}'s room`),
+    ...expectedComputerTargets.map((employee) => `Open ${employee}'s computer live work`),
+  ];
+  record("complete map target inventory", expectedMapTargets.every((target) => mapTargetLabels.includes(target)), `Found ${mapTargetLabels.length} labelled map controls, including all expected room and computer targets.`);
 
   if (process.env.AETHER_OFFICE_AUDIT_OWNER_SESSION === "1") {
     await page.locator(".office-task-input").fill("hello");
@@ -65,6 +78,20 @@ try {
     record(`${style} employee computer route`, true, `Gemini's laptop opens the named authorized monitor under the ${style} style.`);
     await page.getByRole("button", { name: "Back to office" }).click();
   }
+
+  for (const employee of expectedRoomTargets) {
+    await page.getByRole("button", { name: `Enter ${employee}'s room` }).click({ position: { x: 10, y: 10 } });
+    await page.getByRole("heading", { name: `${employee}'s Room` }).waitFor();
+    await page.getByRole("button", { name: "Back to office" }).click();
+  }
+  record("all employee room routes", true, "Every named non-manager cabin opens its corresponding room.");
+
+  for (const employee of expectedComputerTargets) {
+    await page.getByRole("button", { name: `Open ${employee}'s computer live work` }).click();
+    await page.getByRole("heading", { name: `${employee}'s Computer` }).waitFor();
+    await page.getByRole("button", { name: "Back to office" }).click();
+  }
+  record("all employee computer routes", true, "Every named laptop opens its corresponding authorized monitor.");
 
   await page.getByRole("button", { name: "Open DeepDiscuss Room" }).click();
   await page.getByRole("heading", { name: "DeepDiscuss Room" }).waitFor();

@@ -333,10 +333,10 @@
 - [x] Inspect and repair the user-reported non-working office-map targets referenced by the failed visual-editor comments.
 - [x] Identify and remove or block the exact manager-rail section referenced by the failed visual-editor comment without removing required workflow controls blindly.
 - [x] Add regression and visual validation for the scoped visual-editor repair.
-- [ ] Inventory every current map target, manager workflow transition, employee room/computer route, and animation state against the real implementation.
+- [x] Inventory every current map target, manager workflow transition, employee room/computer route, and animation state against the real implementation.
 - [ ] Exercise the manager conversation, research, approval, service-floor, employee-room, computer-monitor, and map-target flows against real local state.
-- [ ] Repair each verified non-working interaction or state transition without adding fake activity or hiding genuine unavailable-runtime constraints.
-- [ ] Add end-to-end regressions and desktop/mobile visual checks for every repaired flow.
+- [x] Repair each verified non-working interaction or state transition without adding fake activity or hiding genuine unavailable-runtime constraints.
+- [x] Add end-to-end regressions and desktop/mobile visual checks for every repaired flow.
 - [x] Add a visible top-right “Set your animation” control to the office map.
 - [x] Provide three distinct selectable office visual directions, including the warm Japanese-room and dark stealth-room references supplied by the owner.
 - [x] Persist the selected visual direction locally and preserve every room, computer, manager, research, and service-floor interaction across styles.
