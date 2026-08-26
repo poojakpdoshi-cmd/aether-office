@@ -104,7 +104,7 @@ export async function runDeepDiscuss(task: string) {
 
     const critique = meeting.messages.filter((message) => message.round === "critique");
     const debateEmployees = remainingRoundEmployees(critiqueEmployees, failedEmployees);
-    const debateOutcome = await runRound(meeting.id, task, debateEmployees, "debate", [...analysis, ...critique]);
+    const debateOutcome = await runRound(meeting.id, task, debateEmployees, "debate", [...analysis, ...critique], { allowAllFailed: mayContinueAfterRoundFailure("debate", [...analysis, ...critique].length) });
     debateOutcome.failedEmployees.forEach((employee) => failedEmployees.add(employee));
 
     const proposal = await synthesizePlan(meeting.id, task, meeting.messages);
@@ -163,7 +163,8 @@ async function runRound(
   task: string,
   employees: EmployeeId[],
   round: Exclude<DeepDiscussRound, "synthesis">,
-  previous: Array<{ employee: EmployeeId; content: string }>
+  previous: Array<{ employee: EmployeeId; content: string }>,
+  options: { allowAllFailed?: boolean } = {}
 ) {
   const previousSummary = previous.length
     ? previous.map((message) => `${message.employee}: ${message.content}`).join("\n\n").slice(0, 12000)
@@ -201,8 +202,12 @@ async function runRound(
     addActivity({ kind: "provider", message: `${contribution.employee} completed ${round}.`, employee: contribution.employee, camera: { fileScope: "No file disclosed", activeTool: "DeepDiscuss", taskStage: `${round} complete` } });
     setEmployeeStatus(contribution.employee, "WAITING");
   }
-  if (failedEmployees.length === employees.length) throw new Error(`No provider completed the ${round} round.`);
+  if (failedEmployees.length === employees.length && !options.allowAllFailed) throw new Error(`No provider completed the ${round} round.`);
   return { failedEmployees };
+}
+
+export function mayContinueAfterRoundFailure(round: Exclude<DeepDiscussRound, "synthesis">, completedEarlierMessages: number) {
+  return round === "debate" && completedEarlierMessages > 0;
 }
 
 export async function runConcurrentRoundJobs<T>(employees: EmployeeId[], work: (employee: EmployeeId) => Promise<T>) {

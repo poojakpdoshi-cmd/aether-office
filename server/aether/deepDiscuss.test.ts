@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { classifyTaskCapabilities, parseProposal, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
+import { classifyTaskCapabilities, mayContinueAfterRoundFailure, parseProposal, providerAvailabilityNotice, remainingRoundEmployees, runConcurrentRoundJobs, selectEmployeesForTask, selectLatencyPrioritySynthesisEmployees, selectSynthesisEmployee, settleConcurrentRoundJobs, withProviderRoundDeadline } from "./deepDiscuss";
 import { provisionOpenRouterProfiles, resetStateForTests, setTemporaryUntilForTests } from "./state";
 
 describe("DeepDiscuss selection and proposal parsing", () => {
@@ -58,6 +58,12 @@ describe("DeepDiscuss selection and proposal parsing", () => {
 
   it("does not retry a provider with a verified failure in later discussion rounds", () => {
     expect(remainingRoundEmployees(["Manus", "Gemini", "Mistral"], new Set(["Gemini"]))).toEqual(["Manus", "Mistral"]);
+  });
+
+  it("allows synthesis after an all-failed debate only when genuine earlier research exists", () => {
+    expect(mayContinueAfterRoundFailure("analysis", 3)).toBe(false);
+    expect(mayContinueAfterRoundFailure("debate", 0)).toBe(false);
+    expect(mayContinueAfterRoundFailure("debate", 3)).toBe(true);
   });
 
   it("skips duplicate worker profiles after their shared provider has a verified failure", async () => {
