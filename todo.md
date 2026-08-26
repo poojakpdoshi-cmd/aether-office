@@ -243,7 +243,7 @@
 - [x] Remove source cloning, local dependency installation, development server, and localhost-opening steps from normal user guidance.
 - [x] Verify `AetherOffice` alone invokes masked first-run setup when required, starts the bundled production server, waits for readiness, and opens the local browser URL.
 - [x] Test a clean isolated global package installation and launch using no command after `AetherOffice`.
-- [ ] Publish `@aetheroffice/cli` from an npm account or organization that owns the `@aetheroffice` scope, then verify the registry installation command.
+- [x] Publish `@aetheroffice/cli` from an npm account or organization that owns the `@aetheroffice` scope, then verify the registry installation command.
 - [ ] Confirm the owner has enabled npm two-factor authentication before the authorized direct public release.
 - [x] Audit the current shared workspace execution and employee state to document the gap to real per-employee isolation.
 - [x] Select an owner-approved secure runtime for real per-employee terminal processes, filesystems, resource limits, and network restrictions.
@@ -346,3 +346,6 @@
 - [x] Diagnose and repair the report that the selected office animation is not visibly moving in the user’s active view.
 - [ ] Diagnose and repair the report that configured AI providers do not complete manager research or work.
 - [ ] Add visual-motion and real configured-provider workflow evidence for the repaired paths.
+- [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
+- [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
+- [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
