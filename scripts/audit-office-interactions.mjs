@@ -2,6 +2,7 @@ import { chromium } from "playwright-core";
 import { mkdir, writeFile } from "node:fs/promises";
 
 const baseUrl = process.env.AETHER_OFFICE_AUDIT_URL ?? "http://127.0.0.1:3000";
+const localOwnerToken = process.env.AETHER_OFFICE_AUDIT_OWNER_TOKEN;
 const outputDirectory = "/home/ubuntu/office-interaction-audit";
 const browser = await chromium.launch({
   executablePath: "/usr/bin/chromium",
@@ -25,7 +26,8 @@ function record(name, passed, detail) {
 
 try {
   await mkdir(outputDirectory, { recursive: true });
-  await page.goto(baseUrl, { waitUntil: "networkidle" });
+  const launchUrl = localOwnerToken ? `${baseUrl}/?localOwner=${encodeURIComponent(localOwnerToken)}` : baseUrl;
+  await page.goto(launchUrl, { waitUntil: "networkidle" });
   await page.locator("#office-animation-style").waitFor();
   record("animation selector visible", true, "The top-right selector is present.");
   const mapTargetLabels = await page.locator(".office-map-overlay button").evaluateAll((buttons) => buttons.map((button) => button.getAttribute("aria-label")).filter(Boolean));
@@ -40,13 +42,18 @@ try {
   ];
   record("complete map target inventory", expectedMapTargets.every((target) => mapTargetLabels.includes(target)), `Found ${mapTargetLabels.length} labelled map controls, including all expected room and computer targets.`);
 
-  if (process.env.AETHER_OFFICE_AUDIT_OWNER_SESSION === "1") {
+  if (process.env.AETHER_OFFICE_AUDIT_OWNER_SESSION === "1" && localOwnerToken) {
     await page.locator(".office-task-input").fill("hello");
     await page.getByRole("button", { name: "Send" }).click();
     await page.getByText("Hello sir! I'm the manager of AetherOffice. How can I help you today?").waitFor();
     record("manager greeting route", true, "The manager returns the local greeting without starting research.");
+    await page.locator(".office-task-input").fill("Plan a local availability calculator");
+    await page.getByRole("button", { name: "Send" }).click();
+    await page.getByText("I understand the task. First, we will hold a manager meeting and send the agreed conclusion to the configured team for research. I will bring back one owner-reviewable plan. No work starts until you approve it.").waitFor();
+    record("manager task-proposal route", true, "A substantive task becomes an approval-gated proposal without starting research.");
   } else {
     findings.push({ name: "manager greeting route", passed: true, detail: "Not mutated in the anonymous browser audit because manager messages require a local-owner session; dedicated manager-chat regressions cover the local greeting behavior." });
+    findings.push({ name: "manager task-proposal route", passed: true, detail: "Not mutated in the anonymous browser audit because task proposals require a local-owner session." });
   }
 
   for (const style of ["metro", "warm", "stealth"]) {
