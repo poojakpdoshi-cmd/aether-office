@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const officeSource = readFileSync(new URL("../client/src/components/LiveOffice.tsx", import.meta.url), "utf8");
 const styles = readFileSync(new URL("../client/src/index.css", import.meta.url), "utf8");
+const officeStyles = readFileSync(new URL("../client/src/pages/owner-floor.css", import.meta.url), "utf8");
 
 describe("office motion performance", () => {
   it("uses real employee positions with compositor-friendly FLIP transitions and reduced-motion support", () => {
@@ -14,5 +15,9 @@ describe("office motion performance", () => {
     expect(styles).toContain("will-change:transform");
     expect(styles).toContain("contain:layout paint");
     expect(styles).toContain("@media(prefers-reduced-motion:reduce)");
+    expect(officeSource).toContain('if (employee.status === "THINKING")');
+    expect(officeSource).toContain('state: "walking"');
+    expect(officeSource).not.toContain('office-walking-person');
+    expect(officeStyles).not.toContain("office-walking-person");
   });
 });

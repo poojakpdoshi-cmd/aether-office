@@ -30,4 +30,11 @@ describe("AetherOffice non-default workspace controls", () => {
     expect(homeSource).toContain('refetchOnMount: "always", refetchOnWindowFocus: "always", staleTime: 0');
     expect(homeSource).toContain("onSuccess: async () => { await dashboardQuery.refetch();");
   });
+
+  it("persists the selected office animation style locally", () => {
+    expect(homeSource).toContain('window.localStorage.getItem("aether-office-animation-style")');
+    expect(homeSource).toContain('window.localStorage.setItem("aether-office-animation-style", officeAnimationStyle)');
+    expect(homeSource).toContain("animationStyle={officeAnimationStyle}");
+    expect(homeSource).toContain("onAnimationStyleChange={setOfficeAnimationStyle}");
+  });
 });

@@ -14,7 +14,7 @@ const employee = (status: string): OfficeEmployee => ({ name: "Gemini", shortNam
 
 describe("real office motion behavior", () => {
   it("maps verified employee status transitions to the correct visible work locations", () => {
-    expect(resolveOfficeLocation(employee("THINKING"), slot)).toMatchObject({ x: "12%", y: "24%", state: "walking" });
+    expect(resolveOfficeLocation(employee("THINKING"), slot)).toMatchObject({ x: "33%", y: "24%", state: "walking" });
     expect(resolveOfficeLocation(employee("IN_MEETING"), slot)).toMatchObject({ x: "49%", y: "48%", state: "meeting" });
     expect(resolveOfficeLocation(employee("TESTING"), slot)).toMatchObject({ x: "50%", y: "92%", state: "testing" });
     expect(resolveOfficeLocation(employee("COMPLETED"), slot)).toMatchObject({ x: "50%", y: "94%", state: "complete" });

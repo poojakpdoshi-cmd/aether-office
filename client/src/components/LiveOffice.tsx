@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { allocateCompactCabinSlots, type CompactCabinSlot } from "./cabinSlots";
-import { ACTIVE_OFFICE_BACKGROUND } from "./officeArtwork";
+import { OFFICE_ANIMATION_STYLES, type OfficeAnimationStyle } from "./officeArtwork";
 
 export type OfficeEmployee = { name: string; shortName: string; role: string; status: string; accent: string };
 type Props = {
@@ -17,12 +17,23 @@ type Props = {
   showManagerCabin?: boolean;
   sideControl?: ReactNode;
   managementPanel?: ReactNode;
+  animationStyle?: OfficeAnimationStyle;
+  onAnimationStyleChange?: (style: OfficeAnimationStyle) => void;
 };
 
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
 export function resolveOfficeLocation(employee: OfficeEmployee, slot: CompactCabinSlot) {
   if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" };
-  if (employee.status === "THINKING") return { ...slot.station, state: "walking" };
+  if (employee.status === "THINKING") {
+    const stationX = Number.parseFloat(slot.station.x);
+    const stationY = Number.parseFloat(slot.station.y);
+    const corridor = stationX < 40
+      ? { x: "33%", y: slot.station.y }
+      : stationX > 60
+        ? { x: "67%", y: slot.station.y }
+        : { x: "50%", y: stationY < 50 ? "31%" : "75%" };
+    return { ...corridor, state: "walking" };
+  }
   if (employee.status === "CODING") return { ...slot.station, state: "coding" };
   if (employee.status === "REVIEWING") return { ...slot.station, state: "reviewing" };
   if (employee.status === "TESTING") return { x: "50%", y: "92%", state: "testing" };
@@ -60,8 +71,9 @@ export function buildOfficeHotspotPlan(employees: OfficeEmployee[]) {
   };
 }
 
-export function LiveOffice({ employees, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, onOpenEmptyFloor, sideControl, managementPanel }: Props) {
+export function LiveOffice({ employees, onOpenEmployeeRoom, onInspectEmployeeComputer, onInspect, onOpenEmptyFloor, sideControl, managementPanel, animationStyle = "metro", onAnimationStyleChange }: Props) {
   const { assignments, assignedEmployees } = buildOfficeHotspotPlan(employees);
+  const officeArtwork = OFFICE_ANIMATION_STYLES[animationStyle];
   const slotByEmployee = new Map(assignments.map((slot) => [slot.employee, slot]));
   const agentNodes = useRef(new Map<string, HTMLButtonElement>());
   const previousAgentRects = useRef(new Map<string, DOMRect>());
@@ -100,10 +112,11 @@ export function LiveOffice({ employees, onOpenEmployeeRoom, onInspectEmployeeCom
     previousAgentRects.current = nextAgentRects;
   }, [employees]);
 
-  return <section className={sideControl ? "text-free-office office-with-control" : "text-free-office"} aria-label="Interactive animated AI office map">
+  return <section className={cn(sideControl ? "text-free-office office-with-control" : "text-free-office", `office-animation-${animationStyle}`)} aria-label="Interactive animated AI office map">
     <div className="real-office-stage illustrated-office-stage" aria-label="Large interactive illustrated AI office map">
-      <div className="office-ambient-backdrop" style={{ backgroundImage: `url(${ACTIVE_OFFICE_BACKGROUND})` }} aria-hidden="true" />
-      <img className="real-office-backdrop" src={ACTIVE_OFFICE_BACKGROUND} alt="Owner-selected compact interactive office floor" />
+      <div className="office-ambient-backdrop" style={{ backgroundImage: `url(${officeArtwork.image})` }} aria-hidden="true" />
+      <img className="real-office-backdrop" src={officeArtwork.image} alt={`${officeArtwork.label} interactive office floor`} />
+      {onAnimationStyleChange ? <div className="office-animation-picker"><label htmlFor="office-animation-style">Set your animation</label><select id="office-animation-style" value={animationStyle} onChange={(event) => onAnimationStyleChange(event.target.value as OfficeAnimationStyle)} aria-label="Set your animation">{Object.entries(OFFICE_ANIMATION_STYLES).map(([style, option]) => <option key={style} value={style}>{option.label}</option>)}</select></div> : null}
       <div className="office-map-overlay">
         <div className="illustrated-readability" />
         <div className="deep-discuss-room-frame" aria-hidden="true"><i /><i /></div>

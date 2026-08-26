@@ -15,6 +15,12 @@
 .text-free-office .real-office-stage { position: relative; width: min(100vw, 177.778dvh); height: auto; min-height: 0; margin: 0; aspect-ratio: 16 / 9; overflow: hidden; background: #070b16; }
 .text-free-office .office-ambient-backdrop { display: none; }
 .text-free-office .real-office-backdrop { z-index: 1; object-fit: cover; filter: saturate(.84) brightness(.96); }
+.office-animation-warm .real-office-backdrop { filter:saturate(.9) sepia(.08) brightness(1.04); }
+.office-animation-stealth .real-office-backdrop { filter:saturate(.82) hue-rotate(10deg) brightness(.72) contrast(1.08); }
+.office-animation-picker { position:absolute; z-index:20; top:10px; right:10px; display:flex; align-items:center; gap:7px; border:1.5px solid #253637; border-radius:3px; background:rgba(255,248,233,.94); box-shadow:3px 3px 0 rgba(37,54,55,.85); padding:6px 7px; color:#253637; }
+.office-animation-picker label { font-size:9px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+.office-animation-picker select { border:1px solid #77887d; border-radius:2px; background:#fffdf4; color:#253637; padding:3px 5px; font-size:10px; font-weight:700; outline:none; }
+.office-animation-picker select:focus-visible { outline:2px solid #355f61; outline-offset:2px; }
 .text-free-office .office-map-overlay { position: absolute; z-index: 2; inset: 0; }
 .text-free-office .illustrated-readability { display: none; }
 .text-free-office .deep-discuss-room-frame span,
@@ -36,8 +42,8 @@
 .text-free-office .map-lounge { left: 5%; bottom: 9%; width: 22%; height: 15%; }
 .text-free-office .manager-file-pile { left: 55%; top: 19%; width: 7%; height: 9%; transform: none; }
 .text-free-office .manager-provider-locker { left: 59%; top: 17%; width: 6%; height: 9%; transform: none; }
-.text-free-office .office-work-zone { width: 18%; height: 16%; transform: translate(-50%, -50%); opacity: 0; }
-.text-free-office .office-room-zone { position: absolute; z-index: 4; cursor: pointer; opacity: 0; }
+.text-free-office .office-work-zone { z-index: 7; width: 18%; height: 16%; transform: translate(-50%, -50%); opacity: 0; }
+.text-free-office .office-room-zone { position: absolute; z-index: 7; cursor: pointer; opacity: 0; }
 .text-free-office .office-laptop-zone { position: absolute; z-index: 8; width: 11%; height: 10%; transform: translate(-50%, -50%); cursor: pointer; opacity: 0; }
 .text-free-office .office-hotspot:focus-visible,
 .text-free-office .manager-file-pile:focus-visible,
@@ -54,9 +60,9 @@
 .map-lounge { left: 7%; bottom: 11%; }
 .manager-file-pile { left: 56%; top: 13%; }
 .manager-provider-locker { left: 61%; top: 10%; }
-.office-corridor-zone { position: absolute; z-index: 5; left: 19%; top: 30%; width: 62%; height: 67%; border: 0; background: transparent; cursor: pointer; }
+.office-corridor-zone { position: absolute; z-index: 3; left: 19%; top: 30%; width: 62%; height: 67%; border: 0; background: transparent; cursor: pointer; }
 .office-corridor-zone:focus-visible { outline: 2px solid rgba(156, 236, 255, .9); outline-offset: -4px; }
-.text-free-office .office-empty-floor-zone { position: absolute; z-index: 7; left: 69%; top: 69%; width: 22%; height: 25%; border: 0; background: transparent; padding: 0; cursor: pointer; }
+.text-free-office .office-empty-floor-zone { position: absolute; z-index: 9; left: 69%; top: 69%; width: 22%; height: 25%; border: 0; background: transparent; padding: 0; cursor: pointer; }
 .text-free-office .office-empty-floor-zone:focus-visible { outline: 2px solid #355f61; outline-offset: -4px; }
 
 @media (max-width: 760px) {

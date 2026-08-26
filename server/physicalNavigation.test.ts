@@ -18,6 +18,15 @@ describe("physical office navigation", () => {
     expect(styles).toContain(".office-bottom-panel");
   });
 
+  it("layers broad corridor inspection underneath real employee and service-floor controls", () => {
+    const styles = readFileSync(join(root, "client/src/pages/owner-floor.css"), "utf8");
+    expect(styles).toContain(".office-corridor-zone { position: absolute; z-index: 3;");
+    expect(styles).toContain(".text-free-office .office-room-zone { position: absolute; z-index: 7;");
+    expect(styles).toContain(".text-free-office .office-work-zone { z-index: 7;");
+    expect(styles).toContain(".text-free-office .office-laptop-zone { position: absolute; z-index: 8;");
+    expect(styles).toContain(".text-free-office .office-empty-floor-zone { position: absolute; z-index: 9;");
+  });
+
   it("keeps management UI conditional instead of visible at office launch", () => {
     const home = readFileSync(join(root, "client/src/pages/Home.tsx"), "utf8");
     expect(home).toContain("managementPanel={<aside className=\"office-bottom-panel\"");

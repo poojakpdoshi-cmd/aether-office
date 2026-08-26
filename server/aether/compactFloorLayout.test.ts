@@ -11,7 +11,8 @@ const cabinSlots = readFileSync(fileURLToPath(new URL("../../client/src/componen
 
 describe("Owner-selected compact office floor", () => {
   it("uses the selected asset and provides direct room, desk, object, and corridor targets", () => {
-    expect(officeComponent).toContain('src={ACTIVE_OFFICE_BACKGROUND}');
+    expect(officeComponent).toContain('src={officeArtwork.image}');
+    expect(officeComponent).toContain("OFFICE_ANIMATION_STYLES");
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_POLICY = "owner-authorized-manager-cabin-removal"');
     expect(officeArtworkPolicy).toContain('OFFICE_ARTWORK_GENERATION_ENABLED = false');
     expect(officeArtworkPolicy).toContain('aetheroffice-office-no-manager-cabin_a8a18332.png');
@@ -61,7 +62,7 @@ describe("Owner-selected compact office floor", () => {
     expect(officeComponent).toContain('onInspectEmployeeComputer(slot.employee)');
     expect(officeComponent).toContain('className={cn("illustrated-agent", `illustrated-${pos.state}`)}');
     expect(officeComponent).not.toContain('illustrated-agent-label');
-    expect(compactFloorStyles).toContain('.text-free-office .office-work-zone { width: 18%; height: 16%; transform: translate(-50%, -50%); opacity: 0; }');
+    expect(compactFloorStyles).toContain('.text-free-office .office-work-zone { z-index: 7; width: 18%; height: 16%; transform: translate(-50%, -50%); opacity: 0; }');
     expect(compactFloorStyles).toContain('.text-free-office .office-laptop-zone { position: absolute; z-index: 8; width: 11%; height: 10%; transform: translate(-50%, -50%); cursor: pointer; opacity: 0; }');
     expect(homePage).toContain('onOpenEmployeeRoom={(employee) => setOfficeFocus(`${employee} Room`)}');
     expect(homePage).toContain('onInspectEmployeeComputer={(employee) => setOfficeFocus(`${employee} Computer`)}');
@@ -74,7 +75,9 @@ describe("Owner-selected compact office floor", () => {
     expect(homePage).toContain('Configured ${profile.provider} profile');
     expect(officeComponent).toContain('if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" }');
     expect(officeComponent).toContain('const { assignments } = allocateCompactCabinSlots(employees.map((employee) => employee.name))');
-    expect(officeComponent).toContain('if (employee.status === "THINKING") return { ...slot.station, state: "walking" }');
+    expect(officeComponent).toContain('if (employee.status === "THINKING") {');
+    expect(officeComponent).toContain('const corridor = stationX < 40');
+    expect(officeComponent).toContain('return { ...corridor, state: "walking" };');
     expect(officeComponent).toContain('if (employee.status === "CODING") return { ...slot.station, state: "coding" }');
     expect(officeComponent).toContain('if (employee.status === "REVIEWING") return { ...slot.station, state: "reviewing" }');
     expect(officeComponent).toContain('if (employee.status === "TESTING") return { x: "50%", y: "92%", state: "testing" }');

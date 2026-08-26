@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { createLaptopOverlay } from "@/lib/laptopOverlay";
 import { trpc } from "@/lib/trpc";
 import { LiveOffice } from "@/components/LiveOffice";
+import { type OfficeAnimationStyle } from "@/components/officeArtwork";
 import { OfficeControlChatbox } from "@/components/OfficeControlChatbox";
 import { OfficeWorldControls } from "@/components/OfficeWorldControls";
 import { EmployeeComputerMonitor, EmployeeRoomScene } from "@/components/EmployeeRoomExperience";
@@ -404,9 +405,14 @@ export default function Home() {
   const [managerMessages, setManagerMessages] = useState<Array<{ role: "manager" | "owner"; content: string }>>([]);
   const [managerTaskCandidate, setManagerTaskCandidate] = useState<string | null>(null);
   const [showWorldControls, setShowWorldControls] = useState(false);
+  const [officeAnimationStyle, setOfficeAnimationStyle] = useState<OfficeAnimationStyle>(() => {
+    const saved = window.localStorage.getItem("aether-office-animation-style");
+    return saved === "warm" || saved === "stealth" || saved === "metro" ? saved : "metro";
+  });
   const [projectPreviewUrl, setProjectPreviewUrl] = useState("");
   const startedManagerTaskRef = useRef<string | null>(null);
   const providerQuery = trpc.aether.providers.useQuery();
+  useEffect(() => { window.localStorage.setItem("aether-office-animation-style", officeAnimationStyle); }, [officeAnimationStyle]);
   const dashboardQuery = trpc.aether.dashboard.useQuery(undefined, { refetchInterval: 1500, refetchOnMount: "always", refetchOnWindowFocus: "always", staleTime: 0 });
   const workspaceQuery = trpc.aether.workspace.useQuery(undefined, { refetchInterval: 3000 });
   const projectPreviewQuery = trpc.aether.projectPreview.useQuery(undefined, { enabled: Boolean(workspaceQuery.data?.selected), refetchInterval: 1500 });
@@ -714,6 +720,8 @@ export default function Home() {
       onInspect={setOfficeFocus}
       onOpenEmptyFloor={() => setShowWorldControls(true)}
       showManagerCabin={false}
+      animationStyle={officeAnimationStyle}
+      onAnimationStyleChange={setOfficeAnimationStyle}
       sideControl={<OfficeControlChatbox
         managers={managers}
         messages={managerMessages}

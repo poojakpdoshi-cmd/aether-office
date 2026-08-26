@@ -42,4 +42,13 @@ describe("playable office-world manager flow", () => {
     expect(office).not.toContain('className="office-anime-walker"');
     expect(office).not.toContain("illustrated-agent-portrait");
   });
+
+  it("keeps working map controls while offering the owner three selectable animation styles", () => {
+    expect(office).toContain('htmlFor="office-animation-style"');
+    expect(office).toContain("Set your animation");
+    expect(office).toContain("OFFICE_ANIMATION_STYLES");
+    expect(office).toContain("onOpenEmployeeRoom");
+    expect(office).toContain("onInspectEmployeeComputer");
+    expect(office).toContain("onOpenEmptyFloor");
+  });
 });
