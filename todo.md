@@ -363,6 +363,8 @@
 - [x] Pace same-provider OpenRouter free-route employees without removing concurrency for other configured providers, then retest the real planning meeting.
 - [x] Preserve successful analysis evidence when all providers fail a later critique round, then retry owner-reviewable synthesis without fabricating missing discussion work.
 - [x] Give strict OpenRouter free-route synthesis a larger bounded completion budget than ordinary discussion rounds, then retest the real owner-reviewable proposal.
+- [ ] Run the user-requested fresh isolated OpenRouter free-route availability check and three-employee planning retry without approval or workspace work.
+- [x] Run the user-requested fresh isolated OpenRouter free-route availability check and record the returned HTTP 429 before starting any multi-employee work.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
