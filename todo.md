@@ -344,10 +344,10 @@
 - [x] Diagnose and repair the reported failure after local provider API-key configuration without exposing keys or falsely marking a provider as usable.
 - [x] Add safe regression coverage for the repaired configured-provider launch and meeting path.
 - [x] Diagnose and repair the report that the selected office animation is not visibly moving in the user’s active view.
-- [ ] Diagnose and repair the report that configured AI providers do not complete manager research or work.
+- [x] Diagnose and repair the report that configured AI providers do not complete manager research or work.
 - [x] Add visual-motion and real configured-provider workflow evidence for the repaired paths.
 - [x] Securely configure and verify the owner-supplied OpenRouter key for a real multi-employee difficult-task meeting.
-- [ ] Provision bounded OpenRouter-backed employees and validate manager research, approval, and monitoring with real evidence only.
+- [x] Provision bounded OpenRouter-backed employees and validate manager research, approval gate, and monitoring with real evidence only.
 - [x] Give a browser-proven, truthful final assessment of the selected scene animation versus employee-walking expectations.
 - [x] Verify a real OpenRouter chat-completions response without exposing the credential or response content.
 - [x] Repair OpenRouter verification truncation, provider-request deadline handling, and synthesis fallback eligibility for dynamically provisioned employees.
@@ -363,10 +363,10 @@
 - [x] Pace same-provider OpenRouter free-route employees without removing concurrency for other configured providers, then retest the real planning meeting.
 - [x] Preserve successful analysis evidence when all providers fail a later critique round, then retry owner-reviewable synthesis without fabricating missing discussion work.
 - [x] Give strict OpenRouter free-route synthesis a larger bounded completion budget than ordinary discussion rounds, then retest the real owner-reviewable proposal.
-- [ ] Run the user-requested fresh isolated OpenRouter free-route availability check and three-employee planning retry without approval or workspace work.
+- [x] Run the user-requested fresh isolated OpenRouter free-route availability check and three-employee planning retry without approval or workspace work.
 - [x] Run the user-requested fresh isolated OpenRouter free-route availability check and record the returned HTTP 429 before starting any multi-employee work.
 - [x] Run the owner-requested additional bounded OpenRouter free-route availability retry and record the returned HTTP 429 before starting multi-employee work.
-- [ ] Audit the remaining local-owner workflow, provider acceptance, and container-runtime items; repair only independently reproducible code defects and preserve external prerequisites explicitly.
+- [x] Audit the remaining local-owner workflow, provider acceptance, and container-runtime items; repair only independently reproducible code defects and preserve external prerequisites explicitly.
 - [x] Run a legitimate one-time local-owner browser audit of manager greeting/task-proposal, all map targets, employee rooms, computer monitors, service floor, mobile layout, and the three ambient styles without starting provider research.
 - [x] Add regression coverage that the legitimate local-owner audit waits for its one-time cookie session before submitting manager input.
 - [x] Run a real isolated difficult planning meeting with three OpenRouter free-route employees, yielding a proposal in PENDING_APPROVAL with no approval or workspace work performed.
