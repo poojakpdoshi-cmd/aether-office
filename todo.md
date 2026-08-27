@@ -234,7 +234,7 @@
 - [x] Add regression coverage for live current-work, idle fallback, and no-fabrication behavior.
 
 - [x] Commit the latest verified AetherOffice checkpoint changes with a descriptive message.
-- [ ] Push the commit to the configured GitHub repository and verify the remote commit.
+- [x] Push the commit to the configured GitHub repository and verify the remote commit. (Verified GitHub main after owner authorization on 2026-08-27.)
 - [x] Provide exact Git clone, ZIP download, npm install, and local launch commands.
 - [x] Replace Unix-only development and start scripts with Windows-compatible Node launchers.
 - [x] Document the supported Windows Corepack and pnpm installation flow without suggesting incompatible npm installation.
@@ -376,7 +376,7 @@
 - [x] Add office-art-compatible visible employee walking for genuine status transitions, with no cropped/chibi/purple placeholder overlay and reduced-motion support.
 - [x] Audit all remaining AetherOffice code paths and runtime diagnostics for reproducible bugs; repair and regression-test only verified defects while keeping external prerequisites explicit.
 - [x] Perform a fresh end-to-end audit of all source code, local-owner interactions, employee routes, discussion flow, visual animations, reduced-motion behavior, and real provider-backed hard-task planning; document evidence without fabricating unsupported runtime results.
-- [ ] Commit and push the owner-authorized audited checkpoint to GitHub main after a final credential-safety review, then verify the remote commit.
+- [x] Commit and push the owner-authorized audited checkpoint to GitHub main after a final credential-safety review, then verify the remote commit. (Verified GitHub main after owner authorization on 2026-08-27.)
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
