@@ -372,6 +372,7 @@
 - [x] Run a real isolated difficult planning meeting with three OpenRouter free-route employees, yielding a proposal in PENDING_APPROVAL with no approval or workspace work performed.
 - [x] Run the owner-authorized isolated approval-only test on a real OpenRouter-backed proposal, then verify no workspace or sandbox action begins.
 - [x] Run a comprehensive browser and runtime audit of all AetherOffice interactive features and the three selectable animation styles, reporting only verified behavior.
+- [x] Measure scene-animation frame cadence for Metro, Warm Japanese, and Stealth Night in a defined local browser condition without promising device-independent performance.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
