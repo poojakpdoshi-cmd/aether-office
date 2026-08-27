@@ -23,6 +23,14 @@ type Props = {
 };
 
 const meetingPositions: Record<string, { x: string; y: string }> = { Manus: { x: "43%", y: "50%" }, Gemini: { x: "49%", y: "48%" }, DeepSeek: { x: "55%", y: "50%" }, Mistral: { x: "43%", y: "56%" }, SambaNova: { x: "57%", y: "56%" }, Grok: { x: "57%", y: "48%" } };
+const corridorWalkerAssets = [
+  "/manus-storage/aether-office-walking-employee-final_4d75bef9.png",
+];
+
+function corridorWalkerAsset(employee: OfficeEmployee) {
+  return corridorWalkerAssets[employee.name.split("").reduce((total, character) => total + character.charCodeAt(0), 0) % corridorWalkerAssets.length]!;
+}
+
 export function resolveOfficeLocation(employee: OfficeEmployee, slot: CompactCabinSlot) {
   if (employee.status === "IN_MEETING") return { ...meetingPositions[employee.name], state: "meeting" };
   if (employee.status === "THINKING") {
@@ -128,7 +136,7 @@ export function LiveOffice({ employees, onOpenEmployeeRoom, onInspectEmployeeCom
         {assignments.filter((slot) => slot.employee !== "Manus").map((slot) => <button key={`${slot.id}-room`} onClick={() => onOpenEmployeeRoom(slot.employee)} className="office-room-zone" style={slot.room} aria-label={`Enter ${slot.employee}'s room`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-desk`} onClick={() => onInspect(`${slot.employee} Desk`)} className="office-work-zone" style={{ left: slot.desk.x, top: slot.desk.y }} aria-label={`Inspect ${slot.employee} desk`} />)}
         {assignments.map((slot) => <button key={`${slot.id}-laptop`} onClick={() => onInspectEmployeeComputer(slot.employee)} className="office-laptop-zone" style={slot.laptop} aria-label={`Open ${slot.employee}'s computer live work`} />)}
-        {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`} />; })}
+        {assignedEmployees.map((employee) => { const slot = slotByEmployee.get(employee.name)!; const pos = resolveOfficeLocation(employee, slot); return <button key={employee.name} ref={(node) => { if (node) agentNodes.current.set(employee.name, node); else agentNodes.current.delete(employee.name); }} onClick={() => employee.name === "Manus" ? onInspect("Manager") : onInspect(employee.name)} className={cn("illustrated-agent", `illustrated-${pos.state}`)} style={{ left: pos.x, top: pos.y }} aria-label={`${employee.name} is ${employee.status}`} data-motion-state={pos.state}>{pos.state === "walking" ? <img className="office-corridor-walker" src={corridorWalkerAsset(employee)} alt="" aria-hidden="true" /> : null}</button>; })}
       </div>
     </div>
     {sideControl && postAnimationReady ? <div className="office-post-animation-control">{sideControl}</div> : managementPanel}

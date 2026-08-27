@@ -6,7 +6,7 @@ const styles = readFileSync(new URL("../client/src/index.css", import.meta.url),
 const officeStyles = readFileSync(new URL("../client/src/pages/owner-floor.css", import.meta.url), "utf8");
 
 describe("office motion performance", () => {
-  it("uses real employee positions with compositor-friendly FLIP transitions and reduced-motion support", () => {
+  it("uses real employee positions with compositor-friendly FLIP transitions and visible walking only for a genuine THINKING corridor state", () => {
     expect(officeSource).toContain("const previousAgentRects = useRef(new Map<string, DOMRect>())");
     expect(officeSource).toContain("node.animate(createAgentMotionFrames(deltaX, deltaY, mobileMotion)");
     expect(officeSource).toContain('const restingTransform = mobileMotion ? "translate3d(-50%, -50%, 0) scale(.82)" : "translate3d(-50%, -50%, 0)"');
@@ -17,7 +17,13 @@ describe("office motion performance", () => {
     expect(styles).toContain("@media(prefers-reduced-motion:reduce)");
     expect(officeSource).toContain('if (employee.status === "THINKING")');
     expect(officeSource).toContain('state: "walking"');
-    expect(officeSource).not.toContain('office-walking-person');
+    expect(officeSource).toContain('const corridorWalkerAssets = [');
+    expect(officeSource).toContain('"/manus-storage/aether-office-walking-employee-final_4d75bef9.png"');
+    expect(officeSource).toContain('pos.state === "walking" ? <img className="office-corridor-walker"');
+    expect(officeSource).toContain('data-motion-state={pos.state}');
+    expect(officeStyles).toContain('.text-free-office .illustrated-walking .office-corridor-walker');
+    expect(officeStyles).toContain('animation: office-corridor-walk');
+    expect(officeStyles).toContain('.text-free-office .office-corridor-walker { display: none; }');
     expect(officeStyles).not.toContain("office-walking-person");
   });
 

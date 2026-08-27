@@ -72,6 +72,11 @@
 .text-free-office .office-work-zone:focus-visible,
 .text-free-office .office-laptop-zone:focus-visible { outline: none; }
 .text-free-office .illustrated-agent-portrait { display: none !important; }
+.text-free-office .illustrated-agent { width: 58px; height: 74px; padding: 0; }
+.text-free-office .office-corridor-walker { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center bottom; pointer-events: none; filter: drop-shadow(0 4px 3px rgba(24, 35, 35, .3)); transform-origin: 50% 88%; will-change: transform; backface-visibility: hidden; }
+@media (prefers-reduced-motion: no-preference) { .text-free-office .illustrated-walking .office-corridor-walker { animation: office-corridor-walk .34s cubic-bezier(.45,0,.55,1) infinite alternate; } }
+@keyframes office-corridor-walk { from { transform: translate3d(-2px, 1px, 0) rotate(-2deg); } to { transform: translate3d(2px, -2px, 0) rotate(2deg); } }
+@media (prefers-reduced-motion: reduce) { .text-free-office .office-corridor-walker { display: none; } }
 
 .deep-discuss-room-frame { left: 32%; top: 35%; width: 36%; height: 42%; }
 .office-manager { left: 43%; top: 7%; }
