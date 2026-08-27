@@ -374,6 +374,8 @@
 - [x] Run a comprehensive browser and runtime audit of all AetherOffice interactive features and the three selectable animation styles, reporting only verified behavior.
 - [x] Measure scene-animation frame cadence for Metro, Warm Japanese, and Stealth Night in a defined local browser condition without promising device-independent performance.
 - [x] Add office-art-compatible visible employee walking for genuine status transitions, with no cropped/chibi/purple placeholder overlay and reduced-motion support.
+- [x] Audit all remaining AetherOffice code paths and runtime diagnostics for reproducible bugs; repair and regression-test only verified defects while keeping external prerequisites explicit.
+- [x] Perform a fresh end-to-end audit of all source code, local-owner interactions, employee routes, discussion flow, visual animations, reduced-motion behavior, and real provider-backed hard-task planning; document evidence without fabricating unsupported runtime results.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.

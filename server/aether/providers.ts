@@ -192,12 +192,17 @@ export function getProviderAdapter(provider: ProviderId) {
   return adapters[provider];
 }
 
-export async function getVerifiedManagerFallbackProvider(): Promise<Exclude<ProviderId, "manus"> | undefined> {
+export async function getVerifiedManagerFallbackProviders(): Promise<Array<Exclude<ProviderId, "manus">>> {
   const candidates = (Object.keys(providerMeta) as ProviderId[]).filter((provider): provider is Exclude<ProviderId, "manus"> => provider !== "manus" && providerMeta[provider].availability === "ready");
+  const verified: Array<Exclude<ProviderId, "manus">> = [];
   for (const provider of candidates) {
-    if (await hasVerifiedProviderConfig(provider) && await adapters[provider].isConfigured()) return provider;
+    if (await hasVerifiedProviderConfig(provider) && await adapters[provider].isConfigured()) verified.push(provider);
   }
-  return undefined;
+  return verified;
+}
+
+export async function getVerifiedManagerFallbackProvider(): Promise<Exclude<ProviderId, "manus"> | undefined> {
+  return (await getVerifiedManagerFallbackProviders())[0];
 }
 
 export async function resolveEmployeeProvider(employee: EmployeeId): Promise<ProviderId> {
@@ -213,9 +218,15 @@ export async function generateForEmployee(employee: EmployeeId, input: { system:
     try {
       return await manusAdapter.generate(input);
     } catch {
-      const fallback = await getVerifiedManagerFallbackProvider();
-      if (!fallback) throw new Error("The built-in manager is unavailable and no verified external provider is configured for local fallback.");
-      return adapters[fallback].generate(input);
+      const fallbacks = await getVerifiedManagerFallbackProviders();
+      for (const fallback of fallbacks) {
+        try {
+          return await adapters[fallback].generate(input);
+        } catch {
+          // Try the next independently verified local provider without exposing raw upstream errors.
+        }
+      }
+      throw new Error("The built-in manager and every verified external fallback provider are unavailable.");
     }
   }
   const profile = getDashboardState().employees.find((candidate) => candidate.id === employee);

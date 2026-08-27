@@ -274,6 +274,9 @@ const RETRY_MAX_DELAY_MS = 30_000;
 
 type FetchInit = NonNullable<Parameters<typeof fetch>[1]>;
 
+export const isRetryableHttpStatus = (status: number): boolean =>
+  status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+
 const sleep = (ms: number) =>
   new Promise<void>(resolve => setTimeout(resolve, ms));
 
@@ -308,7 +311,7 @@ const fetchWithBackoff = async (
   for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, init);
-      if (response.ok || attempt === RETRY_MAX_RETRIES) {
+      if (response.ok || !isRetryableHttpStatus(response.status) || attempt === RETRY_MAX_RETRIES) {
         return response;
       }
 

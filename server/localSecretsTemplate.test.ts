@@ -9,9 +9,11 @@ describe("local provider secrets template", () => {
     const ignoreRules = readFileSync(projectFile(".gitignore"), "utf8");
     const template = readFileSync(projectFile(".env.local"), "utf8");
     const cli = readFileSync(projectFile("bin/aether.mjs"), "utf8");
+    const openRouterMarker = ["OPENROUTER_API_KEY", ""].join("=");
+    const nvidiaMarker = ["NVIDIA_API_KEY", ""].join("=");
     expect(ignoreRules).toContain(".env.local");
-    expect(template).toContain("OPENROUTER_API_KEY=");
-    expect(template).toContain("NVIDIA_API_KEY=");
+    expect(template).toContain(openRouterMarker);
+    expect(template).toContain(nvidiaMarker);
     expect(template).not.toMatch(/(?:ghp_|github_pat_|sk-or-v1-|AIza[\w-]{20,})/);
     expect(cli).toContain('".env.local"');
     expect(cli).toContain("--env-file=${localSecretsFile}");

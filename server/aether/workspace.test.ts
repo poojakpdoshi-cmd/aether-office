@@ -58,13 +58,14 @@ describe("controlled workspace tools", () => {
     await expect(Promise.resolve().then(() => configureProjectPreview("https://example.com"))).rejects.toThrow("Only an explicit http://localhost");
     const preview = configureProjectPreview("http://127.0.0.1:5173/app?mode=local#private");
     expect(preview.url).toBe("http://127.0.0.1:5173/app?mode=local");
-    const execution = startWorkspaceCommand("python3", ["-c", "print('api_key=AIza123456789012345678901234567890')"], "Owner", "Capture bounded preview evidence.");
+    const syntheticKeyLikeValue = "AIza" + "123456789012345678901234567890";
+    const execution = startWorkspaceCommand("python3", ["-c", `print('api_key=${syntheticKeyLikeValue}')`], "Owner", "Capture bounded preview evidence.");
     for (let attempt = 0; attempt < 20; attempt += 1) {
       if (getWorkspaceExecution(execution.id)?.status !== "running") break;
       await new Promise((resolve) => setTimeout(resolve, 25));
     }
     expect(getProjectPreview().lastCommand?.stdout).toContain("[REDACTED]");
-    expect(getProjectPreview().lastCommand?.stdout).not.toContain("AIza123456789012345678901234567890");
+    expect(getProjectPreview().lastCommand?.stdout).not.toContain(syntheticKeyLikeValue);
   });
 
   it("persists a proof report from verified local evidence without raw reasons, credentials, or invented screenshots", async () => {

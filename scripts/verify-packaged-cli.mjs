@@ -13,7 +13,13 @@ const workspace = await mkdtemp(join(tmpdir(), "aether-packaged-workspace-"));
 const preferredPort = 48173;
 process.env.AETHER_CONFIG_HOME = configHome;
 const cliConfig = await import(pathToFileURL(resolve("dist/cli-config.js")).href);
-await cliConfig.configureCliProvider({ provider: "nemotron", apiKey: "packaged-cli-test-key" });
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "OK" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+try {
+  await cliConfig.configureCliProvider({ provider: "nemotron", apiKey: "packaged-cli-test-key" });
+} finally {
+  globalThis.fetch = originalFetch;
+}
 
 function listen(port) {
   return new Promise((resolveListen, rejectListen) => {

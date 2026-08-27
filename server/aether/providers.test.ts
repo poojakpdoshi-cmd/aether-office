@@ -315,4 +315,33 @@ describe("recognizeProviderKey", () => {
       rmSync(configHome, { recursive: true, force: true });
     }
   });
+
+  it("tries the next verified external provider when a configured built-in manager and first fallback both fail", async () => {
+    const originalConfigHome = process.env.AETHER_CONFIG_HOME;
+    const originalForgeKey = process.env.BUILT_IN_FORGE_API_KEY;
+    const originalFetch = globalThis.fetch;
+    const configHome = mkdtempSync(join(tmpdir(), "aether-manager-fallback-chain-test-"));
+    process.env.AETHER_CONFIG_HOME = configHome;
+    process.env.BUILT_IN_FORGE_API_KEY = "local-forge-test-key";
+    globalThis.fetch = async () => new Response(JSON.stringify({ choices: [{ message: { content: "Verified" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+    try {
+      await configureProvider({ provider: "gemini", apiKey: "first-fallback-test-key", ...getProviderDefaults("gemini") }, { verifyConnection: true });
+      await configureProvider({ provider: "openrouter", apiKey: "second-fallback-test-key", model: "openrouter/free" }, { verifyConnection: true });
+      globalThis.fetch = async (url) => {
+        const endpoint = String(url);
+        if (endpoint.includes("forge")) return new Response(JSON.stringify({ error: "precondition unavailable" }), { status: 412 });
+        if (endpoint.includes("generativelanguage")) return new Response(JSON.stringify({ error: "first fallback unavailable" }), { status: 503 });
+        if (endpoint.includes("openrouter")) return new Response(JSON.stringify({ choices: [{ message: { content: "Second verified fallback reply" } }] }), { status: 200, headers: { "content-type": "application/json" } });
+        return new Response(JSON.stringify({ error: "unexpected endpoint" }), { status: 500 });
+      };
+      await expect(generateForEmployee("Manus", { system: "Be concise.", user: "Hello" })).resolves.toBe("Second verified fallback reply");
+    } finally {
+      globalThis.fetch = originalFetch;
+      if (originalForgeKey === undefined) delete process.env.BUILT_IN_FORGE_API_KEY;
+      else process.env.BUILT_IN_FORGE_API_KEY = originalForgeKey;
+      if (originalConfigHome === undefined) delete process.env.AETHER_CONFIG_HOME;
+      else process.env.AETHER_CONFIG_HOME = originalConfigHome;
+      rmSync(configHome, { recursive: true, force: true });
+    }
+  });
 });
