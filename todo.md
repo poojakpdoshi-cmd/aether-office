@@ -244,7 +244,7 @@
 - [x] Verify `AetherOffice` alone invokes masked first-run setup when required, starts the bundled production server, waits for readiness, and opens the local browser URL.
 - [x] Test a clean isolated global package installation and launch using no command after `AetherOffice`.
 - [x] Publish `@aetheroffice/cli` from an npm account or organization that owns the `@aetheroffice` scope, then verify the registry installation command.
-- [ ] Confirm the owner has enabled npm two-factor authentication before the authorized direct public release.
+- [x] Confirm the owner has enabled npm two-factor authentication before the authorized direct public release. (Owner confirmed on 2026-08-27.)
 - [x] Audit the current shared workspace execution and employee state to document the gap to real per-employee isolation.
 - [x] Select an owner-approved secure runtime for real per-employee terminal processes, filesystems, resource limits, and network restrictions.
 - [x] Add server-enforced employee-room, sandbox, workspace, process, and activity ownership contracts.
@@ -376,6 +376,7 @@
 - [x] Add office-art-compatible visible employee walking for genuine status transitions, with no cropped/chibi/purple placeholder overlay and reduced-motion support.
 - [x] Audit all remaining AetherOffice code paths and runtime diagnostics for reproducible bugs; repair and regression-test only verified defects while keeping external prerequisites explicit.
 - [x] Perform a fresh end-to-end audit of all source code, local-owner interactions, employee routes, discussion flow, visual animations, reduced-motion behavior, and real provider-backed hard-task planning; document evidence without fabricating unsupported runtime results.
+- [ ] Commit and push the owner-authorized audited checkpoint to GitHub main after a final credential-safety review, then verify the remote commit.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.
