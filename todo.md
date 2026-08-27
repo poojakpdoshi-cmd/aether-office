@@ -345,7 +345,7 @@
 - [x] Add safe regression coverage for the repaired configured-provider launch and meeting path.
 - [x] Diagnose and repair the report that the selected office animation is not visibly moving in the user’s active view.
 - [ ] Diagnose and repair the report that configured AI providers do not complete manager research or work.
-- [ ] Add visual-motion and real configured-provider workflow evidence for the repaired paths.
+- [x] Add visual-motion and real configured-provider workflow evidence for the repaired paths.
 - [x] Securely configure and verify the owner-supplied OpenRouter key for a real multi-employee difficult-task meeting.
 - [ ] Provision bounded OpenRouter-backed employees and validate manager research, approval, and monitoring with real evidence only.
 - [x] Give a browser-proven, truthful final assessment of the selected scene animation versus employee-walking expectations.
@@ -353,7 +353,7 @@
 - [x] Repair OpenRouter verification truncation, provider-request deadline handling, and synthesis fallback eligibility for dynamically provisioned employees.
 - [x] Surface OpenRouter HTTP 429 verification and meeting rate limits as safe actionable retry guidance without saving or exposing the key.
 - [x] Preserve completed earlier DeepDiscuss research and allow a proposal-synthesis attempt when only the final debate round has a verified provider-wide failure.
-- [ ] Re-run the bounded three-employee OpenRouter meeting after the external OpenRouter 429 rate limit clears, then confirm only the resulting owner-reviewable proposal; do not auto-approve or perform workspace work.
+- [x] Re-run the bounded three-employee OpenRouter meeting after the external OpenRouter 429 rate limit clears, then confirm only the resulting owner-reviewable proposal; do not auto-approve or perform workspace work.
 - [x] Retry the isolated three-employee difficult planning meeting on the owner-authorized current OpenRouter free route after a safe availability recheck.
 - [x] Recheck the OpenRouter free route after an extended cooldown and record the repeated HTTP 429 without attempting further multi-employee work.
 - [x] Capture safe OpenRouter rate-limit metadata and implement bounded retry/backoff behavior that never fabricates provider success or exposes credentials.
@@ -366,6 +366,10 @@
 - [ ] Run the user-requested fresh isolated OpenRouter free-route availability check and three-employee planning retry without approval or workspace work.
 - [x] Run the user-requested fresh isolated OpenRouter free-route availability check and record the returned HTTP 429 before starting any multi-employee work.
 - [x] Run the owner-requested additional bounded OpenRouter free-route availability retry and record the returned HTTP 429 before starting multi-employee work.
+- [ ] Audit the remaining local-owner workflow, provider acceptance, and container-runtime items; repair only independently reproducible code defects and preserve external prerequisites explicitly.
+- [x] Run a legitimate one-time local-owner browser audit of manager greeting/task-proposal, all map targets, employee rooms, computer monitors, service floor, mobile layout, and the three ambient styles without starting provider research.
+- [x] Add regression coverage that the legitimate local-owner audit waits for its one-time cookie session before submitting manager input.
+- [x] Run a real isolated difficult planning meeting with three OpenRouter free-route employees, yielding a proposal in PENDING_APPROVAL with no approval or workspace work performed.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
 - [x] Authenticate the temporary npm account through a secure browser authorization after browser CAPTCHA blocked direct interactive login.

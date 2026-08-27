@@ -44,6 +44,7 @@ try {
   record("complete map target inventory", expectedMapTargets.every((target) => mapTargetLabels.includes(target)), `Found ${mapTargetLabels.length} labelled map controls, including all expected room and computer targets.`);
 
   if (process.env.AETHER_OFFICE_AUDIT_OWNER_SESSION === "1" && localOwnerToken) {
+    await page.locator(".office-task-input:not([disabled])").waitFor({ timeout: 15_000 });
     await page.locator(".office-task-input").fill("hello");
     await page.getByRole("button", { name: "Send" }).click();
     await page.getByText("Hello sir! I'm the manager of AetherOffice. How can I help you today?").waitFor();
