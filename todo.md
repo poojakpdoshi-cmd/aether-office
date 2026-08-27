@@ -334,7 +334,7 @@
 - [x] Identify and remove or block the exact manager-rail section referenced by the failed visual-editor comment without removing required workflow controls blindly.
 - [x] Add regression and visual validation for the scoped visual-editor repair.
 - [x] Inventory every current map target, manager workflow transition, employee room/computer route, and animation state against the real implementation.
-- [ ] Exercise the manager conversation, research, approval, service-floor, employee-room, computer-monitor, and map-target flows against real local state.
+- [x] Exercise the manager conversation, research, approval, service-floor, employee-room, computer-monitor, and map-target flows against real local state.
 - [x] Repair each verified non-working interaction or state transition without adding fake activity or hiding genuine unavailable-runtime constraints.
 - [x] Add end-to-end regressions and desktop/mobile visual checks for every repaired flow.
 - [x] Add a visible top-right “Set your animation” control to the office map.
@@ -370,7 +370,7 @@
 - [x] Run a legitimate one-time local-owner browser audit of manager greeting/task-proposal, all map targets, employee rooms, computer monitors, service floor, mobile layout, and the three ambient styles without starting provider research.
 - [x] Add regression coverage that the legitimate local-owner audit waits for its one-time cookie session before submitting manager input.
 - [x] Run a real isolated difficult planning meeting with three OpenRouter free-route employees, yielding a proposal in PENDING_APPROVAL with no approval or workspace work performed.
-- [ ] Run the owner-authorized isolated approval-only test on a real OpenRouter-backed proposal, then verify no workspace or sandbox action begins.
+- [x] Run the owner-authorized isolated approval-only test on a real OpenRouter-backed proposal, then verify no workspace or sandbox action begins.
 - [x] Run a comprehensive browser and runtime audit of all AetherOffice interactive features and the three selectable animation styles, reporting only verified behavior.
 - [x] Authenticate the owner’s temporary npm account securely in the sandbox without receiving credentials in chat.
 - [x] Verify npm account, scoped-package access, and AetherOffice publish readiness before requesting explicit public-publish approval.
